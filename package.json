@@ -1,0 +1,62 @@
+{
+  "name": "QamarSocial",
+  "version": "0.1.0",
+  "private": true,
+  "author": {
+    "name": "Ali Alhaddad"
+  },
+  "scripts": {
+    "seed": "node ./scripts/seed",
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "peerDependencies": {
+    "@types/react": "18.0.26 || ^18.2.25 || 18.3.3"
+  },
+  "dependencies": {
+    "@emoji-mart/data": "^1.2.1",
+    "@emoji-mart/react": "^1.1.1",
+    "@heroicons/react": "^1.0.6",
+    "@portabletext/react": "^2.0.0",
+    "@types/lodash": "^4.14.191",
+    "axios": "^1.8.2",
+    "emoji-mart": "^5.6.0",
+    "framer-motion": "^7.6.18",
+    "lodash": "^4.17.21",
+    "mobx": "^6.13.6",
+    "mobx-react-lite": "^4.1.0",
+    "neo4j-driver": "^5.21.0",
+    "next": "^14.2.4",
+    "next-auth": "^4.24.7",
+    "next-sanity": "^0.8.5",
+    "next-themes": "^0.2.1",
+    "react": "18.2.0",
+    "react-dom": "18.2.0",
+    "react-firebase-hooks": "^5.1.1",
+    "react-hot-toast": "^2.4.0",
+    "react-time-ago": "^7.2.1",
+    "react-timeago": "^7.1.0",
+    "react-virtualized": "^9.22.5",
+    "tailwind-scrollbar": "^2.0.1",
+    "tailwind-scrollbar-hide": "^1.1.7",
+    "universal-cookie": "^7.2.2"
+  },
+  "devDependencies": {
+    "@faker-js/faker": "^7.6.0",
+    "@types/node": "18.11.10",
+    "@types/react": "^18.0.26",
+    "@types/react-dom": "18.0.9",
+    "@types/react-timeago": "^4.1.3",
+    "@types/react-virtualized": "^9.21.30",
+    "autoprefixer": "^10.4.13",
+    "bufferutil": "^4.0.8",
+    "eslint": "8.30.0",
+    "eslint-config-next": "12.2.4",
+    "postcss": "^8.4.19",
+    "tailwindcss": "^3.2.4",
+    "typescript": "^5.0.2",
+    "utf-8-validate": "^5.0.10"
+  }
+}

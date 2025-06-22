@@ -1,0 +1,235 @@
+"use client";
+import React, { useEffect, useMemo, useRef, useState } from "react";
+import { RefreshIcon } from "@heroicons/react/outline";
+import {
+  DashboardPostToDisplay,
+  PostToDisplay,
+} from "../../typings";
+import TweetComponents from "./Tweet";
+// import { fetchTweets } from "../../utils/tweets/fetchTweets";
+import toast from "react-hot-toast";
+
+import { useSession } from "next-auth/react";
+import TweetBox from "./TweetBox";
+import { setFilterState } from "@utils/mobx";
+import { useSearchParams } from "next/navigation";
+import { convertQueryStringToObject, Params } from "@utils/neo4j";
+import CustomPageLoader from "./common/CustomLoader";
+import { observer } from "mobx-react-lite";
+import { FilterKeys, useStore } from "stores";
+import { PageTitle } from "./common/Titles";
+import { ContentContainer, ContentContainerWithRef } from "./common/Containers";
+import { PagingParams } from "models/common";
+
+interface Props {
+  title?: string;
+  filterKey?: FilterKeys;
+  hideTweetBox?: boolean;
+  posts?: PostToDisplay[] | DashboardPostToDisplay[];
+}
+
+function FeedContainer({ children }: React.PropsWithChildren<any>) {
+  return (
+    <div className="col-span-7 scrollbar-hide border-x max-h-screen overflow-scroll lg:col-span-5 dark:border-gray-800">
+      {children}
+    </div>
+  );
+}
+
+
+const Feed = observer(({ title, filterKey, hideTweetBox, posts }: Props) => {
+  const searchParams = useSearchParams();
+  const { data: session } = useSession();
+  const { user } = session ?? {};
+  const [loading, setLoading] = useState<boolean>(false);
+  const { bookmarkFeedStore, exploreStore, feedStore } = useStore();
+  const [isLoading, setIsLoading] = useState(false);
+  const containerRef = useRef(null);
+  const loaderRef = useRef(null);
+
+  const feedSetLoadingInitial = useMemo(() => {
+    if (filterKey === FilterKeys.Explore) return exploreStore.setLoadingInitial;
+    // else if (filterKey === FilterKeys.Search) return searchStore.predicate;
+    else return feedStore.setLoadingInitial;
+  }, [feedStore.loadingInitial, exploreStore.loadingInitial, bookmarkFeedStore.loadingInitial]);
+  const feedLoadingInitial = useMemo(() => {
+    if (filterKey === FilterKeys.Explore) return exploreStore.loadingInitial;
+    // else if (filterKey === FilterKeys.Search) return searchStore.predicate;
+    else if(filterKey === FilterKeys.MyBookmarks) return bookmarkFeedStore.loadingInitial;
+    else return feedStore.loadingInitial;
+  }, [feedStore.loadingInitial, exploreStore.loadingInitial, bookmarkFeedStore.loadingInitial]);
+
+  const setFeedPagingParams = useMemo(() => {
+    if (filterKey === FilterKeys.Explore) return exploreStore.setPagingParams;
+    else if(filterKey === FilterKeys.MyBookmarks) return bookmarkFeedStore.setPagingParams;
+    // else if (filterKey === FilterKeys.Search) return searchStore.predicate;
+    else return feedStore.setPagingParams;
+  }, [feedStore.pagingParams.currentPage, exploreStore.pagingParams.currentPage, bookmarkFeedStore.pagingParams.currentPage]);
+  const setFeedPredicate = useMemo(() => {
+    if (filterKey === FilterKeys.Explore) return exploreStore.setPredicate;
+    else if(filterKey === FilterKeys.MyBookmarks) return bookmarkFeedStore.setPredicate;
+    // else if (filterKey === FilterKeys.Search) return searchStore.predicate;
+    else return feedStore.setPredicate;
+  }, []);
+  
+  const feedPagingParams = useMemo(() => {
+    if (filterKey === FilterKeys.Explore) return exploreStore.pagingParams;
+    else if(filterKey === FilterKeys.MyBookmarks) return bookmarkFeedStore.pagingParams;
+    // else if (filterKey === FilterKeys.Search) return searchStore.predicate;
+    else return feedStore.pagingParams;
+  }, [feedStore.pagingParams.currentPage, exploreStore.pagingParams.currentPage, bookmarkFeedStore.pagingParams.currentPage]);
+  const feedPagination = useMemo(() => {
+    if (filterKey === FilterKeys.Explore) return exploreStore.pagination;
+    else if(filterKey === FilterKeys.MyBookmarks) return bookmarkFeedStore.pagination;
+    // else if (filterKey === FilterKeys.Search) return searchStore.predicate;
+    else return feedStore.pagination;
+  }, [feedStore.pagingParams.currentPage, exploreStore.pagingParams.currentPage, bookmarkFeedStore.pagingParams.currentPage]);
+
+  const filterPredicate: Map<string, any> = useMemo(() => {
+    if (filterKey === FilterKeys.Explore) return exploreStore.predicate;
+    else if(filterKey === FilterKeys.MyBookmarks) return bookmarkFeedStore.predicate;
+    // else if (filterKey === FilterKeys.Search) return searchStore.predicate;
+    else return feedStore.predicate;
+  }, []);
+
+  const loadPosts = async () => {
+    if (filterKey === FilterKeys.Explore)
+      await exploreStore.loadExplorePosts();
+    else if(filterKey === FilterKeys.MyBookmarks && userId) 
+      await bookmarkFeedStore.loadBookmarkedPosts(userId);
+    else if(filterKey === FilterKeys.Normal)
+      await feedStore.loadPosts();
+    else
+      return console.log();
+  }
+
+  async function getPosts() {
+    setLoading(true);
+    try {
+      const paramsFromQryString = convertQueryStringToObject(
+        window.location.search
+      );
+      debugger;
+      if (
+        (paramsFromQryString.currentPage && paramsFromQryString.itemsPerPage)
+        && (paramsFromQryString.currentPage !== filterPredicate.get('currentPage')
+          || paramsFromQryString.itemsPerPage !== filterPredicate.get('itemsPerPage')
+          || paramsFromQryString.searchTerm != filterPredicate.get('searchTerm'))) {
+  
+        setFeedPagingParams(new PagingParams(paramsFromQryString.currentPage, paramsFromQryString.itemsPerPage));
+        setFeedPredicate('searchTerm', paramsFromQryString.searchTerm);
+      }
+        
+      await loadPosts();
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  const fetchMoreItems = async (pageNum: number) => {
+    setIsLoading(true);
+    setFeedPagingParams(new PagingParams(pageNum, 10))
+    await loadPosts();
+  };
+
+
+  useEffect(() => {
+
+    if (!filterKey) return;
+
+    getPosts();
+  }, [searchParams]);
+
+  const loadedPosts = useMemo(() => {
+    debugger;
+    if (filterKey === FilterKeys.Explore)
+      return exploreStore.explorePosts;
+    else if(filterKey === FilterKeys.MyBookmarks)
+      return bookmarkFeedStore.bookmarkedPosts;
+    // else if (filterKey === FilterKeys.Search)
+    //   return searchStore.searchTweets;
+    else
+      return feedStore.posts;
+
+  }, [feedStore.posts, exploreStore.explorePosts, bookmarkFeedStore.bookmarkedPosts]);
+
+
+  // 1. Add this loader component at the end of your posts list
+  const LoadMoreTrigger = () => {
+    return (
+      <div ref={loaderRef} style={{ height: '20px' }}>
+        {feedLoadingInitial && <div>Loading more posts...</div>}
+      </div>
+    );
+  };
+
+  // 2. Fix your Intersection Observer useEffect
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const firstEntry = entries[0];
+        const currentPage = feedPagination?.currentPage ?? 0;
+        const itemsPerPage = feedPagination?.itemsPerPage ?? 10;
+        const totalItems = feedPagination?.totalItems ?? 0;
+
+        const nextPage = currentPage + 1;
+        const totalItemsOnNextPage = nextPage * itemsPerPage;
+        const hasMoreItems = (totalItems > totalItemsOnNextPage);
+        if (firstEntry?.isIntersecting && !feedLoadingInitial && hasMoreItems) {
+          fetchMoreItems(feedPagingParams.currentPage + 1);
+        }
+      },
+      {
+        root: containerRef.current,
+        rootMargin: '100px',
+        threshold: 0.2
+      }
+    );
+
+    const currentLoader = loaderRef.current;
+    if (currentLoader) {
+      observer.observe(currentLoader);
+    }
+
+    return () => {
+      if (currentLoader) {
+        observer.unobserve(currentLoader);
+      }
+    };
+  }, [fetchMoreItems]);
+
+  const userId = useMemo(() => user ? (user as any)["id"] : "", [session]);
+  const bookmarks = useMemo(() => user ? (user as any)["bookmarks"] : undefined, [session]);
+  const reposts = useMemo(() => user ? (user as any)["reposts"] : undefined, [session]);
+  const likedPosts = useMemo(() => user ? (user as any)["likedPosts"] : undefined, [session]);
+
+  return (
+    <div className="col-span-7 scrollbar-hide border-x max-h-screen overflow-scroll lg:col-span-5 dark:border-gray-800">
+      {title && <PageTitle>{title}</PageTitle>}
+      <div>
+        {session && !hideTweetBox && (
+          <TweetBox filterKey={filterKey ? filterKey : FilterKeys.Normal} />
+        )}
+      </div>
+      <ContentContainerWithRef ref={containerRef} style={{ minHeight: '100vh' }}>
+        {loading ? (
+          <CustomPageLoader title="Loading" />
+        ) : (
+          <>
+            {(posts ? posts : loadedPosts ?? []).map((postRec, postKey) => (
+              <TweetComponents
+                key={postRec.post.id ?? postKey}
+                postToDisplay={postRec}
+              />
+            ))}
+            <LoadMoreTrigger />
+          </>
+        )}
+      </ContentContainerWithRef>
+    </div>
+  );
+});
+
+export { FeedContainer };
+
+export default Feed;
