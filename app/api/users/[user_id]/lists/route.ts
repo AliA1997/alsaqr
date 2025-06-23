@@ -5,31 +5,31 @@ import { NextRequest, NextResponse } from "next/server";
 /** TODO: NEED TO COMPLETE LIST Get, Post, and Put functionality. */
 async function GET(
   request: NextRequest,
-  { params }: { params: { name: string } }
+  { params }: { params: { user_id: string } }
 ) {
   const driver = defineDriver();
   const session = driver.session();
-  const { name } = params;
-  const username = name as string;
+  const { user_id } = params;
+  const userId = user_id as string;
 
-  if (!username) {
-    return new NextResponse("You need to be logged in, in order to access  your bookmarks.", { status: 400 });
+  if (!userId) {
+    return new NextResponse("You need to be logged in, in order to access  your lists.", { status: 400 });
   }
   try {
     const lists = await read(
                                 session, 
                                 `
-                                MATCH (user:User {username: $username})-[:BOOKMARKED]->(tweet:Post) RETURN tweet
+                                MATCH (user:User {id: $userId})-[:BOOKMARKED]->(tweet:Post) RETURN tweet
                                 `, 
-                                { username },
+                                { userId },
                                 "tweet"
                             );
 
-    console.log("bookmarks:", lists);
+    console.log("lists:", lists);
 
     return NextResponse.json({ success: true, lists });
   } catch (err) {
-    return NextResponse.json({ message: "Add bookmarks error!", success: false });
+    return NextResponse.json({ message: "Get lists error!", success: false });
   }
 }
 

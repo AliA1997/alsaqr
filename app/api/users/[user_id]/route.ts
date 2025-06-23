@@ -5,12 +5,12 @@ import { ProfileUser } from "typings";
 
 async function GET(
   request: NextRequest,
-  { params }: { params: { name: string } }
+  { params }: { params: { user_id: string } }
 ) {
-  const { name } = params;
-  const username = name as string;
+  const { user_id } = params;
+  const userId = user_id as string;
 
-  if (!username) {
+  if (!userId) {
     return new NextResponse("User ID is required", { status: 400 });
   }
 
@@ -23,12 +23,12 @@ async function GET(
     const users = await read(
       session,
       `
-        MATCH (user:User {username: $username})
+        MATCH (user:User {id: $userId})
         OPTIONAL MATCH (user)-[:BOOKMARKED]->(bookmark:Post)
         RETURN user,
               COLLECT(DISTINCT bookmark.id) AS bookmarks
       `,
-      { username },
+      { userId },
       ["user", 'bookmarks']
     );
     const user: ProfileUser = users && users.length ? users[0] : undefined;

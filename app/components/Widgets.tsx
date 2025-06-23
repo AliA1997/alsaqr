@@ -21,10 +21,10 @@ function Widgets() {
   const country = "United States"
   // const { country } = useGetCountry();
 
-  useEffect(() => {
-    const qryString = retrieveQueryString({ searchTerm: predicate.get('searchTerm'), currentPage: pagingParams.currentPage, itemsPerPage: pagingParams.itemsPerPage });
-    router.prefetch(`/search${qryString}`);
-  }, [predicate.values()]);
+  // useEffect(() => {
+  //   const qryString = retrieveQueryString({ searchTerm: predicate.get('searchTerm'), currentPage: pagingParams.currentPage, itemsPerPage: pagingParams.itemsPerPage });
+  //   router.prefetch(`/search${qryString}`);
+  // }, [predicate.values()]);
 
 
   return (

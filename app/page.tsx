@@ -5,21 +5,22 @@ import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { User } from "typings";
 import { Metadata } from "next";
-import { FilterKeys } from "@stores/index";
+import { FilterKeys, useStore } from "@stores/index";
+import { observer } from "mobx-react-lite";
 
 const Home = () => {  
   const { data: session } = useSession();
-
+  const { authStore } = useStore();
   const router = useRouter();
   useEffect(() => {
     if (session && session.user) {
-      router.prefetch(`/users/${(session.user as User).username}`);
-      router.prefetch(`/communities`);
-      router.prefetch(`/lists`);
+      authStore.setCurrentUser(session.user);
+    } else {
+      authStore.setCurrentUser(undefined);
     }
   }, [router, session]);
 
   return <Feed title="Popular Posts" filterKey={FilterKeys.Normal} />;
 };
 
-export default Home;
+export default observer(Home);

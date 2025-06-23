@@ -36,10 +36,15 @@ export type CommonRecordBody = {
 };
 
 
+//  Relationships for User
+// user -[:FOLLOW_USER] -> followedUser
+// followedUser - [:FOLLOWED] -> user
+// on unfollow -> delete FOLLOW_USER and FOLLOWED relationship
 export interface ProfileUser {
   user: User;
   bookmarks: string[];
 }
+
 
 export interface User extends UserInfo {
   id: string;
@@ -240,6 +245,7 @@ export interface CommentedRelationship {
   timestamp: string;
 }
 
+
 export interface Neo4jConfig {
   maxConnectionPoolSize: number;
   connectionTimeout: number;
@@ -261,3 +267,4 @@ declare module "next-auth" {
     role?: string
   }
 }
+
