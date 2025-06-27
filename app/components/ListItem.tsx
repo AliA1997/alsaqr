@@ -21,6 +21,7 @@ import { SaveIcon as SaveIconFillIcon } from "@heroicons/react/solid";
 import { useSession } from "next-auth/react";
 import agent from "@utils/common";
 import { useStore } from "@stores/index";
+import { LoginModal } from "./common/AuthModals";
 
 interface Props {
   listToDisplay: ListToDisplay;
@@ -32,7 +33,7 @@ function ListItemComponent({
   const router = useRouter();
   const { data: session } = useSession();
   const { modalStore } = useStore();
-  const { toggleLoginModal } = modalStore;
+  const { showModal } = modalStore;
 
   const [currentComments, setCurrentComments] = useState<CommentToDisplay[]>(() => {
     const comments = session && session.user ? (session.user as any).comments : [];
@@ -76,7 +77,7 @@ function ListItemComponent({
   const checkUserIsLoggedInBeforeUpdatingTweet = async (
     callback: () => Promise<void>
   ) => {
-    if (session && session.user && !(session.user as any)['id']) return toggleLoginModal(true);
+    if (session && session.user && !(session.user as any)['id']) return showModal(<LoginModal />);
 
     await callback();
   };
@@ -145,11 +146,14 @@ function ListItemComponent({
   return (
     <>
       <div
-        className="flex flex-col relative justify-between space-x-3 border-y border-gray-100 p-5 hover:shadow-lg dark:border-gray-800 dark:hover:bg-[#000000] h-[20em]"
+        className={`
+          flex flex-col relative justify-between space-x-3 border-y border-gray-100 
+          p-5 hover:shadow-lg dark:border-gray-800 dark:hover:bg-[#000000] h-[20em] 
+          hover:cursor-pointer`}
         style={{ backgroundImage: `url('${listInfo.bannerImage}')`, objectFit: 'cover' }}
         onClick={navigateToList}
       >
-        <div className="absolute m-0 inset-0 bg-gradient-to-t from-gray-900/80 to-gray-900/20"></div>
+        <div className="absolute m-0 inset-0 bg-gradient-to-t from-gray-900/40 to-gray-900/20"></div>
         <div className="flex flex-col justify-between h-full space-x-3 cursor-pointer">
           <div className="flex item-center space-x-1">
             <img
@@ -199,7 +203,7 @@ function ListItemComponent({
             whileTap={{ scale: 0.9 }}
             onClick={(e) =>
               stopPropagationOnClick(e, () => {
-                toggleLoginModal(true);
+                showModal(<LoginModal />);
                 setCommentBoxOpen(!commentBoxOpen);
               })
             }

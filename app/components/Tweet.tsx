@@ -22,6 +22,7 @@ import {
 import { BookmarkIcon as BookmarkFillIcon } from "@heroicons/react/solid";
 import { useSession } from "next-auth/react";
 import { useStore } from "@stores/index";
+import { LoginModal } from "./common/AuthModals";
 
 interface Props {
   postToDisplay: PostToDisplay;
@@ -33,7 +34,7 @@ function PostComponent({
   const router = useRouter();
   const { data: session } = useSession();
   const { feedStore, modalStore } = useStore();
-  const { toggleLoginModal } = modalStore;
+  const { showModal } = modalStore;
   const { rePost, likedPost, bookmarkPost, loadComments, comments, posts } = feedStore;
 
   const [currentComments, setCurrentComments] = useState<CommentToDisplay[]>(() => {
@@ -96,7 +97,7 @@ function PostComponent({
   const checkUserIsLoggedInBeforeUpdatingTweet = async (
     callback: () => Promise<void>
   ) => {
-    if (session && session.user && !(session.user as any)['id']) return toggleLoginModal(true);
+    if (session && session.user && !(session.user as any)['id']) return showModal(<LoginModal />);
 
     await callback();
   };
@@ -269,7 +270,7 @@ function PostComponent({
           whileTap={{ scale: 0.9 }}
           onClick={(e) =>
             stopPropagationOnClick(e, () => {
-              toggleLoginModal(true);
+              showModal(<LoginModal />);
               setCommentBoxOpen(!commentBoxOpen);
             })
           }

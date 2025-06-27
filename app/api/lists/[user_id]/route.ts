@@ -29,7 +29,7 @@ export async function GET(
   let lists: ListToDisplay[] = [];
   let pagination: Pagination | undefined = undefined;
 
-  console.log("faker.datatype.uuid():", faker.datatype.uuid())
+  // console.log("faker.datatype.uuid():", faker.datatype.uuid())
   try {
    let selectResult,  pagingResult, selectQuery;
 
@@ -107,7 +107,7 @@ export async function GET(
       totalPages: pagingResultParsed / itemsPerPageParsed
     };
     lists = selectResult ?? []; // Adjust based on your schema
-    console.log('lists:', JSON.stringify(lists))
+    // console.log('lists:', JSON.stringify(lists))
   } finally {
     await session.close();
   }

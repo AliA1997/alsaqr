@@ -114,7 +114,7 @@ export const authOptions: NextAuthOptions = {
               updatedAt: null,
               username: getEmailUsername(profile.email),
               email: profile.email,
-              countryOfOrigin: null,
+              countryOfOrigin: 'United States',
               phone: null,
               avatar: (profile as any)["picture"]
                 ? (profile as any)["picture"]
@@ -122,13 +122,13 @@ export const authOptions: NextAuthOptions = {
               bgThumbnail: faker.image.city(),
               dateOfBirth: null,
               geoId: null,
-              maritalStatus: null,
-              preferredMadhab: null,
-              hobbies: null,
-              frequentMasjid: null,
-              favoriteQuranReciters: null,
-              favoriteIslamicScholars: null,
-              islamicStudyTopics: null,
+              maritalStatus: 'Single',
+              preferredMadhab: 'Hanafi',
+              hobbies: [],
+              frequentMasjid: [],
+              favoriteQuranReciters: [],
+              favoriteIslamicScholars: [],
+              islamicStudyTopics: [],
             }
           );
       } catch (error) {

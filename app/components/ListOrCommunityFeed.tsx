@@ -18,9 +18,10 @@ import { FilterKeys, useStore } from "stores";
 import { PageTitle } from "./common/Titles";
 import { ContentContainerWithRef } from "./common/Containers";
 import { PagingParams } from "models/common";
-import ListOrCommunityBox from "./ListOrCommunityBox";
+// import ListOrCommunityBox from "./ListOrCommunityBox";
 import ListItemComponent from "./ListItem";
 import CommunityItemComponent from "./CommunityItem";
+import ListOrCommunityUpsertModal from "./common/ListOrCommunityUpsertModal";
 
 interface Props {
   title?: string;
@@ -41,8 +42,10 @@ const ListOrCommunityFeed = observer(({ title, filterKey, hideTweetBox }: Props)
   const searchParams = useSearchParams();
   const { data: session } = useSession();
   const { user } = session ?? {};
+  const userId = useMemo(() => user ? (user as any)["id"] : "", [session]);
+
   const [loading, setLoading] = useState<boolean>(false);
-  const { listFeedStore, communityFeedStore } = useStore();
+  const { modalStore, listFeedStore, communityFeedStore } = useStore();
   const [isLoading, setIsLoading] = useState(false);
   const containerRef = useRef(null);
   const loaderRef = useRef(null);
@@ -65,7 +68,7 @@ const ListOrCommunityFeed = observer(({ title, filterKey, hideTweetBox }: Props)
     if (filterKey === FilterKeys.Explore) return communityFeedStore.setPredicate;
     else return listFeedStore.setPredicate;
   }, []);
-  
+
   const feedPagingParams = useMemo(() => {
     if (filterKey === FilterKeys.Explore) return communityFeedStore.pagingParams;
     else return listFeedStore.pagingParams;
@@ -84,7 +87,7 @@ const ListOrCommunityFeed = observer(({ title, filterKey, hideTweetBox }: Props)
   const loadFeedRecords = async () => {
     if (filterKey === FilterKeys.Community)
       await communityFeedStore.loadCommunities(userId);
-    else if(filterKey === FilterKeys.Lists)
+    else if (filterKey === FilterKeys.Lists)
       await listFeedStore.loadLists(userId);
     else
       return console.log();
@@ -97,17 +100,17 @@ const ListOrCommunityFeed = observer(({ title, filterKey, hideTweetBox }: Props)
         window.location.search
       );
 
-    
+
       if (
         (paramsFromQryString.currentPage && paramsFromQryString.itemsPerPage)
         && (paramsFromQryString.currentPage !== filterPredicate.get('currentPage')
           || paramsFromQryString.itemsPerPage !== filterPredicate.get('itemsPerPage')
           || paramsFromQryString.searchTerm != filterPredicate.get('searchTerm'))) {
-  
+
         setFeedPagingParams(new PagingParams(paramsFromQryString.currentPage, paramsFromQryString.itemsPerPage));
         setFeedPredicate('searchTerm', paramsFromQryString.searchTerm);
       }
-        
+
       await loadFeedRecords();
     } finally {
       setLoading(false);
@@ -125,17 +128,18 @@ const ListOrCommunityFeed = observer(({ title, filterKey, hideTweetBox }: Props)
 
     if (!filterKey) return;
 
-    getPosts();
-  }, [searchParams]);
+    if(userId)
+      getPosts();
+  }, [searchParams, userId]);
 
   const loadedRecords = useMemo(() => {
-    debugger;
+    console.log("communityFeedStore.communityRegistry", communityFeedStore.communityRegistry.size)
     if (filterKey === FilterKeys.Community)
       return communityFeedStore.communities;
     else
       return listFeedStore.lists;
 
-  }, [communityFeedStore.communities, listFeedStore.lists]);
+  }, [communityFeedStore.communityRegistry, listFeedStore.listsRegistry]);
 
 
   // 1. Add this loader component at the end of your posts list
@@ -182,44 +186,48 @@ const ListOrCommunityFeed = observer(({ title, filterKey, hideTweetBox }: Props)
     };
   }, [fetchMoreItems]);
 
-  const userId = useMemo(() => user ? (user as any)["id"] : "", [session]);
-  const bookmarks = useMemo(() => user ? (user as any)["bookmarks"] : undefined, [session]);
-  const reposts = useMemo(() => user ? (user as any)["reposts"] : undefined, [session]);
-  const likedPosts = useMemo(() => user ? (user as any)["likedPosts"] : undefined, [session]);
-
   return (
     <div className="col-span-7 scrollbar-hide border-x max-h-screen overflow-scroll lg:col-span-5 dark:border-gray-800">
       {title && <PageTitle>{title}</PageTitle>}
       <div>
-        {session && !hideTweetBox && (
-          <ListOrCommunityBox type={filterKey === FilterKeys.Community ? CommonUpsertBoxTypes.Community : CommonUpsertBoxTypes.List} />
-        )}
+          <button
+              type='button'
+              className={`rounded-full bg-maydan px-5 py-2 font-bold text-white disabled:opacity-40`}
+              onClick={() => modalStore.showModal(<ListOrCommunityUpsertModal type={filterKey === FilterKeys.Community ? CommonUpsertBoxTypes.Community : CommonUpsertBoxTypes.List} />)}
+          >
+            {filterKey === FilterKeys.Community ? 'Create Community' : 'Create List'}
+          </button>
       </div>
-      <ContentContainerWithRef ref={containerRef} style={{ minHeight: '100vh' }}>
-        {loading ? (
-          <CustomPageLoader title="Loading" />
-        ) : (
+      {loading ? (
+        <CustomPageLoader title="Loading" />
+      ) : (
+        <ContentContainerWithRef
+          classNames={`${filterKey === FilterKeys.Community ? 'flex flex-wrap' : ''}`}
+          ref={containerRef}
+          style={{ minHeight: '100vh' }}
+        >
           <>
             {(loadedRecords ?? []).map((record: CommunityToDisplay | ListToDisplay, recordKey) => {
               let castedRecord: CommunityToDisplay | ListToDisplay;
-              if(filterKey === FilterKeys.Community ) {
+              console.log("WHAT THE FUCK:", record);
+              if (filterKey === FilterKeys.Community) {
                 castedRecord = record as CommunityToDisplay;
-                return <CommunityItemComponent 
-                          key={castedRecord.community.id ?? recordKey}
-                          community={castedRecord}
-                        />              
+                return <CommunityItemComponent
+                  key={castedRecord.community.id ?? recordKey}
+                  community={castedRecord}
+                />
               } else {
                 castedRecord = record as ListToDisplay;
-                return <ListItemComponent 
-                          key={castedRecord.list.id ?? recordKey}
-                          listToDisplay={castedRecord}
-                        />
-              } 
+                return <ListItemComponent
+                  key={castedRecord.list.id ?? recordKey}
+                  listToDisplay={castedRecord}
+                />
+              }
+              <LoadMoreTrigger />
             })}
-            <LoadMoreTrigger />
           </>
-        )}
-      </ContentContainerWithRef>
+        </ContentContainerWithRef>
+      )}
     </div>
   );
 });

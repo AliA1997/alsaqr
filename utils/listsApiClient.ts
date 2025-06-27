@@ -9,5 +9,7 @@ export const listApiClient = {
     addList: (values: ListRecord, userId: string) =>
         axiosRequests.post(`/api/lists/${userId}`, { values }).then(axiosResponseBody),     
     getLists: (params: URLSearchParams | undefined, userId: string) =>
-        axios.get(`/api/lists/${userId}`, { params }).then(axiosResponseBody)
+        axios.get(`/api/lists/${userId}`, { params }).then(axiosResponseBody),
+    getSavedListItems: (params: URLSearchParams | undefined, userId: string, listId: string) =>
+        axios.get(`/api/lists/${userId}/${listId}`, { params }).then(axiosResponseBody)
 }

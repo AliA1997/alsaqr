@@ -7,6 +7,7 @@ export interface CommunityDiscussion {
     name: string;
     createdAt: string;
     lastMessagedAt: string;
+    _type: "community_discussion";
     tags: string[];
     isPrivate: boolean;
 }
@@ -29,6 +30,7 @@ export interface CommunityDiscussionMessage {
     messageText: string;
     image: string;
     createdAt: string;
+    _type: "community_discussion_message";
     tags: string[];
 }
 

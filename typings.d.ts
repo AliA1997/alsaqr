@@ -46,11 +46,17 @@ export interface ProfileUser {
 }
 
 
+export interface UserItemToDisplay {
+  user: User;
+  following?: User[];
+  followers?: User[];
+}
+
 export interface User extends UserInfo {
   id: string;
-  createdAt: string;
-  updatedAt: string;
-  dateOfBirth?: string;
+  createdAt: Date;
+  updatedAt: Date;
+  dateOfBirth?: Date;
   geoId?: string;
   maritalStatus?: 'single' | 'married' | 'divorced' | 'widowed';
   hobbies?: string[];
@@ -150,7 +156,6 @@ export interface CommunityRecord {
   userId: string
   name: string;
   avatar: string;
-  bannerImage: string;
   createdAt: string;
   updatedAt: string;
   _rev: string;

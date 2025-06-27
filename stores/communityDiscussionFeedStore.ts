@@ -3,8 +3,9 @@ import { CommunityRecord, CommunityToDisplay } from "../typings.d";
 import { Pagination, PagingParams } from "models/common";
 import { fetchCommunities } from "@utils/communities/fetchCommunities";
 import agent from "@utils/common";
+import { CommunityDiscussionRecord, CommunityDiscussionToDisplay } from "models/community";
 
-export default class CommunityFeedStore {
+export default class CommunityDiscussionFeedStore {
 
     constructor() {
         makeAutoObservable(this);
@@ -30,8 +31,7 @@ export default class CommunityFeedStore {
     pagination: Pagination | undefined = undefined;
     pagingParams: PagingParams = new PagingParams(1, 10);
 
-    communityRegistry: Map<string, CommunityToDisplay> = new Map<string, CommunityToDisplay>();
-    currentStepInCommunityCreation: number | undefined = undefined;
+    communityDiscussionsRegistry: Map<string, CommunityDiscussionToDisplay> = new Map<string, CommunityDiscussionToDisplay>();
 
     setLoadingInitial = (val: boolean) => {
         this.loadingInitial = val;
@@ -45,16 +45,13 @@ export default class CommunityFeedStore {
     setSearchQry = (val: string) => this.predicate.set('searchQry', val);
 
 
-    setCommunity = (communityId: string, community: CommunityToDisplay) => {
-        this.communityRegistry.set(communityId, community);
-    }
-    setCurrentStepInCommunityCreation = (currentStep: number) => {
-        this.currentStepInCommunityCreation = currentStep;
+    setCommunityDiscussion = (communityDiscussionId: string, communityDiscussion: CommunityDiscussionToDisplay) => {
+        this.communityDiscussionsRegistry.set(communityDiscussionId, communityDiscussion);
     }
 
     resetListsState = () => {
         this.predicate.clear();
-        this.communityRegistry.clear();
+        this.communityDiscussionsRegistry.clear();
     }
 
     get axiosParams() {
@@ -66,26 +63,25 @@ export default class CommunityFeedStore {
         return params;
     }
 
-    addCommunity = async (newCommunity: CommunityRecord, userId: string) => {
+    addCommunityDiscussion = async (newCommunity: CommunityDiscussionRecord, userId: string) => {
 
         this.setLoadingInitial(true);
         try {
-            await agent.communityApiClient.addCommunity(newCommunity, userId);
+            // await agent.communityApiClient.addCommunity(newCommunity, userId);
         } finally {
             this.setLoadingInitial(false);
         }
 
     }
 
-    loadCommunities = async (userId: string) => {
+    loadCommunityDiscussions = async (userId: string, communityId: string) => {
 
         this.setLoadingInitial(true);
         try {
-            const { result } = await agent.communityApiClient.getCommunities(this.axiosParams, userId) ?? [];
-            console.log("FUCK YOU RESULT:", result);
+            const { result } = await agent.communityApiClient.getCommunity(this.axiosParams, userId, communityId) ?? [];
             runInAction(() => {
-                result.data.forEach((community: CommunityToDisplay) => {
-                    this.setCommunity(community.community.id, community)
+                result.data.forEach((communityDiscussion: CommunityDiscussionToDisplay) => {
+                    this.setCommunityDiscussion(communityDiscussion.communityDiscussion.id, communityDiscussion)
                 });
             });
 
@@ -96,7 +92,7 @@ export default class CommunityFeedStore {
 
     }
 
-    get communities() {
-        return Array.from(this.communityRegistry.values());
+    get communityDiscussions() {
+        return Array.from(this.communityDiscussionsRegistry.values());
     }
 }

@@ -58,3 +58,10 @@ export interface ActivityLog {
   type: ActivityLogType;
   createdAt: string;
 }
+
+export enum ModalKeys {
+  Login = 'login',
+  CreateCommunity = 'create-community',
+  CreateList = 'create-list',
+  ContinueAccountSetup = 'continue-account-setup'
+}

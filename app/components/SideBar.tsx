@@ -23,6 +23,7 @@ import { getEmailUsername, stopPropagationOnClick } from "@utils/neo4j/index";
 import { User } from "typings";
 import { useStore } from "@stores/index";
 import { observer } from "mobx-react-lite";
+import { LoginModal } from "./common/AuthModals";
 
 type SideBarProps = {};
 
@@ -31,9 +32,9 @@ const SideBar = ({}: SideBarProps) => {
   const router = useRouter();
   const [isDropdownOpen, setIsDropdownOpen] = React.useState<boolean>(false);
   const { modalStore } = useStore();
-  const { toggleLoginModal } = modalStore;
+  const { showModal } = modalStore;
 
-  const openModal = () => toggleLoginModal(true);
+  const openModal = () => showModal(<LoginModal />)
 
   const handleDropdownEnter = useCallback(
     () => setIsDropdownOpen(!isDropdownOpen),

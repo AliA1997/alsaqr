@@ -22,6 +22,7 @@ export default class FeedStore {
 
 
     loadingInitial = false;
+    loadingPost = false;
     predicate = new Map();
     setPredicate = (predicate: string, value: string | number | Date | undefined) => {
         if(value) {
@@ -56,6 +57,9 @@ export default class FeedStore {
 
     setLoadingInitial = (value: boolean) => {
         this.loadingInitial = value;
+    }
+    setLoadingPost = (value: boolean) => {
+        this.loadingPost = value;
     }
     setLoadedPost = (value: PostToDisplay) => {
         this.loadedPost = value;
@@ -148,7 +152,7 @@ export default class FeedStore {
 
     loadPost = async (postId: string) => {
 
-        this.setLoadingInitial(true);
+        this.setLoadingPost(true);
         try {
             const post = await agent.postApiClient.getPost(postId) ?? {};
 
@@ -156,7 +160,7 @@ export default class FeedStore {
                 this.setLoadedPost(post);
             });
         } finally {
-            this.setLoadingInitial(false);
+            this.setLoadingPost(false);
         }
 
     }

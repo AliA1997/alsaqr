@@ -25,6 +25,6 @@ export interface ListItem {
 export interface ListItemRecord extends ListItem {}
 
 export interface ListItemToDisplay {
-  listItem: ListItemToDisplay;
+  listItem: ListItem;
   relatedEntity: PostToDisplay | CommunityToDisplay | CommunityDiscussionToDisplay | CommunityDiscussionMessageToDisplay | ListToDisplay;
 }

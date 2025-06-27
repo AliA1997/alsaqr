@@ -3,6 +3,7 @@ import { ListRecord, ListToDisplay } from "../typings.d";
 import { Pagination, PagingParams } from "models/common";
 // import { fetchLists } from "@utils/lists/fetchLists";
 import agent from "@utils/common";
+import { ListItemToDisplay } from "models/list";
 
 export default class ListFeedStore {
     
@@ -19,7 +20,9 @@ export default class ListFeedStore {
     
     
     loadingInitial = false;
+    loadingListItems = false;
     predicate = new Map();
+    savedListItemsPredicate = new Map();
     setPredicate = (predicate: string, value: string | number | Date | undefined) => {
         if(value) {
             this.predicate.set(predicate, value);
@@ -29,10 +32,18 @@ export default class ListFeedStore {
     }
     pagingParams: PagingParams = new PagingParams(1, 10);
     pagination: Pagination | undefined = undefined;
+    savedListItemsPagingParams: PagingParams = new PagingParams(1, 10);
+    savedListItemsPagination: Pagination | undefined = undefined;
 
     listsRegistry: Map<string, ListToDisplay> = new Map<string, ListToDisplay>();
+    savedListItemsRegistry: Map<string, ListItemToDisplay> = new Map<string, ListItemToDisplay>();
+    currentStepInListCreation: number | undefined = undefined;
+
     setLoadingInitial = (value: boolean) => {
         this.loadingInitial = value;
+    }
+    setLoadingListItems = (value: boolean) => {
+        this.loadingListItems = value;
     }
     setPagingParams = (pagingParams: PagingParams) => {
         this.pagingParams = pagingParams;
@@ -40,11 +51,22 @@ export default class ListFeedStore {
     setPagination = (pagination: Pagination) => {
         this.pagination = pagination;
     }
+    setSavedListItemsPagingParams = (pagingParams: PagingParams) => {
+        this.savedListItemsPagingParams = pagingParams;
+    }
+    setSavedListItemsPagination = (pagination: Pagination) => {
+        this.savedListItemsPagination = pagination;
+    }
     setSearchQry = (val: string) => this.predicate.set('searchQry', val);
-
+    setCurrentStepInListCreation = (currentStep: number) => {
+        this.currentStepInListCreation = currentStep;
+    }
     
-    setList = (tweetId: string, tweet: ListToDisplay) => {
-        this.listsRegistry.set(tweetId, tweet);
+    setList = (listId: string, list: ListToDisplay) => {
+        this.listsRegistry.set(listId, list);
+    }
+    setSavedListItem = (listItemId: string, listItem: ListItemToDisplay) => {
+        this.savedListItemsRegistry.set(listItemId, listItem);
     }
     
     resetPredicate = () => {
@@ -65,6 +87,14 @@ export default class ListFeedStore {
         params.append("currentPage", this.pagingParams.currentPage.toString());
         params.append("itemsPerPage", this.pagingParams.itemsPerPage.toString());
         this.predicate.forEach((value, key) => params.append(key, value));
+
+        return params;
+    }
+    get savedListItemsAxiosParams() {
+        const params = new URLSearchParams();
+        params.append("currentPage", this.savedListItemsPagingParams.currentPage.toString());
+        params.append("itemsPerPage", this.savedListItemsPagingParams.itemsPerPage.toString());
+        this.savedListItemsPredicate.forEach((value, key) => params.append(key, value));
 
         return params;
     }
@@ -98,7 +128,29 @@ export default class ListFeedStore {
 
     }
 
+    loadSavedListItems = async (userId: string, listId: string) => {
+        debugger;
+        this.setLoadingListItems(true);
+        try {
+            const { result } = await agent.listApiClient.getSavedListItems(this.savedListItemsAxiosParams, userId, listId);
+            runInAction(() => {
+                result.data.forEach((listItem: ListItemToDisplay) => {
+                    this.setSavedListItem(listItem.listItem.id, listItem)
+                });
+            });
+
+            this.setSavedListItemsPagination(result.pagination);
+        } finally {
+            this.setLoadingListItems(false);
+        }
+
+    }
+
     get lists() {
         return Array.from(this.listsRegistry.values());
+    }
+
+    get savedListItems() {
+        return Array.from(this.savedListItemsRegistry.values());
     }
 }

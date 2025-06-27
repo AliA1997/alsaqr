@@ -1,4 +1,6 @@
 import { makeAutoObservable } from "mobx";
+import { ModalKeys } from "models/common";
+import React from "react";
 
 export default class ModalStore {
     
@@ -7,14 +9,12 @@ export default class ModalStore {
     }
     
     loadingInitial = false;
-    showLoginModal = false;
-
-    toggleLoginModal = (doShow: boolean) => {
-        this.showLoginModal = doShow;
+    modalToShow: React.ReactNode | undefined = undefined;
+    // showLoginModal = false;
+    showModal = (modalToShow: React.ReactNode) => {
+        this.modalToShow = modalToShow;
     }
-
-    resetModalsState = () => {
-        this.showLoginModal = false;
-        this.loadingInitial = false;
+    closeModal = () => {
+        this.modalToShow = undefined;
     }
 }

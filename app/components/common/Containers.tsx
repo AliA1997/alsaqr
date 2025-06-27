@@ -1,8 +1,8 @@
 import React from 'react';
 
-export const ContentContainerWithRef = React.forwardRef(({ children, ...otherProps }: React.PropsWithChildren<any>, ref) => {
+export const ContentContainerWithRef = React.forwardRef(({ children, classNames, ...otherProps }: React.PropsWithChildren<any>, ref) => {
   return (
-    <div className="max-w-xl mx-auto bg-white dark:bg-[#000000] shadow-md rounded-lg mt-10" {...otherProps}>
+    <div className={`max-w-xl mx-auto bg-white dark:bg-[#000000] shadow-md rounded-lg mt-10 ${classNames}`} {...otherProps}>
       {children}
     </div>    
   );

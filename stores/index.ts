@@ -10,6 +10,7 @@ import CommunityFeedStore from './communityFeedStore';
 import NotificationStore from './notificationStore';
 import UserStore from './userStore';
 import BookmarkFeedStore from './bookmarkFeedStore';
+import SearchStore from './searchStore';
 
 interface Store {
     authStore: AuthStore;
@@ -21,12 +22,14 @@ interface Store {
     listFeedStore: ListFeedStore;
     communityFeedStore: CommunityFeedStore;
     notificationStore: NotificationStore;
+    searchStore: SearchStore;
     userStore: UserStore;
 }
 
 
 export enum FilterKeys {
   Search = 'search',
+  SearchUsers = 'search-users',
   MyBookmarks = "my-bookmarks",
   Explore = 'explore',
   Normal = 'normal',
@@ -45,6 +48,7 @@ export const store: Store = {
     listFeedStore: new ListFeedStore(),
     communityFeedStore: new CommunityFeedStore(),
     notificationStore: new NotificationStore(),
+    searchStore: new SearchStore(),
     userStore: new UserStore()
 };
 
