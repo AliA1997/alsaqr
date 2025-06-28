@@ -1,19 +1,25 @@
 "use client";
-import React from "react";
+import React, { useLayoutEffect } from "react";
 import SideBar from "./SideBar";
 import Widgets from "./Widgets";
 import { useStore } from "@stores/index";
 import { observer } from "mobx-react-lite";
+import { useSession } from "next-auth/react";
+import { LoginModal } from "./common/AuthModals";
+import { useRouter } from "next/router";
+import { ROUTES_USER_CANT_ACCESS } from "@utils/constants";
 
 type PageContainerProps = {
   title?: string;
 };
 
+
 const PageContainer = ({
   children,
 }: React.PropsWithChildren<PageContainerProps>) => {
   const { modalStore } = useStore();
-  const { modalToShow } = modalStore;
+  const { modalToShow, showModal } = modalStore;
+  const { data:session } = useSession();
 
   return (
     <>

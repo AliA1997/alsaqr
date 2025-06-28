@@ -2,8 +2,12 @@
 import { useRouter } from "next/navigation";
 import React, { SVGProps, useMemo } from "react";
 import { nonRoutableTitles } from "@utils/neo4j/index";
-import { signOut } from "next-auth/react";
+import { signOut, useSession } from "next-auth/react";
 import { CommonLink, CommonLinkProps } from "./common/Links";
+import { ROUTES_USER_CANT_ACCESS } from "@utils/constants";
+import { observer } from "mobx-react-lite";
+import { useStore } from "@stores/index";
+import { LoginModal } from "./common/AuthModals";
 
 interface SidebarRowProps {
   Icon: (props: SVGProps<SVGSVGElement>) => JSX.Element;
@@ -25,14 +29,26 @@ function SidebarRow({
   classNames,
   href,
 }: SidebarRowProps) {
+  const { modalStore } = useStore();
+  const { showModal } = modalStore;
   const router = useRouter();
+  const { data:session } = useSession();
+  const notLoggedIn = useMemo(() => (!session || !session!.user), [session]);
   
   const sidebarOnClick = async (e: React.MouseEvent) => {
-    if (!nonRoutableTitles.includes(title)) router.push(href!);
+    if (!nonRoutableTitles.includes(title)) {
+
+      
+      if (notLoggedIn && ROUTES_USER_CANT_ACCESS.some(r => r.includes(href!)))
+        showModal(<LoginModal />)
+      else
+        router.push(href!);
+    }
     else {
       if (title === SIGN_IN_TITLE || title === MORE_TITLE) onClick!(e);
       if (title === SIGN_OUT_TITLE) await signOut();
     }
+    
   };
 
   const commonLinkProps: CommonLinkProps = {
@@ -53,4 +69,4 @@ function SidebarRow({
   );
 }
 
-export default SidebarRow;
+export default observer(SidebarRow);

@@ -1,6 +1,7 @@
 import { ModalBody, ModalPortal } from "@components/Modal";
 import { useStore } from "@stores/index";
-import { signIn } from "next-auth/react";
+import { ROUTES_USER_CANT_ACCESS } from "@utils/constants";
+import { signIn, useSession } from "next-auth/react";
 import Image from "next/image";
 
 
@@ -8,9 +9,16 @@ export function LoginModal() {
     const { modalStore } = useStore();
     const { closeModal } = modalStore;
     const handleGoogleSignIn = () => signIn("google");
+    const { data:session } = useSession();
+    
     return (
         <ModalPortal>
-          <ModalBody onClose={() => closeModal()}>
+          <ModalBody onClose={() => {
+            const canCloseLoginModal = !(ROUTES_USER_CANT_ACCESS.some(r => window.location.href.includes(r)));
+            if((!session || !session!.user) && canCloseLoginModal)
+              closeModal();
+            
+          }}>
             <button
               className={`
                 flex items-center p-3 border rounded-lg font-medium 

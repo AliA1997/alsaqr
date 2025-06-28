@@ -15,7 +15,7 @@ import { convertQueryStringToObject, Params } from "@utils/neo4j";
 import CustomPageLoader from "./common/CustomLoader";
 import { observer } from "mobx-react-lite";
 import { FilterKeys, useStore } from "stores";
-import { PageTitle } from "./common/Titles";
+import { NoRecordsTitle, PageTitle } from "./common/Titles";
 import { ContentContainerWithRef } from "./common/Containers";
 import { PagingParams } from "models/common";
 // import ListOrCommunityBox from "./ListOrCommunityBox";
@@ -193,7 +193,7 @@ const ListOrCommunityFeed = observer(({ title, filterKey, hideTweetBox }: Props)
           <button
               type='button'
               className={`rounded-full bg-maydan px-5 py-2 font-bold text-white disabled:opacity-40`}
-              onClick={() => modalStore.showModal(<ListOrCommunityUpsertModal type={filterKey === FilterKeys.Community ? CommonUpsertBoxTypes.Community : CommonUpsertBoxTypes.List} />)}
+              onClick={() => modalStore.showModal(<ListOrCommunityUpsertModal loggedInUserId={userId} type={filterKey === FilterKeys.Community ? CommonUpsertBoxTypes.Community : CommonUpsertBoxTypes.List} />)}
           >
             {filterKey === FilterKeys.Community ? 'Create Community' : 'Create List'}
           </button>
@@ -207,24 +207,26 @@ const ListOrCommunityFeed = observer(({ title, filterKey, hideTweetBox }: Props)
           style={{ minHeight: '100vh' }}
         >
           <>
-            {(loadedRecords ?? []).map((record: CommunityToDisplay | ListToDisplay, recordKey) => {
-              let castedRecord: CommunityToDisplay | ListToDisplay;
-              console.log("WHAT THE FUCK:", record);
-              if (filterKey === FilterKeys.Community) {
-                castedRecord = record as CommunityToDisplay;
-                return <CommunityItemComponent
-                  key={castedRecord.community.id ?? recordKey}
-                  community={castedRecord}
-                />
-              } else {
-                castedRecord = record as ListToDisplay;
-                return <ListItemComponent
-                  key={castedRecord.list.id ?? recordKey}
-                  listToDisplay={castedRecord}
-                />
-              }
-              <LoadMoreTrigger />
-            })}
+            {loadedRecords && loadedRecords.length 
+              ? loadedRecords.map((record: CommunityToDisplay | ListToDisplay, recordKey) => {
+                  let castedRecord: CommunityToDisplay | ListToDisplay;
+
+                  if (filterKey === FilterKeys.Community) {
+                    castedRecord = record as CommunityToDisplay;
+                    return <CommunityItemComponent
+                      key={castedRecord.community.id ?? recordKey}
+                      community={castedRecord}
+                    />
+                  } else {
+                    castedRecord = record as ListToDisplay;
+                    return <ListItemComponent
+                      key={castedRecord.list.id ?? recordKey}
+                      listToDisplay={castedRecord}
+                    />
+                  }
+                  <LoadMoreTrigger />
+                })
+              : <NoRecordsTitle>{filterKey === FilterKeys.Community ? 'You are not part of any communities' : 'You don\'t have any lists'}</NoRecordsTitle>}
           </>
         </ContentContainerWithRef>
       )}

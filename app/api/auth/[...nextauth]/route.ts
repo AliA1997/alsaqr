@@ -95,6 +95,7 @@ export const authOptions: NextAuthOptions = {
                 countryOfOrigin: $countryOfOrigin,
                 email: $email,
                 phone: $phone,
+                bio: $bio,
                 bgThumbnail: $bgThumbnail,
                 avatar: $avatar,
                 dateOfBirth: $dateOfBirth,
@@ -106,7 +107,8 @@ export const authOptions: NextAuthOptions = {
                 favoriteQuranReciters: $favoriteQuranReciters,
                 favoriteIslamicScholars: $favoriteIslamicScholars,
                 islamicStudyTopics: $islamicStudyTopics,
-                verified: false
+                verified: false,
+                isCompleted: false
               })`,
             {
               id: faker.datatype.uuid(),
@@ -114,6 +116,7 @@ export const authOptions: NextAuthOptions = {
               updatedAt: null,
               username: getEmailUsername(profile.email),
               email: profile.email,
+              bio: '',
               countryOfOrigin: 'United States',
               phone: null,
               avatar: (profile as any)["picture"]

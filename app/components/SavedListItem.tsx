@@ -18,6 +18,7 @@ import {
 import { useSession } from "next-auth/react";
 import { useStore } from "@stores/index";
 import { LoginModal } from "./common/AuthModals";
+import { convertDateToDisplay } from "@utils/neo4j/neo4j";
 
 interface Props {
   id: string;
@@ -123,7 +124,7 @@ function SavedListItem({
             </p>
             <TimeAgo
               className="text-sm text-gray-500 dark:text-gray-400"
-              date={dateCreated}
+              date={convertDateToDisplay(dateCreated)}
             />
           </div>
           <p className="pt-1">{textOrName}</p>

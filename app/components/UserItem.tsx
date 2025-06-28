@@ -1,7 +1,4 @@
 "use client";
-import { faker } from "@faker-js/faker";
-import { SaveIcon } from "@heroicons/react/outline";
-import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
 import React, {
     useLayoutEffect,
@@ -9,10 +6,8 @@ import React, {
     useRef,
     useState,
 } from "react";
-import toast from "react-hot-toast";
-import TimeAgo from "react-timeago";
 
-import { Comment, CommentToDisplay, CommunityToDisplay, ListToDisplay, User, UserItemToDisplay } from "../../typings";
+import {UserItemToDisplay } from "../../typings";
 import {
     getPercievedNumberOfRecord,
     stopPropagationOnClick,
@@ -20,25 +15,31 @@ import {
 import { useSession } from "next-auth/react";
 import { FilterKeys, useStore } from "@stores/index";
 import { LoginModal } from "./common/AuthModals";
-import { convertDateToDisplay } from "@utils/neo4j/neo4j";
+import { convertDateToDisplay, shortenText } from "@utils/neo4j/neo4j";
+import { MAX_BIO_LENGTH_FEED } from "@utils/constants";
+import { observer } from "mobx-react-lite";
+import { AddOrFollowButton } from "./common/IconButtons";
 
 interface Props {
     filterKey: FilterKeys;
     userItemToDisplay: UserItemToDisplay;
     usersAlreadyFollowedOrAddedIds: string[];
-    onAddOrFollow: (user: User) => Promise<void>;
+    canAddOrFollow: boolean;
     onModal: boolean;
+    onAddOrFollow?: Function;
+    loggedInUserId?: string;
 }
 
 function UserItemComponent({
-    onAddOrFollow,
     userItemToDisplay,
     usersAlreadyFollowedOrAddedIds,
     filterKey,
-    onModal
+    onModal,
+    onAddOrFollow,
+    canAddOrFollow,
+    loggedInUserId
 }: Props) {
     const router = useRouter();
-    const { data: session } = useSession();
     const { modalStore } = useStore();
     const { showModal, closeModal } = modalStore;
 
@@ -62,22 +63,26 @@ function UserItemComponent({
     const checkUserIsLoggedInBeforeUpdatingUserItem = async (
         callback: () => Promise<void>
     ) => {
-        if (session && session.user && !(session.user as any)['id']) return showModal(<LoginModal />)
+        if (!loggedInUserId) return showModal(<LoginModal />)
 
         await callback();
     };
 
     useLayoutEffect(() => {
-        if (session && session.user && (session.user as any)['id']) {
-
+        if (loggedInUserId) {
+            // alert(JSON)
             const alreadyFollowedOrAdded = usersAlreadyFollowedOrAddedIds?.some((userById: string) => userById == userItemInfo.id) ?? false;
-
-            if (filterKey === FilterKeys.SearchUsers)
+            console.log(JSON.stringify(usersAlreadyFollowedOrAddedIds))
+            if (filterKey === FilterKeys.SearchUsers) {
                 initiallyBooleanValues.current.added = alreadyFollowedOrAdded;
-            else
+                setIsAdded(alreadyFollowedOrAdded);
+            }
+            else {
                 initiallyBooleanValues.current.following = alreadyFollowedOrAdded;
+                setIsFollowing(alreadyFollowedOrAdded);
+            }
         }
-    }, [session]);
+    }, []);
 
 
     const navigateToUser = () => {
@@ -92,7 +97,8 @@ function UserItemComponent({
         try {
             await checkUserIsLoggedInBeforeUpdatingUserItem(async () => {
                 setIsAdded(!isAdded);
-                await onAddOrFollow(userItemInfo);
+                debugger;
+                onAddOrFollow!(userItemToDisplay);
             });
         } catch {
             setIsAdded(beforeUpdate);
@@ -104,7 +110,7 @@ function UserItemComponent({
         try {
             await checkUserIsLoggedInBeforeUpdatingUserItem(async () => {
                 setIsFollowing(!isFollowing);
-                await onAddOrFollow(userItemInfo);
+                await onAddOrFollow!(userItemToDisplay);
             });
         } catch {
             setIsFollowing(beforeUpdate);
@@ -118,40 +124,16 @@ function UserItemComponent({
                     `flex relative space-x-3 border-y border-gray-100 p-5 dark:border-gray-800 rounded-sm w-full h-[7em]
         `}
             >
-                <div className='p-1'>
-
-                    {isAdded || isFollowing
-                        ? (
-                            <button
-                                type='button'
-                                className={`w-[2.5rem] h-[2.5rem] border rounded-full bg-maydan p-2 hover:bg-[transparent]`}
-                            >
-                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-6">
-                                    <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" />
-                                </svg>
-                            </button>
-                        )
-                        : (
-                            <button
-                                type='button'
-                                onClick={() => setIsAdded(true)}
-                                className='w-[2.5rem] h-[2.5rem] border rounded-full p-2 hover:bg-maydan cursor-pointer'
-                            >
-                                {filterKey === FilterKeys.SearchUsers
-                                    ? (
-                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-6">
-                                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-                                        </svg>
-                                    )
-                                    : (
-                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-6">
-                                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-                                        </svg>
-                                    )}
-                            </button>
-                        )
-                    }
-                </div>
+                {canAddOrFollow && (
+                    <AddOrFollowButton
+                     isAdded={isAdded}
+                     isFollowing={isFollowing}
+                     filterKey={filterKey}
+                     onIsAlreadyAdded={onIsAlreadyAdded}
+                     onIsAlreadyFollowing={onIsAlreadyFollowing}
+                    />
+                )}
+ 
                 {/* <div className="absolute m-0 inset-0"></div> */}
                 <div className="flex flex-col justify-self-stretch grow justify-start h-full space-x-3 cursor-pointer bg-red-900">
                     <div className="flex justify-items-start items-end align-items-end space-x-2">
@@ -165,20 +147,19 @@ function UserItemComponent({
                             <h6>
                                 {userItemInfo.username}
                             </h6>
+                            <p className='italic text-gray-400 text-sm'>
+                                {shortenText(userItemInfo.bio ?? "", MAX_BIO_LENGTH_FEED)}
+                            </p>
                             <div className='flex item-center justify-items-start space-x-3'>
-                                <p className='italic text-gray-300 text-sm'>
+                                <p className='italic text-gray-400 text-sm'>
                                     {(userItemToDisplay.following ?? []).length} Following
                                 </p>
-                                <p className='italic text-gray-300 text-sm'>
+                                <p className='italic text-gray-400 text-sm'>
                                     {(userItemToDisplay.followers ?? []).length} Followers
                                 </p>
                             </div>
 
                         </div>
-                        <TimeAgo
-              className="text-sm bg-red-100 text-gray-500 dark:text-gray-400"
-              date={convertDateToDisplay(userItemInfo.createdAt)}
-            />
                     </div>
                 </div>
             </div>
@@ -187,3 +168,43 @@ function UserItemComponent({
 }
 
 export default UserItemComponent;
+
+
+
+            //    {canAddOrFollow && (
+            //         <div className='p-1'>
+
+            //             {isAdded || isFollowing
+            //                 ? (
+            //                     <button
+            //                         type='button'
+            //                         onClick={filterKey === FilterKeys.SearchUsers ? onIsAlreadyAdded : onIsAlreadyFollowing}
+            //                         className={`w-[2.5rem] h-[2.5rem] border rounded-full bg-maydan p-2 hover:bg-[transparent]`}
+            //                     >
+            //                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-6">
+            //                             <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" />
+            //                         </svg>
+            //                     </button>
+            //                 )
+            //                 : (
+            //                     <button
+            //                         type='button'
+            //                         onClick={filterKey === FilterKeys.SearchUsers ? onIsAlreadyAdded : onIsAlreadyFollowing}
+            //                         className='w-[2.5rem] h-[2.5rem] border rounded-full p-2 hover:bg-maydan cursor-pointer'
+            //                     >
+            //                         {filterKey === FilterKeys.SearchUsers
+            //                             ? (
+            //                                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-6">
+            //                                     <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+            //                                 </svg>
+            //                             )
+            //                             : (
+            //                                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-6">
+            //                                     <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+            //                                 </svg>
+            //                             )}
+            //                     </button>
+            //                 )
+            //             }
+            //         </div>
+            //     )}

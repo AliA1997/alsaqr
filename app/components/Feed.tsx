@@ -42,7 +42,7 @@ const Feed = observer(({ title, filterKey, hideTweetBox, posts }: Props) => {
   const { data: session } = useSession();
   const { user } = session ?? {};
   const [loading, setLoading] = useState<boolean>(false);
-  const { bookmarkFeedStore, exploreStore, feedStore } = useStore();
+  const { bookmarkFeedStore, exploreStore, feedStore, searchStore } = useStore();
   const [isLoading, setIsLoading] = useState(false);
   const containerRef = useRef(null);
   const loaderRef = useRef(null);
@@ -51,20 +51,35 @@ const Feed = observer(({ title, filterKey, hideTweetBox, posts }: Props) => {
     if (filterKey === FilterKeys.Explore) return exploreStore.setLoadingInitial;
     // else if (filterKey === FilterKeys.Search) return searchStore.predicate;
     else return feedStore.setLoadingInitial;
-  }, [feedStore.loadingInitial, exploreStore.loadingInitial, bookmarkFeedStore.loadingInitial]);
+  }, [
+    searchStore.searchPostsLoadingInitial,
+    feedStore.loadingInitial, 
+    exploreStore.loadingInitial, 
+    bookmarkFeedStore.loadingInitial
+  ]);
   const feedLoadingInitial = useMemo(() => {
     if (filterKey === FilterKeys.Explore) return exploreStore.loadingInitial;
     // else if (filterKey === FilterKeys.Search) return searchStore.predicate;
     else if(filterKey === FilterKeys.MyBookmarks) return bookmarkFeedStore.loadingInitial;
     else return feedStore.loadingInitial;
-  }, [feedStore.loadingInitial, exploreStore.loadingInitial, bookmarkFeedStore.loadingInitial]);
+  }, [
+    searchStore.searchPostsLoadingInitial,
+    feedStore.loadingInitial, 
+    exploreStore.loadingInitial, 
+    bookmarkFeedStore.loadingInitial
+  ]);
 
   const setFeedPagingParams = useMemo(() => {
     if (filterKey === FilterKeys.Explore) return exploreStore.setPagingParams;
     else if(filterKey === FilterKeys.MyBookmarks) return bookmarkFeedStore.setPagingParams;
     // else if (filterKey === FilterKeys.Search) return searchStore.predicate;
     else return feedStore.setPagingParams;
-  }, [feedStore.pagingParams.currentPage, exploreStore.pagingParams.currentPage, bookmarkFeedStore.pagingParams.currentPage]);
+  }, [
+    searchStore.searchedPostsPagingParams.currentPage,
+    feedStore.pagingParams.currentPage, 
+    exploreStore.pagingParams.currentPage, 
+    bookmarkFeedStore.pagingParams.currentPage
+  ]);
   const setFeedPredicate = useMemo(() => {
     if (filterKey === FilterKeys.Explore) return exploreStore.setPredicate;
     else if(filterKey === FilterKeys.MyBookmarks) return bookmarkFeedStore.setPredicate;
@@ -77,24 +92,36 @@ const Feed = observer(({ title, filterKey, hideTweetBox, posts }: Props) => {
     else if(filterKey === FilterKeys.MyBookmarks) return bookmarkFeedStore.pagingParams;
     // else if (filterKey === FilterKeys.Search) return searchStore.predicate;
     else return feedStore.pagingParams;
-  }, [feedStore.pagingParams.currentPage, exploreStore.pagingParams.currentPage, bookmarkFeedStore.pagingParams.currentPage]);
+  }, [
+    searchStore.searchedPostsPagingParams.currentPage,
+    feedStore.pagingParams.currentPage, 
+    exploreStore.pagingParams.currentPage, 
+    bookmarkFeedStore.pagingParams.currentPage
+  ]);
   const feedPagination = useMemo(() => {
     if (filterKey === FilterKeys.Explore) return exploreStore.pagination;
     else if(filterKey === FilterKeys.MyBookmarks) return bookmarkFeedStore.pagination;
     // else if (filterKey === FilterKeys.Search) return searchStore.predicate;
     else return feedStore.pagination;
-  }, [feedStore.pagingParams.currentPage, exploreStore.pagingParams.currentPage, bookmarkFeedStore.pagingParams.currentPage]);
+  }, [
+    searchStore.searchedPostsPagingParams.currentPage, 
+    feedStore.pagingParams.currentPage, 
+    exploreStore.pagingParams.currentPage, 
+    bookmarkFeedStore.pagingParams.currentPage
+  ]);
 
   const filterPredicate: Map<string, any> = useMemo(() => {
     if (filterKey === FilterKeys.Explore) return exploreStore.predicate;
     else if(filterKey === FilterKeys.MyBookmarks) return bookmarkFeedStore.predicate;
-    // else if (filterKey === FilterKeys.Search) return searchStore.predicate;
+    else if (filterKey === FilterKeys.SearchPosts) return searchStore.searchedPostsPredicate;
     else return feedStore.predicate;
   }, []);
 
   const loadPosts = async () => {
     if (filterKey === FilterKeys.Explore)
       await exploreStore.loadExplorePosts();
+    else if(filterKey === FilterKeys.MyBookmarks && userId) 
+      await searchStore.loadSearchedPosts(userId);
     else if(filterKey === FilterKeys.MyBookmarks && userId) 
       await bookmarkFeedStore.loadBookmarkedPosts(userId);
     else if(filterKey === FilterKeys.Normal)
@@ -141,17 +168,17 @@ const Feed = observer(({ title, filterKey, hideTweetBox, posts }: Props) => {
   }, [searchParams]);
 
   const loadedPosts = useMemo(() => {
-    debugger;
+
     if (filterKey === FilterKeys.Explore)
       return exploreStore.explorePosts;
     else if(filterKey === FilterKeys.MyBookmarks)
       return bookmarkFeedStore.bookmarkedPosts;
-    // else if (filterKey === FilterKeys.Search)
-    //   return searchStore.searchTweets;
+    else if (filterKey === FilterKeys.SearchPosts)
+      return searchStore.searchedPosts;
     else
       return feedStore.posts;
 
-  }, [feedStore.posts, exploreStore.explorePosts, bookmarkFeedStore.bookmarkedPosts]);
+  }, [searchStore.searchedPosts, feedStore.posts, exploreStore.explorePosts, bookmarkFeedStore.bookmarkedPosts]);
 
 
   // 1. Add this loader component at the end of your posts list

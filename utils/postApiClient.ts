@@ -10,6 +10,8 @@ export const postApiClient = {
         axiosRequests.post(`/api/posts`, { values }).then(axiosResponseBody),     
     getPosts: (params: URLSearchParams | undefined) =>
         axios.get(`/api/posts`, { params }).then(axiosResponseBody),
+    getPostsToAdd: (userId: string, params: URLSearchParams) =>
+        axios.get(`/api/users/${userId}/postsToAdd`, { params }).then(axiosResponseBody),
     getBookmarkedPosts: (params: URLSearchParams | undefined, userId: string) =>
         axios.get(`/api/bookmarks/${userId}`, { params }).then(axiosResponseBody),
     getPost: (statusId: string) =>

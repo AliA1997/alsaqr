@@ -15,7 +15,7 @@ export const RadioCard = ({
   icon,
   ...props
 }: RadioCardProps) => {
-  const [field, meta] = useField<string>(props);
+  const [field, meta] = useField<string>(props.name);
 
   return (
     <label

@@ -19,17 +19,20 @@ import {
 } from "@utils/neo4j/index";
 // import { likeTweet } from "@utils/update-tweets/likeTweet";
 // import { retweet } from "@utils/update-tweets/retweet";
-import { BookmarkIcon as BookmarkFillIcon } from "@heroicons/react/solid";
 import { useSession } from "next-auth/react";
-import { useStore } from "@stores/index";
+import { FilterKeys, useStore } from "@stores/index";
 import { LoginModal } from "./common/AuthModals";
+import { convertDateToDisplay } from "@utils/neo4j/neo4j";
+import { BookmarkedIconButton, CommentIconButton, LikesIconButton, RePostedIconButton } from "./common/IconButtons";
 
 interface Props {
   postToDisplay: PostToDisplay;
+  filterKey?: FilterKeys;
 }
 
 function PostComponent({
   postToDisplay,
+  filterKey,
 }: Props) {
   const router = useRouter();
   const { data: session } = useSession();
@@ -205,6 +208,7 @@ function PostComponent({
 
 
   const userId = useMemo(() => session && session.user ? (session.user as any)['id'] : "", [session]);
+  const isSearchedPosts = useMemo(() => (filterKey ?? FilterKeys.Normal) !== FilterKeys.SearchPosts, [filterKey]);
 
   return (
     <div
@@ -250,7 +254,7 @@ function PostComponent({
             </p>
             <TimeAgo
               className="text-sm text-gray-500 dark:text-gray-400"
-              date={postInfo?.createdAt}
+              date={convertDateToDisplay(postInfo?.createdAt)}
             />
           </div>
           <p className="pt-1">{postInfo.text}</p>
@@ -264,98 +268,44 @@ function PostComponent({
           )}
         </div>
       </div>
-      <div className="mt-5 flex justify-between">
-        <motion.div
-          whileHover={{ scale: 1.1 }}
-          whileTap={{ scale: 0.9 }}
-          onClick={(e) =>
-            stopPropagationOnClick(e, () => {
-              showModal(<LoginModal />);
-              setCommentBoxOpen(!commentBoxOpen);
-            })
-          }
-          className="flex cursor-pointer item-center space-x-3 text-gray-400 hover:text-maydan"
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            fill="none"
-            viewBox="0 0 24 24"
-            strokeWidth={1.5}
-            stroke="currentColor"
-            className="w-5 h-5"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              d="M12 20.25c4.97 0 9-3.694 9-8.25s-4.03-8.25-9-8.25S3 7.444 3 12c0 2.104.859 4.023 2.273 5.48.432.447.74 1.04.586 1.641a4.483 4.483 0 01-.923 1.785A5.969 5.969 0 006 21c1.282 0 2.47-.402 3.445-1.087.81.22 1.668.337 2.555.337z"
+      
+      {isSearchedPosts && (
+          <div className="mt-5 flex justify-between">
+            <CommentIconButton
+              onClick={(e) =>
+                stopPropagationOnClick(e, () => {
+                  showModal(<LoginModal />);
+                  setCommentBoxOpen(!commentBoxOpen);
+                })}
+              numberOfComments={numberOfComments}
             />
-          </svg>
-
-          <p className="text-center">{numberOfComments}</p>
-        </motion.div>
-        <motion.div
-          whileHover={{ scale: 1.1 }}
-          whileTap={{ scale: 0.9 }}
-          className={`
-            flex cursor-pointer item-center space-x-3 ${isRePosted ? "text-retweet" : "text-gray-400"
-            } hover:text-retweet
-            `}
-          onClick={(e) => stopPropagationOnClick(e, onRetweet)}
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            fill="none"
-            viewBox="0 0 24 24"
-            strokeWidth={1.5}
-            stroke="currentColor"
-            className="w-5 h-5"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              d="M19.5 12c0-1.232-.046-2.453-.138-3.662a4.006 4.006 0 00-3.7-3.7 48.678 48.678 0 00-7.324 0 4.006 4.006 0 00-3.7 3.7c-.017.22-.032.441-.046.662M19.5 12l3-3m-3 3l-3-3m-12 3c0 1.232.046 2.453.138 3.662a4.006 4.006 0 003.7 3.7 48.656 48.656 0 007.324 0 4.006 4.006 0 003.7-3.7c.017-.22.032-.441.046-.662M4.5 12l3 3m-3-3l-3 3"
+            <RePostedIconButton
+              onClick={(e) => stopPropagationOnClick(e, onRetweet)}
+              numberOfRePosts={numberOfRetweets}
+              isRePosted={isRePosted}
             />
-          </svg>
-
-          <p className="text-center">{numberOfRetweets}</p>
-        </motion.div>
-        <motion.div
-          whileHover={{ scale: 1.1 }}
-          whileTap={{ scale: 0.9 }}
-          className={`flex cursor-pointer item-center space-x-3 ${isLiked ? "text-liked" : "text-gray-400"
-            } hover:text-liked`}
-          onClick={(e) => stopPropagationOnClick(e, onLikeTweet)}
-        >
-          <HeartIcon className="h-5 w-5" />
-          <p className="text-center">{numberOfLikes}</p>
-        </motion.div>
-        <div className="flex gap-2">
-          <motion.div
-            whileHover={{ scale: 1.1 }}
-            whileTap={{ scale: 0.9 }}
-            className={`
-              flex cursor-pointer item-center space-x-3 ${isBookmarked ? "text-maydan" : "text-gray-400"
-              } hover:text-maydan
-            `}
-            onClick={(e) => stopPropagationOnClick(e, onBookmarkTweet)}
-          >
-            {isBookmarked ? (
-              <BookmarkFillIcon className="h-5 w-5" />
-            ) : (
-              <BookmarkIcon className="h-5 w-5" />
-            )}
-          </motion.div>
-          <motion.div
-            whileHover={{ scale: 1.1 }}
-            whileTap={{ scale: 0.9 }}
-            className="flex cursor-pointer item-center space-x-3 text-gray-400"
-          >
-            <UploadIcon className="h-5 w-5" />
-          </motion.div>
+            <LikesIconButton
+            onClick={(e) => stopPropagationOnClick(e, onLikeTweet)}
+            numberOfLikes={numberOfLikes}
+            isLiked={isLiked}
+          />
+          <div className="flex gap-2">
+            <BookmarkedIconButton
+              onClick={(e) => stopPropagationOnClick(e, onBookmarkTweet)}
+              isBookmarked={isBookmarked}
+            />
+            <motion.div
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.9 }}
+              className="flex cursor-pointer item-center space-x-3 text-gray-400"
+            >
+              <UploadIcon className="h-5 w-5" />
+            </motion.div>
+          </div>
         </div>
-      </div>
+      )}
 
-      {commentBoxOpen && (
+      {!isSearchedPosts && commentBoxOpen && (
         <>
           {userId && (
             <motion.div
@@ -384,7 +334,7 @@ function PostComponent({
           )}
         </>
       )}
-      {commentBoxOpen && (
+      {!isSearchedPosts && commentBoxOpen && (
         <>
           {currentComments?.length > 0 && (
             <motion.div
@@ -409,7 +359,7 @@ function PostComponent({
                       </p>
                       <TimeAgo
                         className="text-sm text-gray-500"
-                        date={comment.createdAt}
+                        date={convertDateToDisplay(comment.createdAt)}
                       />
                     </div>
                     <p>{comment.text}</p>

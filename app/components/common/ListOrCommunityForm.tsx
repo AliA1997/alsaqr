@@ -73,7 +73,7 @@ export const ListOrCommunityFormInputs = observer(({ type }: Props) => {
 
     const namePlaceholder = useMemo(() => type === CommonUpsertBoxTypes.Community ? 'New Community' : 'New List', [type])
     const fileUploadLabel = useMemo(() => type === CommonUpsertBoxTypes.Community ? 'Avatar' : 'Banner Image', [type])
-    const fileUploadName = useMemo(() => type === CommonUpsertBoxTypes.Community ? 'avatar' : 'bannerImage', [type])
+
     return (
         <>
             <MyInput
@@ -82,31 +82,35 @@ export const ListOrCommunityFormInputs = observer(({ type }: Props) => {
                 className="mb-4"
             />
             <FileUploadInput
-                name={fileUploadName}
+                name="avatarOrImage"
                 label={fileUploadLabel}
                 handleFileChange={handleFileChange}
             />
-            <div>
-                <h3 className="text-lg font-medium text-gray-900 dark:text-white">
-                    Visibility Status
-                </h3>
+            
+            {type === CommonUpsertBoxTypes.Community && (
+                <div>
+                    <h3 className="text-lg font-medium text-gray-900 dark:text-white">
+                        Visibility Status
+                    </h3>
 
-                <div className="grid gap-3 md:grid-cols-3">
-                    {options.map((option) => (
-                        <RadioCard
-                            key={option.value}
-                            name="isPrivate"
-                            value={option.value}
-                            label={option.label}
-                            description={option.description}
-                        />
-                    ))}
+                    <div className="grid gap-3 md:grid-cols-3">
+                        {options.map((option) => (
+                            <RadioCard
+                                key={option.value}
+                                name="isPrivate"
+                                value={option.value}
+                                label={option.label}
+                                description={option.description}
+                            />
+                        ))}
+                    </div>
                 </div>
-            </div>
+            )}
+
             <MultiSelect
                 name="tags"
-                label="Select Tags associated with Community"
-                placeholder="Select Tags"
+                label={type === CommonUpsertBoxTypes.Community ? "Select Hashtags associated with Community" : "Select Hashtags associated with List"}
+                placeholder="Select Hashtags"
                 options={tagOptions}
             />
         </>

@@ -145,10 +145,11 @@ async function POST(request: NextRequest) {
         blockTweet: $blockTweet,
         text: $text,
         userId: $userId,
-        image: $image
+        image: $image,
+        tags: $tags
       })
       `,
-      { ...data }
+      { ...data , tags: []}
     );
 
     return NextResponse.json({ success: true });

@@ -7,20 +7,19 @@ import { PagingParams } from "models/common";
 import { signIn, useSession } from "next-auth/react";
 import { useCallback, useMemo } from "react";
 import toast from "react-hot-toast";
-import { CommonUpsertBoxTypes, CommunityRecord, ListRecord } from "typings.d";
+import { CommonUpsertBoxTypes, CommunityRecord, ListRecord, UserItemToDisplay } from "typings.d";
 import { observer } from "mobx-react-lite";
 import { ListOrCommunityFormInputs } from "./ListOrCommunityForm";
 import UsersFeed from "@components/UsersFeed";
+import { ReviewForm, ReviewNewListOrCommunity, ReviewUsersAdded } from "./ReviewForm";
 
 
 interface Props {
     type: CommonUpsertBoxTypes;
+    loggedInUserId: string;
 }
 
-function ListOrCommunityUpsertModal({ type }: Props) {
-    const { data: session } = useSession();
-    const { user } = session ?? {};
-    const userId = useMemo(() => user ? (user as any)["id"] : "", [session]);
+function ListOrCommunityUpsertModal({ type, loggedInUserId }: Props) {
     const toastMessage = useMemo(() => type === CommonUpsertBoxTypes.List ? 'New List Created' : 'New Community Found', [type]);
 
     const { modalStore, communityFeedStore, listFeedStore, searchStore } = useStore();
@@ -31,10 +30,11 @@ function ListOrCommunityUpsertModal({ type }: Props) {
         else return (listFeedStore.currentStepInListCreation ?? 0);
     }, [type, communityFeedStore.currentStepInCommunityCreation, listFeedStore.currentStepInListCreation]);
 
-    const setCurrentStep = useCallback((val: number) => {
+    const setCurrentStep = (val: number) => (e: any) => {
+        e.preventDefault();
         if (type === CommonUpsertBoxTypes.Community) return communityFeedStore.setCurrentStepInCommunityCreation(val);
         else return listFeedStore.setCurrentStepInListCreation(val);
-    }, [type]);
+    };
 
 
 
@@ -67,7 +67,7 @@ function ListOrCommunityUpsertModal({ type }: Props) {
         if (type === CommonUpsertBoxTypes.Community)
             infoToUpsert = {
                 id: `community_${faker.datatype.uuid()}`,
-                userId,
+                userId: loggedInUserId,
                 name: values.name,
                 avatar: values.avatar,
                 createdAt: new Date().toISOString(),
@@ -80,7 +80,7 @@ function ListOrCommunityUpsertModal({ type }: Props) {
         else if (type === CommonUpsertBoxTypes.List)
             infoToUpsert = {
                 id: `list_${faker.datatype.uuid()}`,
-                userId,
+                userId: loggedInUserId,
                 name: values.name,
                 avatar: "",
                 bannerImage: values.bannerImage,
@@ -90,16 +90,21 @@ function ListOrCommunityUpsertModal({ type }: Props) {
                 _type: "list"
             } as ListRecord
 
-        await upsert(infoToUpsert, userId)
+        await upsert(infoToUpsert, loggedInUserId)
 
         resetPagingParams();
 
-        await loadListsOrCommunities(userId);
+        await loadListsOrCommunities(loggedInUserId);
 
         toast(toastMessage, {
             icon: "🚀",
         });
     };
+
+    const showAddPosts = useMemo(() => type === CommonUpsertBoxTypes.List ? currentStep === 1 : false, [currentStep]);
+    const showAddUsers = useMemo(() => type === CommonUpsertBoxTypes.List ? currentStep === 2 : currentStep === 1, [currentStep]);
+    const showReviewForm = useMemo(() => type === CommonUpsertBoxTypes.List ? currentStep === 3 : currentStep === 2, [currentStep]);
+    const lastStepBeforeReview = useMemo(() => type === CommonUpsertBoxTypes.List ? 2 : 1, [type]);
 
     return (
         <ModalPortal>
@@ -114,19 +119,23 @@ function ListOrCommunityUpsertModal({ type }: Props) {
                     <Formik
                         initialValues={{
                             name: '',
-                            avatar: '',
-                            isPrivate: false,
+                            avatarOrImage: '',
+                            isPrivate: 'public',
                             tags: [],
                             usersAdded: []
+                        } as {
+                            name: string;
+                            avatarOrImage: string;
+                            isPrivate: any;
+                            tags: string[];
+                            usersAdded: UserItemToDisplay[];
                         }}
                         validate={values => {
                             const errors: FormikErrors<any> = {};
                             if (!values.name) {
                                 errors.name = 'Name is required';
-                            } else if (!values.avatar) {
-                                errors.avatar = 'Community avatar is required'
-                            } else if (!values.isPrivate) {
-                                errors.isPrivate = 'Is Private is required'
+                            } else if (!values.avatarOrImage) {
+                                errors.avatarOrImage = type === CommonUpsertBoxTypes.Community ? 'Community avatar is required' : 'List banner image is required'
                             } else if (!values.tags || !values.tags.length) {
                                 errors.tags = 'Tags is required'
                             }
@@ -143,6 +152,7 @@ function ListOrCommunityUpsertModal({ type }: Props) {
                             values,
                             errors,
                             handleSubmit,
+                            setFieldValue,
                             isSubmitting,
                             /* and other goodies */
                         }) => (
@@ -150,61 +160,151 @@ function ListOrCommunityUpsertModal({ type }: Props) {
                                 {currentStep === 0 && (
                                     <ListOrCommunityFormInputs type={type} />
                                 )}
-                                {currentStep === 1 && (
-                                    <UsersFeed 
-                                        title="Users to Add"
+                                {showAddPosts && (
+                                    <UsersFeed
+                                        title="Posts to Add"
+                                        loggedInUserId={loggedInUserId}
                                         filterKey={FilterKeys.SearchUsers}
-                                        usersAlreadyAddedOrFollowedByIds={values.usersAdded}
+                                        onAddOrFollow={(u: UserItemToDisplay) => {
+                                            const userFoundIdx = values.usersAdded.findIndex(user => user.user.id === u.user.id);
+                                            debugger;
+                                            if (userFoundIdx !== -1) {
+                                                const newUsersAddedArray = values.usersAdded.slice();
+                                                newUsersAddedArray.splice(userFoundIdx, 1);
+                                                setFieldValue('usersAdded', newUsersAddedArray);
+                                            } else {
+                                                const distinctUsers = Array.from(new Set([...values.usersAdded, u]).values());
+                                                setFieldValue('usersAdded', distinctUsers);
+                                            }
+                                        }}
+                                        usersAlreadyAddedOrFollowedByIds={values.usersAdded.map(u => u.user.id)}
+                                    />
+                                )}
+                                {showAddUsers && (
+                                    <UsersFeed
+                                        title="Users to Add"
+                                        loggedInUserId={loggedInUserId}
+                                        filterKey={FilterKeys.SearchUsers}
+                                        onAddOrFollow={(u: UserItemToDisplay) => {
+                                            const userFoundIdx = values.usersAdded.findIndex(user => user.user.id === u.user.id);
+                                            debugger;
+                                            if (userFoundIdx !== -1) {
+                                                const newUsersAddedArray = values.usersAdded.slice();
+                                                newUsersAddedArray.splice(userFoundIdx, 1);
+                                                setFieldValue('usersAdded', newUsersAddedArray);
+                                            } else {
+                                                const distinctUsers = Array.from(new Set([...values.usersAdded, u]).values());
+                                                setFieldValue('usersAdded', distinctUsers);
+                                            }
+                                        }}
+                                        usersAlreadyAddedOrFollowedByIds={values.usersAdded.map(u => u.user.id)}
+                                    />
+                                )}
+                                {showReviewForm && (
+                                    <ReviewForm
+                                        sections={
+                                            (function () {
+                                                var sections = [
+                                                    {
+                                                        title: type === CommonUpsertBoxTypes.Community ? 'Community Info' : 'List Info',
+                                                        jsx: (
+                                                            <ReviewNewListOrCommunity
+                                                                name={values.name}
+                                                                avatarOrImage={values.avatarOrImage}
+                                                                visibility={values.isPrivate}
+                                                                tags={values.tags}
+                                                                type={type}
+                                                            />
+                                                        ),
+                                                    },
+                                                    {
+                                                        title: 'Users Added',
+                                                        jsx: (
+                                                            <ReviewUsersAdded
+                                                                usersAdded={values.usersAdded}
+                                                            />
+                                                        ),
+                                                    }
+                                                ];
+
+                                                if (type === CommonUpsertBoxTypes.List)
+                                                    sections = [
+                                                        sections[0],
+                                                        {
+                                                            title: 'Posts Added',
+                                                            jsx: (
+                                                                <ReviewUsersAdded
+                                                                    usersAdded={values.usersAdded}
+                                                                />
+                                                            ),
+                                                        },
+                                                        sections[1]
+                                                    ];
+
+                                                return sections;
+                                            }())
+                                        }
                                     />
                                 )}
                                 <div className="flex items-center mt-2 space-x-2">
                                     {currentStep > 0 && (
                                         <button
                                             type="button"
-                                            onClick={() => setCurrentStep(currentStep === 0 ? 0 : currentStep - 1)}
+                                            onClick={setCurrentStep(currentStep === 0 ? 0 : currentStep - 1)}
                                             className="rounded-full bg-gray-200 px-5 py-2 font-bold text-gray-700"
                                         >
                                             Back
                                         </button>
                                     )}
 
-                                    {currentStep < 1 ? (
-                                        <button
-                                            type="button"
-                                            onClick={() => setCurrentStep(currentStep === 1 ? 1 : currentStep + 1)}
-                                            disabled={Object.values(errors).some(v => !!v)}
-                                            className={`rounded-full bg-maydan px-5 py-2 font-bold text-white disabled:opacity-40`}
-                                        >
-                                            Next
-                                        </button>
-                                    ) : (
-                                        <button
-                                            type='submit'
-                                            disabled={Object.values(errors).some(v => !!v) || feedLoadingInitial}
-                                            className={`rounded-full bg-maydan px-5 py-2 font-bold text-white disabled:opacity-40`}
-                                        >
-                                            {feedLoadingInitial ? (
-                                                <svg
-                                                    aria-hidden="true"
-                                                    className="inline w-6 h-6 text-gray-200 animate-spin dark:text-gray-600 fill-maydan"
-                                                    viewBox="0 0 100 101"
-                                                    fill="none"
-                                                    xmlns="http://www.w3.org/2000/svg"
-                                                >
-                                                    <path
-                                                        d="M100 50.5908C100 78.2051 77.6142 100.591 50 100.591C22.3858 100.591 0 78.2051 0 50.5908C0 22.9766 22.3858 0.59082 50 0.59082C77.6142 0.59082 100 22.9766 100 50.5908ZM9.08144 50.5908C9.08144 73.1895 27.4013 91.5094 50 91.5094C72.5987 91.5094 90.9186 73.1895 90.9186 50.5908C90.9186 27.9921 72.5987 9.67226 50 9.67226C27.4013 9.67226 9.08144 27.9921 9.08144 50.5908Z"
-                                                        fill="currentColor"
-                                                    />
-                                                    <path
-                                                        d="M93.9676 39.0409C96.393 38.4038 97.8624 35.9116 97.0079 33.5539C95.2932 28.8227 92.871 24.3692 89.8167 20.348C85.8452 15.1192 80.8826 10.7238 75.2124 7.41289C69.5422 4.10194 63.2754 1.94025 56.7698 1.05124C51.7666 0.367541 46.6976 0.446843 41.7345 1.27873C39.2613 1.69328 37.813 4.19778 38.4501 6.62326C39.0873 9.04874 41.5694 10.4717 44.0505 10.1071C47.8511 9.54855 51.7191 9.52689 55.5402 10.0491C60.8642 10.7766 65.9928 12.5457 70.6331 15.2552C75.2735 17.9648 79.3347 21.5619 82.5849 25.841C84.9175 28.9121 86.7997 32.2913 88.1811 35.8758C89.083 38.2158 91.5421 39.6781 93.9676 39.0409Z"
-                                                        fill="currentFill"
-                                                    />
-                                                </svg>
-                                            ) : (
-                                                'Submit'
-                                            )}
-                                        </button>
-                                    )}
+                                    {currentStep === (lastStepBeforeReview + 1)
+                                        ? (
+                                            <button
+                                                type='submit'
+                                                disabled={Object.values(errors).some(v => !!v) || feedLoadingInitial}
+                                                className={`rounded-full bg-maydan px-5 py-2 font-bold text-white disabled:opacity-40`}
+                                            >
+                                                {feedLoadingInitial ? (
+                                                    <svg
+                                                        aria-hidden="true"
+                                                        className="inline w-6 h-6 text-gray-200 animate-spin dark:text-gray-600 fill-maydan"
+                                                        viewBox="0 0 100 101"
+                                                        fill="none"
+                                                        xmlns="http://www.w3.org/2000/svg"
+                                                    >
+                                                        <path
+                                                            d="M100 50.5908C100 78.2051 77.6142 100.591 50 100.591C22.3858 100.591 0 78.2051 0 50.5908C0 22.9766 22.3858 0.59082 50 0.59082C77.6142 0.59082 100 22.9766 100 50.5908ZM9.08144 50.5908C9.08144 73.1895 27.4013 91.5094 50 91.5094C72.5987 91.5094 90.9186 73.1895 90.9186 50.5908C90.9186 27.9921 72.5987 9.67226 50 9.67226C27.4013 9.67226 9.08144 27.9921 9.08144 50.5908Z"
+                                                            fill="currentColor"
+                                                        />
+                                                        <path
+                                                            d="M93.9676 39.0409C96.393 38.4038 97.8624 35.9116 97.0079 33.5539C95.2932 28.8227 92.871 24.3692 89.8167 20.348C85.8452 15.1192 80.8826 10.7238 75.2124 7.41289C69.5422 4.10194 63.2754 1.94025 56.7698 1.05124C51.7666 0.367541 46.6976 0.446843 41.7345 1.27873C39.2613 1.69328 37.813 4.19778 38.4501 6.62326C39.0873 9.04874 41.5694 10.4717 44.0505 10.1071C47.8511 9.54855 51.7191 9.52689 55.5402 10.0491C60.8642 10.7766 65.9928 12.5457 70.6331 15.2552C75.2735 17.9648 79.3347 21.5619 82.5849 25.841C84.9175 28.9121 86.7997 32.2913 88.1811 35.8758C89.083 38.2158 91.5421 39.6781 93.9676 39.0409Z"
+                                                            fill="currentFill"
+                                                        />
+                                                    </svg>
+                                                ) : (
+                                                    'Submit'
+                                                )}
+                                            </button>
+                                        )
+                                        : currentStep === lastStepBeforeReview ? (
+                                            <button
+                                                type="button"
+                                                onClick={setCurrentStep(currentStep + 1)}
+                                                disabled={Object.values(errors).some(v => !!v)}
+                                                className={`rounded-full bg-maydan px-5 py-2 font-bold text-white disabled:opacity-40`}
+                                            >
+                                                Review
+                                            </button>
+                                        ) : (
+                                            <button
+                                                type="button"
+                                                onClick={setCurrentStep(currentStep + 1)}
+                                                disabled={Object.values(errors).some(v => !!v)}
+                                                className={`rounded-full bg-maydan px-5 py-2 font-bold text-white disabled:opacity-40`}
+                                            >
+                                                Next
+                                            </button>
+                                        )}
                                 </div>
                             </form>
                         )}

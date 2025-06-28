@@ -22,6 +22,7 @@ import { useSession } from "next-auth/react";
 import { joinCommunity } from "@utils/communities/joinCommunity";
 import { useStore } from "@stores/index";
 import { LoginModal } from "./common/AuthModals";
+import { convertDateToDisplay } from "@utils/neo4j/neo4j";
 
 interface Props {
   community: CommunityToDisplay;
@@ -152,10 +153,12 @@ function CommunityItemComponent({
             <p className='text-italic'>
 
             </p>
-            <TimeAgo
-              className="text-sm text-gray-500 dark:text-gray-400"
-              date={communityInfo.createdAt ? communityInfo.createdAt.toString() : ''}
-            />
+            {communityInfo.createdAt && (
+              <TimeAgo
+                className="text-sm text-gray-500 dark:text-gray-400"
+                date={convertDateToDisplay(communityInfo.createdAt)}
+              />
+            )}
           </div>
         </div>
       </div>

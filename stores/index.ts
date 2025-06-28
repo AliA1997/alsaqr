@@ -30,6 +30,7 @@ interface Store {
 export enum FilterKeys {
   Search = 'search',
   SearchUsers = 'search-users',
+  SearchPosts = 'search-posts',
   MyBookmarks = "my-bookmarks",
   Explore = 'explore',
   Normal = 'normal',

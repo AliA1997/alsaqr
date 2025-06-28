@@ -54,19 +54,28 @@ export async function write(session: Session, cypher = "", params = {}) {
 
 
 export function convertDateToDisplay(neo4jDateTime: any) {
+
+  if(!neo4jDateTime.year) {
+    return neo4jDateTime;
+  }
   // Convert to JS Date CORRECTLY
   const dateObj = new types.DateTime(
-    neo4jDateTime.year.low,
-    neo4jDateTime.month.low,
-    neo4jDateTime.day.low,
-    neo4jDateTime.hour.low,
-    neo4jDateTime.minute.low,
-    neo4jDateTime.second.low,
-    neo4jDateTime.nanosecond.low,
-    neo4jDateTime.timeZoneOffsetSeconds?.low
+    neo4jDateTime.year.low ?? neo4jDateTime.year.high,
+    neo4jDateTime.month.low ?? neo4jDateTime.month.high,
+    neo4jDateTime.day.low ?? neo4jDateTime.day.high,
+    neo4jDateTime.hour.low ?? neo4jDateTime.hour.high,
+    neo4jDateTime.minute.low ?? neo4jDateTime.minute.high,
+    neo4jDateTime.second.low ?? neo4jDateTime.second.high,
+    neo4jDateTime.nanosecond.low ?? neo4jDateTime.nanosecond.high,
+    neo4jDateTime.timeZoneOffsetSeconds?.low ?? neo4jDateTime.timeZoneOffsetSeconds.high
   );
 
   const jsDate: Date = dateObj.toStandardDate();
 
   return jsDate;
+}
+
+export function shortenText(text: string, maxLength: number): string {
+  if (text.length <= maxLength) return text;
+  return text.substring(0, maxLength).trim() + "...";
 }

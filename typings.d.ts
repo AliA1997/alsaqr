@@ -65,6 +65,7 @@ export interface User extends UserInfo {
   favoriteQuranReciters?: string[];
   favoriteIslamicScholars?: string[];
   islamicStudyTopics?: string[];
+  isCompleted: boolean;
   verified: boolean;
 }
 
@@ -109,6 +110,7 @@ export interface PostRecord extends CommonRecordBody {
   _rev: string;
   _type: "post";
   blockTweet: boolean;
+  tags: string[];
   likes?: string[];
   userId?: string;
 }

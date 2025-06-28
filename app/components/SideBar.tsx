@@ -1,5 +1,5 @@
 "use client";
-import React, { useCallback } from "react";
+import React, { useCallback, useLayoutEffect, useMemo } from "react";
 import {
   BellIcon,
   HashtagIcon,
@@ -24,6 +24,7 @@ import { User } from "typings";
 import { useStore } from "@stores/index";
 import { observer } from "mobx-react-lite";
 import { LoginModal } from "./common/AuthModals";
+import { ROUTES_USER_CANT_ACCESS } from "@utils/constants";
 
 type SideBarProps = {};
 
@@ -35,11 +36,23 @@ const SideBar = ({}: SideBarProps) => {
   const { showModal } = modalStore;
 
   const openModal = () => showModal(<LoginModal />)
+  const notLoggedIn = useMemo(() => (!session || !session!.user), [session]);
 
   const handleDropdownEnter = useCallback(
     () => setIsDropdownOpen(!isDropdownOpen),
     []
   );
+
+  
+  useLayoutEffect(() => {
+    const showLoginModal = ROUTES_USER_CANT_ACCESS.some(r => window.location.href.includes(r));
+
+    if(notLoggedIn && showLoginModal) {
+      showModal(<LoginModal />);
+    }
+
+  }, [session, router]);
+  
   // console.log("session.user:", session!.user);
   const username = session ? (session!.user as User).username : "";
 

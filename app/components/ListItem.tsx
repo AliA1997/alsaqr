@@ -22,6 +22,7 @@ import { useSession } from "next-auth/react";
 import agent from "@utils/common";
 import { useStore } from "@stores/index";
 import { LoginModal } from "./common/AuthModals";
+import { convertDateToDisplay } from "@utils/neo4j/neo4j";
 
 interface Props {
   listToDisplay: ListToDisplay;
@@ -192,7 +193,7 @@ function ListItemComponent({
             </p>
             <TimeAgo
               className="text-sm text-gray-500 dark:text-gray-400"
-              date={listInfo.createdAt}
+              date={convertDateToDisplay(listInfo.createdAt)}
             />
           </div>
           <p className="pt-1 text-white text-3xl">{listInfo.name}</p>
@@ -300,7 +301,7 @@ function ListItemComponent({
                         </p>
                         <TimeAgo
                           className="text-sm text-gray-500"
-                          date={comment.createdAt}
+                          date={convertDateToDisplay(comment.createdAt)}
                         />
                       </div>
                       <p>{comment.text}</p>

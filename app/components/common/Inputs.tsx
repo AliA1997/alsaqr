@@ -7,7 +7,7 @@ type MyInputProps = {
 } & FieldHookConfig<string>;
 
 export function MyInput({ label, ...props }: MyInputProps) {
-    const [field, meta] = useField(props);
+    const [field, meta] = useField(props.name);
 
     return (
         <div className="w-full">

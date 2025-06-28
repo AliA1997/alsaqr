@@ -26,8 +26,10 @@ import UserItemComponent from "./UserItem";
 
 interface Props {
   title?: string;
+  loggedInUserId?: string;
   filterKey: FilterKeys;
   usersAlreadyAddedOrFollowedByIds: string[];
+  onAddOrFollow: (u: UserItemToDisplay) => void;
 }
 
 function FeedContainer({ children }: React.PropsWithChildren<any>) {
@@ -39,13 +41,10 @@ function FeedContainer({ children }: React.PropsWithChildren<any>) {
 }
 
 
-const UsersFeed = observer(({ title, filterKey, usersAlreadyAddedOrFollowedByIds }: Props) => {
+const UsersFeed = observer(({ title, loggedInUserId, filterKey, usersAlreadyAddedOrFollowedByIds, onAddOrFollow }: Props) => {
   const searchParams = useSearchParams();
-  const { data: session } = useSession();
-  const { user } = session ?? {};
   const [loading, setLoading] = useState<boolean>(false);
   const { searchStore } = useStore();
-  const [isLoading, setIsLoading] = useState(false);
   const containerRef = useRef(null);
   const loaderRef = useRef(null);
 
@@ -75,7 +74,7 @@ const UsersFeed = observer(({ title, filterKey, usersAlreadyAddedOrFollowedByIds
   }, []);
 
   const loadUsers = async () => {
-    await searchStore.loadSearchedUsers(userId);
+    await searchStore.loadSearchedUsers(loggedInUserId ?? "");
   }
 
   async function getUsers() {
@@ -102,7 +101,6 @@ const UsersFeed = observer(({ title, filterKey, usersAlreadyAddedOrFollowedByIds
   }
 
   const fetchMoreItems = async (pageNum: number) => {
-    setIsLoading(true);
     setUserFeedPagingParams(new PagingParams(pageNum, 25))
     await loadUsers();
   };
@@ -135,7 +133,7 @@ const UsersFeed = observer(({ title, filterKey, usersAlreadyAddedOrFollowedByIds
       (entries) => {
         const firstEntry = entries[0];
         const currentPage = userFeedPagination?.currentPage ?? 0;
-        const itemsPerPage = userFeedPagination?.itemsPerPage ?? 10;
+        const itemsPerPage = userFeedPagination?.itemsPerPage ?? 25;
         const totalItems = userFeedPagination?.totalItems ?? 0;
 
         const nextPage = currentPage + 1;
@@ -164,13 +162,12 @@ const UsersFeed = observer(({ title, filterKey, usersAlreadyAddedOrFollowedByIds
     };
   }, [fetchMoreItems]);
 
-  const userId = useMemo(() => user ? (user as any)["id"] : "", [session]);
 
   return (
     <div className={`col-span-7 scrollbar-hide border-x ${filterKey === FilterKeys.SearchUsers ? 'max-h-[60vh]' : 'max-h-screen'} overflow-scroll lg:col-span-5 dark:border-gray-800`}>
       {title && <PageTitle>{title}</PageTitle>}
       <div>
-        {session && (
+        {loggedInUserId && (
             <input 
             className="bg-dim-700 h-10 px-10 pr-5 w-full rounded-full text-sm focus:outline-none bg-maydan-white shadow border-0 dark:bg-gray-800 dark:text-gray-200"
             
@@ -202,10 +199,13 @@ const UsersFeed = observer(({ title, filterKey, usersAlreadyAddedOrFollowedByIds
             {(loadedUsers ?? []).map((userRec: UserItemToDisplay, userKey) => (
               <UserItemComponent
                 key={userRec.user.id ?? userKey}
+                loggedInUserId={loggedInUserId}
                 filterKey={filterKey}
                 userItemToDisplay={userRec}
                 usersAlreadyFollowedOrAddedIds={usersAlreadyAddedOrFollowedByIds}
-                onAddOrFollow={async (val: User) => console.log('val:', val)}
+                onAddOrFollow={onAddOrFollow}
+                canAddOrFollow={true}
+                onModal={true}
               />
             ))}
             <LoadMoreTrigger />

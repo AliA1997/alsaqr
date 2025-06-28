@@ -13,7 +13,7 @@ type MultiSelectProps = FieldHookConfig<string[]> & {
 };
 
 export function MultiSelect({ label, placeholder, options, ...props }: MultiSelectProps) {
-  const [field, meta, helpers] = useField<string[]>(props);
+  const [field, meta, helpers] = useField<string[]>(props.name);
   const [inputValue, setInputValue] = useState('');
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {

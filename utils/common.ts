@@ -12,8 +12,7 @@ import { communityApiClient } from "./communityApiClient";
 
 export const extractQryParams = (request: NextRequest, paramsToExtract: string[]): (string | null)[] => {
     const qryParams = new URL(request.url!).searchParams;
-    // console.log("FUCKING QRY PARAMS", qryParams);
-    // console.log("FUCKING QRY PARAMS stringified", JSON.stringify(qryParams));
+
     // console.log('paramsToExtract', paramsToExtract)
     // console.log('qryParams.get(itemsPerPage)', qryParams.get('itemsPerPage'))
 

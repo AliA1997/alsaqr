@@ -100,7 +100,7 @@ export default class FeedStore {
             this.setPagination(result.pagination);
         } finally {
             this.setLoadingInitial(false);
-            alert(this.postsRegistry.size)
+            // alert(this.postsRegistry.size)
         }
 
     }
