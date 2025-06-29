@@ -1,7 +1,7 @@
 'use client';
 import dynamic from "next/dynamic";
 import React, { Suspense, useEffect, useRef, useState } from "react";
-const TweetComponent = dynamic(() => import("../../components/Tweet"), {
+const TweetComponent = dynamic(() => import("../../components/posts/Post"), {
   ssr: false,
 });
 import { getServerSession } from "next-auth";

@@ -10,14 +10,14 @@ import React, {
 } from "react";
 import toast from "react-hot-toast";
 import TimeAgo from "react-timeago";
-import { CommentToDisplay, PostToDisplay, User } from "../../typings";
+import { CommentToDisplay, PostToDisplay, User } from "../../../typings";
 import {
   getPercievedNumberOfRecord,
   stopPropagationOnClick,
 } from "@utils/neo4j/index";
 import { useSession } from "next-auth/react";
 import { useStore } from "@stores/index";
-import { LoginModal } from "./common/AuthModals";
+import { LoginModal } from "../common/AuthModals";
 import { convertDateToDisplay } from "@utils/neo4j/neo4j";
 
 interface Props {

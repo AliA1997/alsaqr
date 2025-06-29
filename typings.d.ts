@@ -53,6 +53,10 @@ export interface UserItemToDisplay {
   followers?: User[];
 }
 
+export interface UserRegisterFormDto extends UserRegisterForm {
+  followingUsers: string[];
+}
+
 export interface UserRegisterForm extends UserInfo {
   firstName: string;
   lastName: string;

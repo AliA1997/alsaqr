@@ -7,7 +7,7 @@ import {
   retrieveQueryString,
   stopPropagationOnClick,
 } from "@utils/neo4j/index";
-import SearchBar from "./common/SearchBar";
+import SearchBar from "../common/SearchBar";
 import { useStore } from "@stores/index";
 import useGetCountry from "hooks/useGetCountry";
 

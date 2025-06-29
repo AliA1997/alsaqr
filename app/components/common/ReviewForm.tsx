@@ -2,7 +2,7 @@ import { motion } from "framer-motion";
 import { useMemo, useState } from "react";
 import { observer } from "mobx-react-lite";
 import { CommonUpsertBoxTypes, PostToDisplay, User, UserItemToDisplay } from "typings.d";
-import UserItemComponent from "@components/UserItem";
+import UserItemComponent from "@components/users/UserItem";
 import { FilterKeys } from "@stores/index";
 import { ProfileImagePreview } from "./Containers";
 

@@ -1,6 +1,6 @@
 "use client";
 import React, { useEffect } from "react";
-import Feed from "app/components/Feed";
+import Feed from "@components/shared/Feed";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { User } from "typings";

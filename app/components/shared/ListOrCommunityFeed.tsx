@@ -12,16 +12,16 @@ import toast from "react-hot-toast";
 import { useSession } from "next-auth/react";
 import { useSearchParams } from "next/navigation";
 import { convertQueryStringToObject, Params } from "@utils/neo4j";
-import CustomPageLoader from "./common/CustomLoader";
+import CustomPageLoader from "../common/CustomLoader";
 import { observer } from "mobx-react-lite";
 import { FilterKeys, useStore } from "stores";
-import { NoRecordsTitle, PageTitle } from "./common/Titles";
-import { ContentContainerWithRef } from "./common/Containers";
+import { NoRecordsTitle, PageTitle } from "../common/Titles";
+import { ContentContainerWithRef } from "../common/Containers";
 import { PagingParams } from "models/common";
 // import ListOrCommunityBox from "./ListOrCommunityBox";
-import ListItemComponent from "./ListItem";
-import CommunityItemComponent from "./CommunityItem";
-import ListOrCommunityUpsertModal from "./common/ListOrCommunityUpsertModal";
+import ListItemComponent from "../list/ListItem";
+import CommunityItemComponent from "../community/CommunityItem";
+import ListOrCommunityUpsertModal from "../common/ListOrCommunityUpsertModal";
 
 interface Props {
   title?: string;

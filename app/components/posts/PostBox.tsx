@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import NextImage from 'next/image';
 import toast from "react-hot-toast";
 
-import { ListRecord,  PostRecord } from "../../typings";
+import { ListRecord,  PostRecord } from "../../../typings";
 import { useSession } from "next-auth/react";
 import {
   defaultSearchParams,
@@ -28,7 +28,7 @@ interface Props {
   filterKey: FilterKeys;
 }
 
-function TweetBox({ filterKey }: Props) {
+function PostBox({ filterKey }: Props) {
   const { data: session } = useSession();
 
   const [input, setInput] = useState<string>("");
@@ -309,4 +309,4 @@ function TweetBox({ filterKey }: Props) {
   );
 }
 
-export default TweetBox;
+export default PostBox;

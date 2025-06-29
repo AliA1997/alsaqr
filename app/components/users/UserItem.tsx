@@ -7,18 +7,18 @@ import React, {
     useState,
 } from "react";
 
-import {UserItemToDisplay } from "../../typings";
+import {UserItemToDisplay } from "../../../typings";
 import {
     getPercievedNumberOfRecord,
     stopPropagationOnClick,
 } from "@utils/neo4j/index";
 import { useSession } from "next-auth/react";
 import { FilterKeys, useStore } from "@stores/index";
-import { LoginModal } from "./common/AuthModals";
+import { LoginModal } from "../common/AuthModals";
 import { convertDateToDisplay, shortenText } from "@utils/neo4j/neo4j";
 import { MAX_BIO_LENGTH_FEED } from "@utils/constants";
 import { observer } from "mobx-react-lite";
-import { AddOrFollowButton } from "./common/IconButtons";
+import { AddOrFollowButton } from "../common/IconButtons";
 
 interface Props {
     filterKey: FilterKeys;

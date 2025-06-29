@@ -5,7 +5,7 @@ import { Metadata } from "next";
 import { getServerSession } from "next-auth";
 import dynamic from "next/dynamic";
 import Header from "./components/layout/Header";
-const PageContainer = dynamic(() => import("./components/PageContainer"), {
+const PageContainer = dynamic(() => import("./components/layout/PageContainer"), {
   ssr: false,
 });
 const ThemeProviderWrapper = dynamic(

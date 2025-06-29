@@ -40,11 +40,6 @@ export const PersonalInfoFormInputs = observer(({ avatar, bgThumbnail, username 
 
     return (
         <>
-            {/* <ProfileImagePreview 
-                avatar={avatar}
-                bgThumbnail={bgThumbnail}
-                username={username}
-            /> */}
             <div>
                 <MyInput
                     prefix='@'
@@ -52,9 +47,17 @@ export const PersonalInfoFormInputs = observer(({ avatar, bgThumbnail, username 
                     label="Username"
                     aria-label="username"
                     placeholder="Your @username"
-                    className='mb-1'
+                    className='mb-1 h-8 text-md'
                 />
             </div>
+            
+            <MyInput
+                name='bio'
+                label="Your Introduction to Others"
+                aria-label="Your Introduction to Others"
+                placeholder="Provide a proper introduction"
+                className='mb-1 h-8 text-md'
+            />
 
             <div className='flex px-1'>
                 <MyInput
@@ -62,14 +65,14 @@ export const PersonalInfoFormInputs = observer(({ avatar, bgThumbnail, username 
                     label="First Name"
                     aria-label="firstName"
                     placeholder="Your first name"
-                    className="mb-1"
+                    className="mb-1 h-8 text-md"
                 />
                 <MyInput
                     name="lastName"
                     label="Last Name"
                     aria-label="lastName"
                     placeholder="Your last name"
-                    className="mb-"
+                    className="mb-1 h-8 text-md"
                 />
             </div>
             <FileUploadInput
@@ -88,6 +91,7 @@ export const PersonalInfoFormInputs = observer(({ avatar, bgThumbnail, username 
                 label="Date of Birth"
                 aria-label="dateOfBirth"
                 placeholder="05/01/2000"
+                className="mb-1 h-8 text-md"
             />
         </>
     );
@@ -115,6 +119,7 @@ export const HobbiesAndOptionalInfoFormInputs = observer(({ avatar, bgThumbnail,
                 label="Country of Origin"
                 placeholder="Select a Country"
                 options={COUNTRY_OPTIONS}
+                className="mb-1 h-8 text-md"
             />
 
             <MultiSelect 
@@ -147,6 +152,7 @@ export const HobbiesAndOptionalInfoFormInputs = observer(({ avatar, bgThumbnail,
                 label="Religion"
                 placeholder="Select a Religion"
                 options={RELIGION_OPTIONS}
+                className="mb-1 h-8 text-md"
             />
         </>
     );

@@ -12,7 +12,7 @@ import toast from "react-hot-toast";
 import TimeAgo from "react-timeago";
 
 // import { auth } from "../firebase/firebase";
-import { CommentToDisplay, PostToDisplay, User } from "../../typings";
+import { CommentToDisplay, PostToDisplay, User } from "../../../typings";
 import {
   getPercievedNumberOfRecord,
   stopPropagationOnClick,
@@ -21,9 +21,9 @@ import {
 // import { retweet } from "@utils/update-tweets/retweet";
 import { useSession } from "next-auth/react";
 import { FilterKeys, useStore } from "@stores/index";
-import { LoginModal } from "./common/AuthModals";
+import { LoginModal } from "../common/AuthModals";
 import { convertDateToDisplay } from "@utils/neo4j/neo4j";
-import { BookmarkedIconButton, CommentIconButton, LikesIconButton, RePostedIconButton } from "./common/IconButtons";
+import { BookmarkedIconButton, CommentIconButton, LikesIconButton, RePostedIconButton } from "../common/IconButtons";
 
 interface Props {
   postToDisplay: PostToDisplay;

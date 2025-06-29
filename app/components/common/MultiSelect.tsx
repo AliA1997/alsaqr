@@ -53,7 +53,7 @@ export function MultiSelect({ label, placeholder, options, ...props }: MultiSele
         </label>
       )}
 
-      <div className="flex flex-wrap gap-2 p-2 min-h-12 w-full border rounded-md dark:bg-[#000000] dark:border-gray-700">
+      <div className="flex flex-wrap gap-2 p-2 min-h-8 w-full border rounded-md dark:bg-[#000000] dark:border-gray-700">
         {/* Selected options */}
         {field.value.map(selectedValue => {
           const selectedOption = options.find(opt => opt.value === selectedValue) || {

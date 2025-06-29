@@ -3,11 +3,11 @@ import { useRouter } from "next/navigation";
 import React, { SVGProps, useMemo } from "react";
 import { nonRoutableTitles } from "@utils/neo4j/index";
 import { signOut, useSession } from "next-auth/react";
-import { CommonLink, CommonLinkProps } from "./common/Links";
+import { CommonLink, CommonLinkProps } from "../common/Links";
 import { ROUTES_USER_CANT_ACCESS } from "@utils/constants";
 import { observer } from "mobx-react-lite";
 import { useStore } from "@stores/index";
-import { LoginModal } from "./common/AuthModals";
+import { LoginModal } from "../common/AuthModals";
 
 interface SidebarRowProps {
   Icon: (props: SVGProps<SVGSVGElement>) => JSX.Element;

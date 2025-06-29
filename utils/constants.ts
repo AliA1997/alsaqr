@@ -1,3 +1,5 @@
+import { UserRegisterForm } from "typings";
+
 export const ROUTES_USER_CANT_ACCESS = [
   '/communities',
   '/bookmarks',
@@ -149,3 +151,19 @@ export const HOBBIES_OPTIONS = [
   { value: "Vinyl Records/CDs", label: "Vinyl Records/CDs" },
   { value: "Postcards", label: "Postcards" }
 ];
+
+export const DEFAULT_USER_REGISTRATION_FORM: UserRegisterForm = {
+      username: "",
+      avatar: "",
+      bgThumbnail: "",
+      email: "",
+      bio: "",
+      firstName: "",
+      lastName: "",
+      dateOfBirth: undefined,
+      maritalStatus: undefined,
+      hobbies: [],
+      religion: "",
+      countryOfOrigin: undefined,
+      followingUsers: []
+};

@@ -1,4 +1,4 @@
-import { ModalBody, ModalPortal } from "@components/Modal";
+import { ModalBody, ModalPortal } from "@components/common/Modal";
 import { FilterKeys, useStore } from "@stores/index";
 import { ROUTES_USER_CANT_ACCESS } from "@utils/constants";
 import { Formik, FormikErrors } from "formik";
@@ -9,7 +9,7 @@ import Image from "next/image";
 import { useCallback, useMemo } from "react";
 import { CommonUpsertBoxTypes, User, UserItemToDisplay, UserRegisterForm } from "typings.d";
 import { HobbiesAndOptionalInfoFormInputs, PersonalInfoFormInputs } from "./RegisterForm";
-import UsersFeed from "@components/UsersFeed";
+import UsersFeed from "@components/users/UsersFeed";
 import { ReviewForm, ReviewUserHobbiesAndOtherInfo, ReviewUserPersonalInfo, ReviewUsersAdded } from "./ReviewForm";
 import { ProfileImagePreview } from "./Containers";
 
@@ -56,13 +56,22 @@ type RegisterModalProps = {
 
 export const  RegisterModal = observer(({ userInfo }: RegisterModalProps) => {
   const { authStore, modalStore } = useStore();
-  const { setCurrentStepInUserRegistration, loadingRegistration, currentStepInUserRegistration } = authStore;
+  const { 
+    setCurrentStepInUserRegistration, 
+    loadingRegistration, 
+    currentStepInUserRegistration, 
+    setCurrentRegistrationForm, 
+    currentRegistrationForm ,
+    completeRegistration
+  } = authStore;
   const { closeModal } = modalStore;
   const loggedInUserId = useMemo(() => userInfo?.id, [userInfo]);
 
-  const setCurrentStep = useCallback((val: number) => (e: any) => {
+  const setCurrentStep = useCallback((val: number, currentForm?: UserRegisterForm) => (e: any) => {
     e.preventDefault();
     setCurrentStepInUserRegistration(val);
+    if(val > 0 && currentForm)
+      setCurrentRegistrationForm(currentForm!);
   }, [currentStepInUserRegistration])
 
   const currentStep = useMemo(() => currentStepInUserRegistration ?? 0, [currentStepInUserRegistration]);
@@ -83,18 +92,19 @@ export const  RegisterModal = observer(({ userInfo }: RegisterModalProps) => {
           {/* <div className="flex flex-1 item-center pl-2"> */}
           <Formik
             initialValues={{
-              avatar: userInfo?.avatar ?? '',
-              bgThumbnail: userInfo?.bgThumbnail ?? '',
-              username: userInfo?.username ?? '',
-              email: userInfo?.email ?? '',
-              firstName: userInfo?.firstName ?? '',
-              lastName: '',
-              dateOfBirth: userInfo?.dateOfBirth,
-              countryOfOrigin: userInfo?.countryOfOrigin ?? '',
-              hobbies: userInfo?.hobbies ?? [],
-              maritalStatus: userInfo?.maritalStatus ?? "single",
-              religion: userInfo?.religion ??  "Prefer Not To Disclose",
-              followingUsers: []
+              avatar: currentRegistrationForm.avatar ? currentRegistrationForm.avatar : userInfo?.avatar ?? '',
+              bgThumbnail: currentRegistrationForm.bgThumbnail ? currentRegistrationForm.bgThumbnail : userInfo?.bgThumbnail ?? '',
+              username: currentRegistrationForm.username ? currentRegistrationForm.username : userInfo?.username ?? '',
+              bio: currentRegistrationForm.bio ? currentRegistrationForm.bio : userInfo?.bio ?? '',
+              email: currentRegistrationForm.email ? currentRegistrationForm.email : userInfo?.email ?? '',
+              firstName: currentRegistrationForm.firstName ? currentRegistrationForm.firstName : userInfo?.firstName ?? '',
+              lastName: currentRegistrationForm.lastName ? currentRegistrationForm.lastName : '',
+              dateOfBirth: currentRegistrationForm.dateOfBirth ? currentRegistrationForm.dateOfBirth : userInfo?.dateOfBirth,
+              countryOfOrigin: currentRegistrationForm.countryOfOrigin ? currentRegistrationForm.countryOfOrigin : userInfo?.countryOfOrigin ?? '',
+              hobbies: currentRegistrationForm.hobbies ? currentRegistrationForm.hobbies : userInfo?.hobbies ?? [],
+              maritalStatus: currentRegistrationForm.maritalStatus ? currentRegistrationForm.maritalStatus : userInfo?.maritalStatus ?? "single",
+              religion: currentRegistrationForm.religion ? currentRegistrationForm.religion : userInfo?.religion ??  "Prefer Not To Disclose",
+              followingUsers: currentRegistrationForm.followingUsers ? currentRegistrationForm.followingUsers : []
             } as UserRegisterForm}
             validate={values => {
               const errors: FormikErrors<any> = {};
@@ -103,7 +113,7 @@ export const  RegisterModal = observer(({ userInfo }: RegisterModalProps) => {
               return errors;
             }}
             onSubmit={async (values, { setSubmitting }) => {
-              // await postRecord(values);
+              await completeRegistration(loggedInUserId, values);
               setSubmitting(false);
               closeModal();
             }}
@@ -201,7 +211,7 @@ export const  RegisterModal = observer(({ userInfo }: RegisterModalProps) => {
                   />
                 )}
 
-                <div className="flex items-center mt-2 space-x-2">
+                <div className="flex justify-between items-center mt-2 w-full space-x-2">
                   {currentStep > 0 && (
                     <button
                       type="button"
@@ -244,7 +254,7 @@ export const  RegisterModal = observer(({ userInfo }: RegisterModalProps) => {
                     : lastStepBeforeReview ? (
                       <button
                         type="button"
-                        onClick={setCurrentStep(currentStep + 1)}
+                        onClick={setCurrentStep(currentStep + 1, values)}
                         disabled={Object.values(errors).some(v => !!v)}
                         className={`rounded-full bg-maydan px-5 py-2 font-bold text-white disabled:opacity-40`}
                       >
@@ -253,7 +263,7 @@ export const  RegisterModal = observer(({ userInfo }: RegisterModalProps) => {
                     ) : (
                       <button
                         type="button"
-                        onClick={setCurrentStep(currentStep + 1)}
+                        onClick={setCurrentStep(currentStep + 1, values)}
                         disabled={Object.values(errors).some(v => !!v)}
                         className={`rounded-full bg-maydan px-5 py-2 font-bold text-white disabled:opacity-40`}
                       >

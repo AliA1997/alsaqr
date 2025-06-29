@@ -16,9 +16,9 @@ import { XIcon } from "@heroicons/react/solid"; // Import the XMarkIcon
 import { useStore } from "@stores/index";
 import { observer } from "mobx-react-lite";
 import { Field, FieldHelperProps, Formik, FormikErrors, FormikHelpers } from "formik";
-import { FileUploadInput, MyInput } from "./common/Inputs";
-import { RadioCard } from "./common/RadioBoxes";
-import { MultiSelect } from "./common/MultiSelect";
+import { FileUploadInput, MyInput } from "../common/Inputs";
+import { RadioCard } from "../common/RadioBoxes";
+import { MultiSelect } from "../common/MultiSelect";
 
 
 

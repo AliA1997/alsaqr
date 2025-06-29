@@ -17,16 +17,17 @@ export function Select({ label, placeholder, options, ...props }: SelectProps) {
   return (
     <div className="space-y-2 w-full">
       {label && (
-        <label htmlFor={props.name} className="block mb-2 text-sm font-medium">
+        <label htmlFor={props.name} className="block mb-1 text-sm font-medium">
           {label}
         </label>
       )}
 
       <select
         {...field}
-        className={`h-12 w-full text-lg outline-none placeholder:text-xl dark:bg-[#000000] border rounded-md px-3 ${
-          meta.touched && meta.error ? 'border-red-500' : 'dark:border-gray-700'
-        }`}
+        className={`
+          h-12 w-full text-lg outline-none placeholder:text-xl dark:bg-[#000000] border rounded-md px-3 
+          ${props.className ?? ""}
+          ${meta.touched && meta.error ? 'border-red-500' : 'dark:border-gray-700'}`}
       >
         {placeholder && (
           <option value="" disabled selected>

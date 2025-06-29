@@ -5,8 +5,8 @@ import { fetchBookmarks } from "@utils/user/fetchBookmarks";
 import { getServerSession } from "next-auth";
 import { getEmailUsername } from "@utils/neo4j";
 import { redirect } from "next/navigation";
-import TweetComponents from "@components/Tweet";
-import { FeedContainer } from "@components/Feed";
+import TweetComponents from "@components/posts/Post";
+import { FeedContainer } from "@components/shared/Feed";
 import { NoRecordsTitle, PageTitle } from "@components/common/Titles";
 import { authOptions } from "app/api/auth/[...nextauth]/route";
 import { useGetSession } from "hooks/useGetSession";
@@ -16,7 +16,7 @@ import { FilterKeys, useStore } from "@stores/index";
 import CustomPageLoader from "@components/common/CustomLoader";
 import { Pagination, PagingParams } from "models/common";
 import { useSession } from "next-auth/react";
-const Feed = dynamic(() => import("@components/Feed"), { ssr: false });
+const Feed = dynamic(() => import("@components/shared/Feed"), { ssr: false });
 
 function BookmarksPage() {
   const { data: session } = useSession();

@@ -2,7 +2,7 @@
 import { useCallback, useState } from "react";
 import Tabs from "@components/common/Tabs";
 import { PostToDisplay } from "typings";
-import TweetComponent from "./Tweet";
+import TweetComponent from "../posts/Post";
 
 export enum NotificationTabs {
   All = "All",

@@ -12,7 +12,7 @@ import React, {
 import toast from "react-hot-toast";
 import TimeAgo from "react-timeago";
 
-import { Comment, CommentToDisplay, CommunityToDisplay, ListToDisplay, User } from "../../typings";
+import { Comment, CommentToDisplay, CommunityToDisplay, ListToDisplay, User } from "../../../typings";
 import {
   getPercievedNumberOfRecord,
   stopPropagationOnClick,
@@ -21,7 +21,7 @@ import { SaveIcon as SaveIconFillIcon } from "@heroicons/react/solid";
 import { useSession } from "next-auth/react";
 import { joinCommunity } from "@utils/communities/joinCommunity";
 import { useStore } from "@stores/index";
-import { LoginModal } from "./common/AuthModals";
+import { LoginModal } from "../common/AuthModals";
 import { convertDateToDisplay } from "@utils/neo4j/neo4j";
 
 interface Props {

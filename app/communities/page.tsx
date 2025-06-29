@@ -1,6 +1,6 @@
 "use client";
 import React from "react";
-import ListOrCommunityFeed from "@components/ListOrCommunityFeed";
+import ListOrCommunityFeed from "@components/shared/ListOrCommunityFeed";
 import { FilterKeys } from "@stores/index";
 
 function CommunitiesPage() {

@@ -6,9 +6,9 @@ import {
   ProfileUser,
   PostToDisplay,
 } from "../../../typings";
-import TweetComponents from "../Tweet";
+import TweetComponents from "../posts/Post";
 import UserHeader from "./UserHeader";
-import Feed from "../Feed";
+import Feed from "../shared/Feed";
 import { useParams } from "next/navigation";
 import { fetchUserInfo } from "@utils/user/fetchUserInfo";
 import Tabs from "@components/common/Tabs";

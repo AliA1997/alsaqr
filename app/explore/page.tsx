@@ -1,7 +1,7 @@
 "use client";
 import React from "react";
 import { useGetSession } from "hooks/useGetSession";
-import Feed, { FeedContainer } from "@components/Feed";
+import Feed, { FeedContainer } from "@components/shared/Feed";
 import { NoRecordsTitle } from "@components/common/Titles";
 import ExploreItemComponent from "@components/explore/ExploreItem";
 import { exploreApiClient } from "@utils/exploreApiClient";

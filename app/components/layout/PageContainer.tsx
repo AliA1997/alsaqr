@@ -5,7 +5,7 @@ import Widgets from "./Widgets";
 import { useStore } from "@stores/index";
 import { observer } from "mobx-react-lite";
 import { useSession } from "next-auth/react";
-import { LoginModal } from "./common/AuthModals";
+import { LoginModal } from "../common/AuthModals";
 import { useRouter } from "next/router";
 import { ROUTES_USER_CANT_ACCESS } from "@utils/constants";
 

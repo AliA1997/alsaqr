@@ -22,7 +22,7 @@ export function MyInput({ label, prefix, disabled, ...props }: MyInputProps) {
             )}
             <div className='relative'>
                 {prefix && ( 
-                    <span className="absolute left-0 text-lg border-r-2 w-10 h-full bg-gray-100 p-3">{prefix}</span>
+                    <span className="absolute left-0 text-lg border-r-2 w-10 h-full bg-gray-100 px-3 py-1">{prefix}</span>
                 )}
                 <input
                     {...field}

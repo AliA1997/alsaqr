@@ -6,21 +6,21 @@ import {
   PostToDisplay,
   User,
   UserItemToDisplay,
-} from "../../typings";
-import TweetComponents from "./Tweet";
+} from "../../../typings";
+import TweetComponents from "../posts/Post";
 // import { fetchTweets } from "../../utils/tweets/fetchTweets";
 import toast from "react-hot-toast";
 
 import { useSession } from "next-auth/react";
-import TweetBox from "./TweetBox";
+import TweetBox from "../posts/PostBox";
 import { setFilterState } from "@utils/mobx";
 import { useSearchParams } from "next/navigation";
 import { convertQueryStringToObject, Params } from "@utils/neo4j";
-import CustomPageLoader from "./common/CustomLoader";
+import CustomPageLoader from "../common/CustomLoader";
 import { observer } from "mobx-react-lite";
 import { FilterKeys, useStore } from "stores";
-import { PageTitle } from "./common/Titles";
-import { ContentContainer, ContentContainerWithRef } from "./common/Containers";
+import { PageTitle } from "../common/Titles";
+import { ContentContainer, ContentContainerWithRef } from "../common/Containers";
 import { PagingParams } from "models/common";
 import UserItemComponent from "./UserItem";
 

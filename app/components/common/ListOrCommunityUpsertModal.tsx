@@ -1,4 +1,4 @@
-import { ModalBody, ModalPortal } from "@components/Modal";
+import { ModalBody, ModalPortal } from "@components/common/Modal";
 import { faker } from "@faker-js/faker";
 import { FilterKeys, useStore } from "@stores/index";
 import { FieldHelperProps, Formik, FormikErrors } from "formik";
@@ -10,7 +10,7 @@ import toast from "react-hot-toast";
 import { CommonUpsertBoxTypes, CommunityRecord, ListRecord, UserItemToDisplay } from "typings.d";
 import { observer } from "mobx-react-lite";
 import { ListOrCommunityFormInputs } from "./ListOrCommunityForm";
-import UsersFeed from "@components/UsersFeed";
+import UsersFeed from "@components/users/UsersFeed";
 import { ReviewForm, ReviewNewListOrCommunity, ReviewUsersAdded } from "./ReviewForm";
 
 

@@ -23,7 +23,7 @@ import { getEmailUsername, stopPropagationOnClick } from "@utils/neo4j/index";
 import { User } from "typings";
 import { useStore } from "@stores/index";
 import { observer } from "mobx-react-lite";
-import { LoginModal, RegisterModal } from "./common/AuthModals";
+import { LoginModal, RegisterModal } from "../common/AuthModals";
 import { ROUTES_USER_CANT_ACCESS } from "@utils/constants";
 
 type SideBarProps = {};
