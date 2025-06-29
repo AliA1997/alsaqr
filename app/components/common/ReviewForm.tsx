@@ -4,6 +4,7 @@ import { observer } from "mobx-react-lite";
 import { CommonUpsertBoxTypes, PostToDisplay, User, UserItemToDisplay } from "typings.d";
 import UserItemComponent from "@components/UserItem";
 import { FilterKeys } from "@stores/index";
+import { ProfileImagePreview } from "./Containers";
 
 interface Section {
     jsx: React.ReactNode;
@@ -12,6 +13,13 @@ interface Section {
 
 interface Props {
     sections: Section[];
+    type: CommonUpsertBoxTypes;
+    hideTitle?: boolean;
+    previewInfo?: {
+        avatar: string;
+        bgThumbnail: string;
+        username: string;
+    }
 }
 
 interface ReviewNewCommunityProps {
@@ -115,10 +123,104 @@ export const ReviewNewListOrCommunity = ({
     </div>
 );
 
-export const ReviewNewList = () => (<div />);
+// vatar: userInfo?.avatar ?? '',
+//               bgThumbnail: userInfo?.bgThumbnail ?? '',
+//               username: userInfo?.username ?? '',
+//               email: userInfo?.email ?? '',
+//               firstName: userInfo?.firstName ?? '',
+//               lastName: '',
+//               dateOfBirth: userInfo?.dateOfBirth,
+//               countryOfOrigin: userInfo?.countryOfOrigin ?? '',
+//               hobbies: userInfo?.hobbies ?? [],
+//               maritalStatus: userInfo?.maritalStatus ?? "single",
+//               religion: userInfo?.religion ??  "Prefer Not To Disclose",
+interface ReviewUserPersonalInfoProps {
+    avatar: string;
+    bgThumbnail: string;
+    username: string;
+    email: string;
+    firstName: string;
+    lastName: string;
+    dateOfBirth: Date | undefined;
+}
+
+interface ReviewUserHobbiesAndOtherInfoProps {
+    countryOfOrigin: string;
+    hobbies: string[];
+    maritalStatus: string;
+    religion: string;
+}
+
+export const ReviewUserPersonalInfo = ({
+    // avatar,
+    // bgThumbnail,
+    username,
+    email,
+    firstName,
+    lastName,
+    dateOfBirth
+}: ReviewUserPersonalInfoProps) => (
+    <div className='flex flex-col'>
+
+        <div className='flex x-space-3 justify-items-between'>
+            <h5 className='font-bold mr-2'>Username:</h5>
+            <p>@{username}</p>
+        </div>
+        
+        <div className='flex x-space-3 justify-items-between'>
+            <h5 className='font-bold mr-2'>Name:</h5>
+            <p>{firstName.trim()} {lastName.trim()}</p>
+        </div>
+
+        <div className='flex x-space-3 justify-items-between'>
+            <h5 className='font-bold mr-2'>Email:</h5>
+            <p>{email}</p>
+        </div>
+        
+        <div className='flex x-space-3 justify-items-between'>
+            <h5 className='font-bold mr-2'>Date of Birth:</h5>
+            <p>{dateOfBirth ? new Intl.DateTimeFormat("en-US").format(dateOfBirth) : ''}</p>
+        </div>
+    </div>
+);
 
 
-export const ReviewForm = observer(({ sections }: Props) => {
+export const ReviewUserHobbiesAndOtherInfo = ({
+    countryOfOrigin,
+    hobbies,
+    maritalStatus,
+    religion
+}: ReviewUserHobbiesAndOtherInfoProps) => (
+    <div className='flex flex-col'>
+
+        <div className='flex x-space-3 justify-items-between'>
+            <h5 className='font-bold mr-2'>Country of Origin:</h5>
+            <p>{countryOfOrigin}</p>
+        </div>
+        
+        <div className='flex x-space-3 justify-items-between'>
+            <h5 className='font-bold mr-2'>Hobbies:</h5>
+            {
+                hobbies && hobbies.length
+                    ? hobbies.map((hobby, hobbyIdx) => <p key={hobbyIdx}>{hobby}</p>)
+                    : null
+            }
+        </div>
+
+        <div className='flex x-space-3 justify-items-between'>
+            <h5 className='font-bold mr-2'>Marital Status:</h5>
+            <p>{maritalStatus}</p>
+        </div>
+        
+        <div className='flex x-space-3 justify-items-between'>
+            <h5 className='font-bold mr-2'>Religion:</h5>
+            <p>{religion}</p>
+        </div>
+    </div>
+);
+
+
+export const ReviewForm = observer(({ sections, hideTitle, previewInfo, type }: Props) => {
     const [expandedSections, setExpandedSections] = useState<Set<number>>(new Set([0]));
 
     const toggleSection = (index: number) => {
@@ -137,7 +239,14 @@ export const ReviewForm = observer(({ sections }: Props) => {
 
     return (
         <div className="w-full border rounded-lg overflow-hidden shadow-sm">
-            <h3 className="font-medium text-lg p-4">Review Form</h3>
+            {!hideTitle && <h3 className="font-medium text-lg p-4">Review Form</h3>}
+            {type === CommonUpsertBoxTypes.Register && previewInfo && (
+                <ProfileImagePreview 
+                    avatar={previewInfo.avatar}
+                    bgThumbnail={previewInfo.bgThumbnail}
+                    username={previewInfo.username}
+                />
+            )}
 
             <div className="divide-y">
                 {sections.map((section, index) => (

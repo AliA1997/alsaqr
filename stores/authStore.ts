@@ -7,17 +7,26 @@ export default class AuthStore {
   constructor() {
     makeAutoObservable(this);
   }
+  loadingRegistration: boolean = false;
+  currentStepInUserRegistration: number | undefined = 0;
 
-  setCurrentUser = action((currentUserPayload: User | undefined) => {
+  setLoadingRegistration = (val: boolean) => {
+    this.loadingRegistration = val;
+  }
+  setCurrentStepInUserRegistration = (val: number | undefined) => {
+    this.currentStepInUserRegistration = val;
+  }
+
+  setCurrentUser = (currentUserPayload: User | undefined) => {
     this.currentUser = currentUserPayload;
-  });
+  };
 
-  navigateBackToHome = action(() => {
+  navigateBackToHome = () => {
     window.location.href = `${process.env.NEXT_PUBLIC_BASE_URL}/`;
-  });
+  };
 
-  resetAuthState = action(() => {
+  resetAuthState = () => {
     this.currentUser = undefined;
-  });
+  };
   
 }

@@ -46,9 +46,9 @@ export function MultiSelect({ label, placeholder, options, ...props }: MultiSele
   );
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-2 relative">
       {label && (
-        <label htmlFor={props.name} className="block text-sm font-medium text-gray-700 dark:text-gray-200">
+        <label htmlFor={props.name} className="block text-md font-medium text-gray-700 dark:text-gray-200">
           {label}
         </label>
       )}
@@ -90,8 +90,8 @@ export function MultiSelect({ label, placeholder, options, ...props }: MultiSele
 
       {/* Dropdown with suggestions */}
       {inputValue && filteredOptions.length > 0 && (
-        <div className="mt-1 w-full border rounded-md shadow-lg dark:bg-[#000000] dark:border-gray-700">
-          {filteredOptions.map(option => (
+        <div className="absolute left-0 bottom-0 mt-1 w-full z-[9999] border bg-[#FFFFFF] rounded-md shadow-lg dark:bg-[#000000] dark:border-gray-700">
+          {filteredOptions.slice(0, 6).map(option => (
             <div
               key={option.value}
               className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 cursor-pointer"

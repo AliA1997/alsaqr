@@ -26,7 +26,8 @@ export enum MessageType {
 export enum CommonUpsertBoxTypes {
   Post = "Post",
   List = "List",
-  Community = "Community"
+  Community = "Community",
+  Register = "Register"
 }
 
 
@@ -52,19 +53,35 @@ export interface UserItemToDisplay {
   followers?: User[];
 }
 
+export interface UserRegisterForm extends UserInfo {
+  firstName: string;
+  lastName: string;
+  dateOfBirth?: Date;
+  maritalStatus?: 'single' | 'married' | 'divorced' | 'widowed';
+  hobbies?: string[];
+  religion?: string;
+  countryOfOrigin?: string;
+  followingUsers: UserItemToDisplay[];
+}
+
 export interface User extends UserInfo {
   id: string;
   createdAt: Date;
   updatedAt: Date;
+  firstName?: string;
+  lastName?: string;
   dateOfBirth?: Date;
   geoId?: string;
   maritalStatus?: 'single' | 'married' | 'divorced' | 'widowed';
   hobbies?: string[];
-  preferredMadhab?: 'Hanafi' | "Shafi'i" | 'Maliki' | 'Hanbali' | "Salafi";
+  religion?: "Christian" | "Muslim" | "Atheist" | "Agnostic" | "Jew" | "Prefer Not To Disclose";
+  preferredMadhab?: 'Hanafi' | "Shafi'i" | 'Maliki' | 'Hanbali' | "Salafi" | "Prefer Not To Disclose";
   frequentMasjid?: string;
   favoriteQuranReciters?: string[];
   favoriteIslamicScholars?: string[];
   islamicStudyTopics?: string[];
+  followingUsers: string[];
+  followedByUsers: string[];
   isCompleted: boolean;
   verified: boolean;
 }

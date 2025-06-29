@@ -11,6 +11,12 @@ const nextConfig = {
         port: '',
         pathname: '/aa1997/image/upload/**',
       },
+      {
+        protocol: 'https',
+        hostname: 'lh3.googleusercontent.com',
+        port: '',
+        pathname: '/**'
+      }
     ],
   },
   // Additional configurations can be added here

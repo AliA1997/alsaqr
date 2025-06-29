@@ -7,12 +7,13 @@ interface ModalBodyProps {
   // isOpen: boolean;
   onClose: () => void;
   children: React.ReactNode;
+  classNames?: string;
 }
 
-const ModalBody = ({ onClose, children }: ModalBodyProps) => {
+const ModalBody = ({ onClose, children, classNames }: ModalBodyProps) => {
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+    <div className={`fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 ${classNames ?? ""}`}>
       <div className="bg-white dark:bg-[#000000] rounded-lg shadow-lg w-11/12 max-w-lg mx-auto">
         <div className="relative p-4">
           <button

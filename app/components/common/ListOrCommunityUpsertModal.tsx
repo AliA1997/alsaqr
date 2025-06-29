@@ -244,6 +244,7 @@ function ListOrCommunityUpsertModal({ type, loggedInUserId }: Props) {
                                                 return sections;
                                             }())
                                         }
+                                        type={type}
                                     />
                                 )}
                                 <div className="flex items-center mt-2 space-x-2">

@@ -23,7 +23,7 @@ import { getEmailUsername, stopPropagationOnClick } from "@utils/neo4j/index";
 import { User } from "typings";
 import { useStore } from "@stores/index";
 import { observer } from "mobx-react-lite";
-import { LoginModal } from "./common/AuthModals";
+import { LoginModal, RegisterModal } from "./common/AuthModals";
 import { ROUTES_USER_CANT_ACCESS } from "@utils/constants";
 
 type SideBarProps = {};
@@ -37,6 +37,8 @@ const SideBar = ({}: SideBarProps) => {
 
   const openModal = () => showModal(<LoginModal />)
   const notLoggedIn = useMemo(() => (!session || !session!.user), [session]);
+  console.log('session?.user.isCompleted', session?.user.isCompleted);
+  const registrationNotCompleted = useMemo(() => !session?.user.isCompleted, [])
 
   const handleDropdownEnter = useCallback(
     () => setIsDropdownOpen(!isDropdownOpen),
@@ -50,6 +52,8 @@ const SideBar = ({}: SideBarProps) => {
     if(notLoggedIn && showLoginModal) {
       showModal(<LoginModal />);
     }
+    if(registrationNotCompleted && session?.user) 
+      showModal(<RegisterModal userInfo={session?.user!} />);
 
   }, [session, router]);
   

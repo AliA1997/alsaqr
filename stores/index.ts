@@ -35,7 +35,8 @@ export enum FilterKeys {
   Explore = 'explore',
   Normal = 'normal',
   Lists = "lists",
-  Community = "community"
+  Community = "community",
+  Register = "register"
 }
 
 
