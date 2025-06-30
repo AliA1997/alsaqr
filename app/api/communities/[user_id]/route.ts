@@ -5,7 +5,7 @@ import { defineDriver, read, write } from "@utils/neo4j/neo4j";
 import { PaginatedResult, Pagination } from "models/common";
 import { int } from "neo4j-driver";
 import { NextRequest, NextResponse } from "next/server";
-import { CommunityRecord, CommunityToDisplay } from "typings";
+import { CommunityToDisplay, CreateListOrCommunityFormDto } from "typings";
 
 async function GET(
   request: NextRequest,
@@ -35,13 +35,27 @@ async function GET(
 
     if(searchTerm){
       selectQuery = `
-          MATCH (u:User {id: $userId})-[:CREATED_COMMUNITY]->(community:Community)
-          WHERE community.text CONTAINS $searchTerm
-          OPTIONAL MATCH (community)-[:COMMUNITY_FOUNDER]->(founder:User)
-          WITH community,
-                founder
-          RETURN community,
-                  founder
+        // Communities where user is the founder (userId matches)
+        MATCH (community:Community { userId: $userId })
+        RETURN community, 'FOUNDER' AS relationshipType
+
+        UNION
+
+        // Communities that invited users
+        MATCH (community:Community)
+        WHERE EXISTS {
+          MATCH (community)-[:INVITED]->(:User)
+        }
+        RETURN community, 'INVITED' AS relationshipType
+
+        UNION
+
+        // Communities that users joined
+        MATCH (community:Community)
+        WHERE EXISTS {
+          MATCH (:User)-[:JOINED]->(community)
+        }
+        RETURN community, 'JOINED' AS relationshipType
       `;
 
       selectResult = await read(
@@ -53,7 +67,7 @@ async function GET(
           skip: int((currentPageParsed - 1) *  itemsPerPageParsed),
           itemsPerPage: int(itemsPerPageParsed)
         },
-        ["community", "founder"]
+        ["community", "relationshipType"]
     );
       
       pagingResult = await read(
@@ -67,12 +81,27 @@ async function GET(
       );
     } else {
       selectQuery = `
-          MATCH (u:User {id: $userId})-[:CREATED_COMMUNITY]->(community:Community)
-          OPTIONAL MATCH (community)-[:COMMUNITY_FOUNDER]->(founder:User)
-          WITH community,
-                founder
-          RETURN community,
-                  founder
+        // Communities where user is the founder (userId matches)
+        MATCH (community:Community { userId: $userId })
+        RETURN community, 'FOUNDER' AS relationshipType
+
+        UNION
+
+        // Communities that invited users
+        MATCH (community:Community)
+        WHERE EXISTS {
+          MATCH (community)-[:INVITED]->(:User)
+        }
+        RETURN community, 'INVITED' AS relationshipType
+
+        UNION
+
+        // Communities that users joined
+        MATCH (community:Community)
+        WHERE EXISTS {
+          MATCH (:User)-[:JOINED]->(community)
+        }
+        RETURN community, 'JOINED' AS relationshipType
       `;
       selectResult = await read(
         session,
@@ -82,7 +111,7 @@ async function GET(
           skip: int((currentPageParsed - 1) *  itemsPerPageParsed),
           itemsPerPage: int(itemsPerPageParsed)
         },
-        ["community", "founder"]
+        ["community", "relationshipType"]
       );
 
       pagingResult = await read(
@@ -124,7 +153,7 @@ async function POST(
   request: NextRequest,
   { params }: { params: { user_id: string } }
 ) {
-  const { values:data }: { values: CommunityRecord } = await request.json();
+  const { values:data }: { values: CreateListOrCommunityFormDto } = await request.json();
   const driver = defineDriver();
   const session = driver.session();
   const { user_id } = params;
@@ -134,8 +163,9 @@ async function POST(
   if (!data.name) {
     return new NextResponse("Name of Community is required", { status: 400 });
   }
-
   try {
+    const communityId = `community_${faker.datatype.uuid()}`;
+
     await write(
       session,
       `
@@ -146,19 +176,41 @@ async function POST(
           userId: $userId,
           name: $name,
           avatar: $avatar,
-          bannerImage: $bannerImage,
-          createdAt: datetime($createdAt),
-          updatedAt: datetime($updatedAt),
+          bannerImage: null,
+          createdAt: datetime(),
+          updatedAt: null,
           _rev: "",
           _type: "community",
           isPrivate: $isPrivate,
-          tags: []
+          tags: $tags
         })
-        CREATE (u)-[:CREATED_COMMUNITY {timestamp: datetime($createdAt)}]->(cmty)
-        CREATE (cmty)-[:COMMUNITY_FOUNDER {timestamp: datetime($createdAt)}]->(u)
+        CREATE (u)-[:CREATED_COMMUNITY {timestamp: datetime()}]->(cmty)
+        CREATE (cmty)-[:COMMUNITY_FOUNDER {timestamp: datetime()}]->(u)
         `,
-      data
+      {
+        id: communityId,
+        userId,
+        name: data.name,
+        avatar: data.avatarOrBannerImage,
+        isPrivate: (data.isPrivate === 'private'),
+        tags: data.tags
+      }
     );
+
+    await write(
+      session,
+      `
+        UNWIND $usersAdded AS usersAddedId
+        MATCH (cmty: Community {id: $communityId}), (user:User {id: usersAddedId})
+        MERGE (cmty)-[r:INVITED]->(user)
+        SET r.createdAt = datetime()
+        RETURN count(r) AS relationshipsCreated
+      `,
+      {
+        communityId,
+        usersAdded: data.usersAdded
+      }
+    )
 
     return NextResponse.json({ success: true });
   } catch (err) {

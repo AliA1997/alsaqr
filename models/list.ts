@@ -1,8 +1,9 @@
-import { CommunityToDisplay, ListToDisplay, PostToDisplay } from "typings";
+import { CommunityToDisplay, ListToDisplay, PostToDisplay, UserItemToDisplay } from "typings";
 import { CommunityDiscussionMessageToDisplay, CommunityDiscussionToDisplay } from "./community";
 
 export enum ListItemType {
     Post = 'post',
+    User = 'user',
     Community = 'community',
     CommunityDiscussion = 'community-discussion',
     CommunityDiscussionMessage = 'community-discussion-message',
@@ -13,6 +14,7 @@ export enum ListItemType {
 // listItem - [:SAVED_TO_LIST] -> list
 export interface ListItem {
     id: string;
+    savedUserId?: string;
     postId?: string;
     commmunityId?: string;
     communityDiscussionId?: string;
@@ -26,5 +28,5 @@ export interface ListItemRecord extends ListItem {}
 
 export interface ListItemToDisplay {
   listItem: ListItem;
-  relatedEntity: PostToDisplay | CommunityToDisplay | CommunityDiscussionToDisplay | CommunityDiscussionMessageToDisplay | ListToDisplay;
+  relatedEntity: PostToDisplay | CommunityToDisplay | CommunityDiscussionToDisplay | CommunityDiscussionMessageToDisplay | ListToDisplay | UserItemToDisplay;
 }

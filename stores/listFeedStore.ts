@@ -1,9 +1,10 @@
 import { makeAutoObservable, reaction, runInAction } from "mobx";
-import { ListRecord, ListToDisplay } from "../typings.d";
+import { CreateListOrCommunityForm, CreateListOrCommunityFormDto, ListRecord, ListToDisplay } from "../typings.d";
 import { Pagination, PagingParams } from "models/common";
 // import { fetchLists } from "@utils/lists/fetchLists";
 import agent from "@utils/common";
 import { ListItemToDisplay } from "models/list";
+import { DEFAULT_CREATED_LIST_OR_COMMUNITY_FORM } from "@utils/constants";
 
 export default class ListFeedStore {
     
@@ -37,6 +38,7 @@ export default class ListFeedStore {
 
     listsRegistry: Map<string, ListToDisplay> = new Map<string, ListToDisplay>();
     savedListItemsRegistry: Map<string, ListItemToDisplay> = new Map<string, ListItemToDisplay>();
+    listCreationForm: CreateListOrCommunityForm = DEFAULT_CREATED_LIST_OR_COMMUNITY_FORM;
     currentStepInListCreation: number | undefined = undefined;
 
     setLoadingInitial = (value: boolean) => {
@@ -60,6 +62,9 @@ export default class ListFeedStore {
     setSearchQry = (val: string) => this.predicate.set('searchQry', val);
     setCurrentStepInListCreation = (currentStep: number) => {
         this.currentStepInListCreation = currentStep;
+    }
+    setListCreationForm = (val: CreateListOrCommunityForm) => {
+        this.listCreationForm = val;
     }
     
     setList = (listId: string, list: ListToDisplay) => {
@@ -99,11 +104,24 @@ export default class ListFeedStore {
         return params;
     }
 
-    addList = async (newList: ListRecord, userId: string) => {
+    addList = async (newList: CreateListOrCommunityForm, userId: string) => {
 
         this.setLoadingInitial(true);
         try {
-            await agent.listApiClient.addList(newList, userId);
+            const newListDto: CreateListOrCommunityFormDto = {
+                name: newList.name,
+                avatarOrBannerImage: newList.avatarOrBannerImage,
+                tags: newList.tags,
+                usersAdded: newList.usersAdded.map(u => u.user.id),
+                postsAdded: newList.postsAdded.map(p => p.post.id),
+                isPrivate: 'private'
+            };
+            await agent.listApiClient.addList(newListDto, userId);
+
+            runInAction(() => {
+                this.setCurrentStepInListCreation(0);
+                this.setListCreationForm(DEFAULT_CREATED_LIST_OR_COMMUNITY_FORM);
+            });
         } finally {
             this.loadingInitial = false;
         }

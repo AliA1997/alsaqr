@@ -6,13 +6,13 @@ import { defineDriver, read, write } from "@utils/neo4j/neo4j";
 import { PaginatedResult, Pagination } from "models/common";
 import { int } from "neo4j-driver";
 import { NextRequest, NextResponse } from "next/server";
-import { ListRecord, ListToDisplay } from "typings";
+import { CreateListOrCommunityForm, CreateListOrCommunityFormDto, ListRecord, ListToDisplay } from "typings";
 
 type Data = {
   message: string;
 };
 
-export async function GET(
+async function GET_RETURN_LISTS(
   request: NextRequest,
   { params }: { params: { user_id: string } }
 ) {
@@ -118,11 +118,11 @@ export async function GET(
 }
 
 
-export async function POST(
+async function POST_ADD_LISTS(
   request: NextRequest,
   { params }: { params: { user_id: string } }
 ) {
-  const { values:data }: { values: ListRecord }= await request.json();
+  const { values:data }: { values: CreateListOrCommunityFormDto }= await request.json();
   const driver = defineDriver();
   const session = driver.session();
   const { user_id } = params;
@@ -133,6 +133,8 @@ export async function POST(
   }
 
   try {
+    const listId = `list_${faker.datatype.uuid()}`;
+
     await write(
       session,
       `
@@ -141,16 +143,78 @@ export async function POST(
           id: $id,
           userId: $userId, 
           name: $name, 
-          avatar: $avatar,
+          avatar: null,
           bannerImage: $bannerImage,
-          createdAt: datetime($createdAt),
-          updatedAt: datetime($updatedAt),
+          tags: $tags,
+          createdAt: datetime(),
+          updatedAt: null,
           _rev: "",
           _type: "list"
         })
-        CREATE (l)-[:LIST_CREATOR {timestamp: datetime($createdAt)}]->(u)
+        CREATE (u)-[:CREATED_LIST {timestamp: datetime()}]->(l)
+        CREATE (l)-[:LIST_CREATOR {timestamp: datetime()}]->(u)
       `,
-      data
+      {
+        id: listId,
+        userId,
+        name: data.name,
+        bannerImage: data.avatarOrBannerImage,
+        tags: data.tags
+      }
+    );
+
+    await write(
+      session,
+      `
+        UNWIND $usersAdded AS usersAddedId
+        MATCH (list: List {id: $listId}), (user:User {id: usersAddedId})
+        CREATE (list)-[r:SAVED_LIST_ITEM]->(listItem:ListItem {
+              id: apoc.text.format("listItem_%s", [randomUUID()]),
+              savedUserId: usersAddedId,
+              postId: null,
+              commmunityId: null,
+              communityDiscussionId: null,
+              communityDiscussionMessageId: null,
+              listId: $listId,
+              listItemType: 'user',
+              savedAt: datetime()
+        })
+        MERGE (listItem)-[lr:SAVED_TO_LIST]->(list)
+        SET r.createdAt = datetime(),
+            lr.createdAt = datetime()
+        RETURN count(lr) AS relationshipsCreated
+      `,
+      {
+        listId,
+        usersAdded: data.usersAdded
+      }
+    );
+
+    await write(
+      session,
+      `
+        UNWIND $postsAdded AS postsAddedId
+        MATCH (list: List {id: $listId}), (post:Post {id: postsAddedId})
+        CREATE (list)-[r:SAVED_LIST_ITEM]->(listItem:ListItem {
+              id: apoc.text.format("listItem_%s", [randomUUID()]),
+              savedUserId: null,
+              postId: postsAddedId,
+              commmunityId: null,
+              communityDiscussionId: null,
+              communityDiscussionMessageId: null,
+              listId: $listId,
+              listItemType: 'post',
+              savedAt: datetime()
+        })
+        MERGE (listItem)-[lr:SAVED_TO_LIST]->(list)
+        SET r.createdAt = datetime(),
+            lr.createdAt = datetime()
+        RETURN count(lr) AS relationshipsCreated
+      `,
+      {
+        listId,
+        postsAdded: data.postsAdded
+      }
     );
 
     return NextResponse.json({ success: true });
@@ -229,3 +293,8 @@ export async function POST(
 //     return NextResponse.json({ message: "Patch list error!", success: false });
 //   }
 // }
+
+export {
+  GET_RETURN_LISTS as GET,
+  POST_ADD_LISTS as POST
+}

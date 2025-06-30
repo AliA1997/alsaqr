@@ -4,15 +4,15 @@ import { FilterKeys, useStore } from "@stores/index";
 import { FieldHelperProps, Formik, FormikErrors } from "formik";
 import { motion } from "framer-motion";
 import { PagingParams } from "models/common";
-import { signIn, useSession } from "next-auth/react";
 import { useCallback, useMemo } from "react";
 import toast from "react-hot-toast";
-import { CommonUpsertBoxTypes, CommunityRecord, ListRecord, UserItemToDisplay } from "typings.d";
+import { CommonUpsertBoxTypes, CommunityRecord, CreateListOrCommunityForm, ListRecord, PostToDisplay, UserItemToDisplay } from "typings.d";
 import { observer } from "mobx-react-lite";
 import { ListOrCommunityFormInputs } from "./ListOrCommunityForm";
 import UsersFeed from "@components/users/UsersFeed";
-import { ReviewForm, ReviewNewListOrCommunity, ReviewUsersAdded } from "./ReviewForm";
-
+import { default as PostsFeed } from "@components/shared/Feed";
+import { ReviewForm, ReviewNewListOrCommunity, ReviewPostsAdded, ReviewUsersAdded } from "./ReviewForm";
+import Image from 'next/image';
 
 interface Props {
     type: CommonUpsertBoxTypes;
@@ -29,20 +29,30 @@ function ListOrCommunityUpsertModal({ type, loggedInUserId }: Props) {
         if (type === CommonUpsertBoxTypes.Community) return (communityFeedStore.currentStepInCommunityCreation ?? 0);
         else return (listFeedStore.currentStepInListCreation ?? 0);
     }, [type, communityFeedStore.currentStepInCommunityCreation, listFeedStore.currentStepInListCreation]);
+    const currentForm = useMemo(() => {
+        if (type === CommonUpsertBoxTypes.Community) return communityFeedStore.communityCreationForm;
+        else return listFeedStore.listCreationForm;
+    }, [type, communityFeedStore.currentStepInCommunityCreation, listFeedStore.currentStepInListCreation])
 
-    const setCurrentStep = (val: number) => (e: any) => {
+
+    const setCurrentStep = (val: number, form: CreateListOrCommunityForm) => (e: any) => {
         e.preventDefault();
-        if (type === CommonUpsertBoxTypes.Community) return communityFeedStore.setCurrentStepInCommunityCreation(val);
-        else return listFeedStore.setCurrentStepInListCreation(val);
+        if (type === CommonUpsertBoxTypes.Community) {
+            communityFeedStore.setCommunityCreationForm(form);
+            return communityFeedStore.setCurrentStepInCommunityCreation(val)
+        }
+        else {
+            listFeedStore.setListCreationForm(form);
+            return listFeedStore.setCurrentStepInListCreation(val);
+        }
     };
-
 
 
     const feedLoadingInitial = useMemo(() =>
         type === CommonUpsertBoxTypes.Community ? communityFeedStore.loadingInitial : listFeedStore.loadingInitial,
         [
-            communityFeedStore.setLoadingInitial,
-            listFeedStore.setLoadingInitial
+            communityFeedStore.loadingInitial,
+            listFeedStore.loadingInitial
         ]);
     const resetPagingParams = useCallback(() => {
         if (type === CommonUpsertBoxTypes.Community)
@@ -62,34 +72,28 @@ function ListOrCommunityUpsertModal({ type, loggedInUserId }: Props) {
         [type]
     );
     const postRecord = async (values: any) => {
-        let infoToUpsert: ListRecord | CommunityRecord | undefined;
+        let infoToUpsert: CreateListOrCommunityForm | undefined;
 
         if (type === CommonUpsertBoxTypes.Community)
             infoToUpsert = {
-                id: `community_${faker.datatype.uuid()}`,
-                userId: loggedInUserId,
                 name: values.name,
-                avatar: values.avatar,
-                createdAt: new Date().toISOString(),
-                updatedAt: new Date().toISOString(),
-                _rev: '',
-                _type: "community",
-                isPrivate: (values.isPrivate === 'private'),
-                tags: values.tags
-            } as CommunityRecord
+                avatarOrBannerImage: values.avatarOrBannerImage,
+                isPrivate: values.isPrivate,
+                tags: values.tags,
+                usersAdded: values.usersAdded,
+                postsAdded: []
+            };
         else if (type === CommonUpsertBoxTypes.List)
             infoToUpsert = {
-                id: `list_${faker.datatype.uuid()}`,
-                userId: loggedInUserId,
                 name: values.name,
-                avatar: "",
-                bannerImage: values.bannerImage,
-                createdAt: new Date().toISOString(),
-                updatedAt: new Date().toISOString(),
-                _rev: "",
-                _type: "list"
-            } as ListRecord
+                avatarOrBannerImage: values.avatarOrBannerImage,
+                isPrivate: values.isPrivate,
+                tags: values.tags,
+                usersAdded: values.usersAdded,
+                postsAdded: values.postsAdded
+            };
 
+        console.log('infoToUpsert!!:', JSON.stringify(infoToUpsert));
         await upsert(infoToUpsert, loggedInUserId)
 
         resetPagingParams();
@@ -118,28 +122,23 @@ function ListOrCommunityUpsertModal({ type, loggedInUserId }: Props) {
                     {/* <div className="flex flex-1 item-center pl-2"> */}
                     <Formik
                         initialValues={{
-                            name: '',
-                            avatarOrImage: '',
-                            isPrivate: 'public',
-                            tags: [],
-                            usersAdded: []
-                        } as {
-                            name: string;
-                            avatarOrImage: string;
-                            isPrivate: any;
-                            tags: string[];
-                            usersAdded: UserItemToDisplay[];
-                        }}
+                            name: currentForm?.name ?? '',
+                            avatarOrBannerImage: currentForm?.avatarOrBannerImage ?? '',
+                            isPrivate: currentForm?.isPrivate ?? 'public',
+                            tags: currentForm?.tags && currentForm?.tags.length > 0 ? currentForm?.tags : [],
+                            usersAdded: currentForm?.usersAdded && currentForm?.usersAdded.length > 0 ? currentForm?.usersAdded : [],
+                            postsAdded: []
+                        } as CreateListOrCommunityForm}
                         validate={values => {
                             const errors: FormikErrors<any> = {};
                             if (!values.name) {
                                 errors.name = 'Name is required';
-                            } else if (!values.avatarOrImage) {
-                                errors.avatarOrImage = type === CommonUpsertBoxTypes.Community ? 'Community avatar is required' : 'List banner image is required'
+                            } else if (!values.avatarOrBannerImage) {
+                                errors.avatarOrBannerImage = type === CommonUpsertBoxTypes.Community ? 'Community avatar is required' : 'List banner image is required'
                             } else if (!values.tags || !values.tags.length) {
                                 errors.tags = 'Tags is required'
                             }
-
+                            // alert(JSON.stringify(errors))
                             return errors;
                         }}
                         onSubmit={async (values, { setSubmitting }) => {
@@ -157,27 +156,48 @@ function ListOrCommunityUpsertModal({ type, loggedInUserId }: Props) {
                             /* and other goodies */
                         }) => (
                             <form onSubmit={handleSubmit} className="flex flex-1 flex-col">
+                                {type === CommonUpsertBoxTypes.Community 
+                                    ? (
+                                        <Image
+                                            src={values.avatarOrBannerImage ? values.avatarOrBannerImage : 'https://robohash.org/placeholder'}
+                                            alt={values.name}
+                                            height={40}
+                                            width={40}
+                                            className='h-20 w-20 rounded-full'
+                                        />
+                                    )
+                                    : (
+                                            <motion.div 
+                                                className="flex justify-center items-center bg-gray-100 w-full h-[10em] relative" 
+                                                style={{ 
+                                                    backgroundImage: `url('${values.avatarOrBannerImage}')`,
+                                                    backgroundSize: 'cover',
+                                                    backgroundRepeat: 'no-repeat'
+                                                }}
+                                            ></motion.div>
+                                    )
+                                }
                                 {currentStep === 0 && (
                                     <ListOrCommunityFormInputs type={type} />
                                 )}
                                 {showAddPosts && (
-                                    <UsersFeed
+                                    <PostsFeed
                                         title="Posts to Add"
-                                        loggedInUserId={loggedInUserId}
-                                        filterKey={FilterKeys.SearchUsers}
-                                        onAddOrFollow={(u: UserItemToDisplay) => {
-                                            const userFoundIdx = values.usersAdded.findIndex(user => user.user.id === u.user.id);
-                                            debugger;
-                                            if (userFoundIdx !== -1) {
-                                                const newUsersAddedArray = values.usersAdded.slice();
-                                                newUsersAddedArray.splice(userFoundIdx, 1);
-                                                setFieldValue('usersAdded', newUsersAddedArray);
+                                        hideTweetBox={true}
+                                        filterKey={FilterKeys.SearchPosts}
+                                        onAdd={(p: PostToDisplay) => {
+                                            const postFoundIdx = values.postsAdded.findIndex(pst => pst.post.id === p.post.id);
+
+                                            if (postFoundIdx !== -1) {
+                                                const newPostsAddedArray = values.postsAdded.slice();
+                                                newPostsAddedArray.splice(postFoundIdx, 1);
+                                                setFieldValue('postsAdded', newPostsAddedArray);
                                             } else {
-                                                const distinctUsers = Array.from(new Set([...values.usersAdded, u]).values());
-                                                setFieldValue('usersAdded', distinctUsers);
+                                                const distinctPosts = Array.from(new Set([...values.postsAdded, p]).values());
+                                                setFieldValue('postsAdded', distinctPosts);
                                             }
                                         }}
-                                        usersAlreadyAddedOrFollowedByIds={values.usersAdded.map(u => u.user.id)}
+                                        postsAlreadyAddedByIds={values.postsAdded.map(pst => pst.post.id)}
                                     />
                                 )}
                                 {showAddUsers && (
@@ -187,7 +207,7 @@ function ListOrCommunityUpsertModal({ type, loggedInUserId }: Props) {
                                         filterKey={FilterKeys.SearchUsers}
                                         onAddOrFollow={(u: UserItemToDisplay) => {
                                             const userFoundIdx = values.usersAdded.findIndex(user => user.user.id === u.user.id);
-                                            debugger;
+
                                             if (userFoundIdx !== -1) {
                                                 const newUsersAddedArray = values.usersAdded.slice();
                                                 newUsersAddedArray.splice(userFoundIdx, 1);
@@ -210,7 +230,7 @@ function ListOrCommunityUpsertModal({ type, loggedInUserId }: Props) {
                                                         jsx: (
                                                             <ReviewNewListOrCommunity
                                                                 name={values.name}
-                                                                avatarOrImage={values.avatarOrImage}
+                                                                avatarOrImage={values.avatarOrBannerImage}
                                                                 visibility={values.isPrivate}
                                                                 tags={values.tags}
                                                                 type={type}
@@ -233,8 +253,8 @@ function ListOrCommunityUpsertModal({ type, loggedInUserId }: Props) {
                                                         {
                                                             title: 'Posts Added',
                                                             jsx: (
-                                                                <ReviewUsersAdded
-                                                                    usersAdded={values.usersAdded}
+                                                                <ReviewPostsAdded
+                                                                    postsAdded={values.postsAdded}
                                                                 />
                                                             ),
                                                         },
@@ -247,11 +267,11 @@ function ListOrCommunityUpsertModal({ type, loggedInUserId }: Props) {
                                         type={type}
                                     />
                                 )}
-                                <div className="flex items-center mt-2 space-x-2">
+                                <div className="flex justify-between items-center mt-2 w-full space-x-2">
                                     {currentStep > 0 && (
                                         <button
                                             type="button"
-                                            onClick={setCurrentStep(currentStep === 0 ? 0 : currentStep - 1)}
+                                            onClick={setCurrentStep(currentStep === 0 ? 0 : currentStep - 1, values)}
                                             className="rounded-full bg-gray-200 px-5 py-2 font-bold text-gray-700"
                                         >
                                             Back
@@ -290,7 +310,7 @@ function ListOrCommunityUpsertModal({ type, loggedInUserId }: Props) {
                                         : currentStep === lastStepBeforeReview ? (
                                             <button
                                                 type="button"
-                                                onClick={setCurrentStep(currentStep + 1)}
+                                                onClick={setCurrentStep(currentStep + 1, values)}
                                                 disabled={Object.values(errors).some(v => !!v)}
                                                 className={`rounded-full bg-maydan px-5 py-2 font-bold text-white disabled:opacity-40`}
                                             >
@@ -299,7 +319,7 @@ function ListOrCommunityUpsertModal({ type, loggedInUserId }: Props) {
                                         ) : (
                                             <button
                                                 type="button"
-                                                onClick={setCurrentStep(currentStep + 1)}
+                                                onClick={setCurrentStep(currentStep + 1, values)}
                                                 disabled={Object.values(errors).some(v => !!v)}
                                                 className={`rounded-full bg-maydan px-5 py-2 font-bold text-white disabled:opacity-40`}
                                             >

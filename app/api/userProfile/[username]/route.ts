@@ -3,15 +3,14 @@ import { NextRequest, NextResponse } from "next/server";
 import { defineDriver, read } from "@utils/neo4j/neo4j";
 import { ProfileUser } from "typings";
 
-async function GET(
+async function GET_USER_PROFILE_INFO(
   request: NextRequest,
-  { params }: { params: { user_id: string } }
+  { params }: { params: { username: string } }
 ) {
-  const { user_id } = params;
-  const userId = user_id as string;
+  const { username } = params;
 
-  if (!userId) {
-    return new NextResponse("User ID is required", { status: 400 });
+  if (!username) {
+    return new NextResponse("Username is required", { status: 400 });
   }
 
   const driver = defineDriver();
@@ -23,12 +22,12 @@ async function GET(
     const users = await read(
       session,
       `
-        MATCH (user:User {id: $userId})
+        MATCH (user:User {username: $username})
         OPTIONAL MATCH (user)-[:BOOKMARKED]->(bookmark:Post)
         RETURN user,
               COLLECT(DISTINCT bookmark.id) AS bookmarks
       `,
-      { userId },
+      { username },
       ["user", 'bookmarks']
     );
     const user: ProfileUser = users && users.length ? users[0] : undefined;
@@ -38,4 +37,4 @@ async function GET(
   }
 }
 
-export { GET };
+export { GET_USER_PROFILE_INFO as GET };

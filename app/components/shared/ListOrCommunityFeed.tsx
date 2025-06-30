@@ -139,7 +139,7 @@ const ListOrCommunityFeed = observer(({ title, filterKey, hideTweetBox }: Props)
     else
       return listFeedStore.lists;
 
-  }, [communityFeedStore.communityRegistry, listFeedStore.listsRegistry]);
+  }, [communityFeedStore.loadingInitial, listFeedStore.loadingInitial]);
 
 
   // 1. Add this loader component at the end of your posts list

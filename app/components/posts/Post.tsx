@@ -23,16 +23,22 @@ import { useSession } from "next-auth/react";
 import { FilterKeys, useStore } from "@stores/index";
 import { LoginModal } from "../common/AuthModals";
 import { convertDateToDisplay } from "@utils/neo4j/neo4j";
-import { BookmarkedIconButton, CommentIconButton, LikesIconButton, RePostedIconButton } from "../common/IconButtons";
+import { AddOrFollowButton, BookmarkedIconButton, CommentIconButton, LikesIconButton, RePostedIconButton } from "../common/IconButtons";
 
 interface Props {
   postToDisplay: PostToDisplay;
   filterKey?: FilterKeys;
+  canAdd?: boolean;
+  onAdd?: (pst: PostToDisplay) => void;
+  postsAlreadyAddedByIds?: string[];
 }
 
 function PostComponent({
   postToDisplay,
   filterKey,
+  canAdd,
+  onAdd,
+  postsAlreadyAddedByIds
 }: Props) {
   const router = useRouter();
   const { data: session } = useSession();
@@ -50,6 +56,7 @@ function PostComponent({
   const [isBookmarked, setIsBookmarked] = useState<boolean>(false);
   const [isRePosted, setIsRePosted] = useState<boolean>(false);
   const [isLiked, setIsLiked] = useState<boolean>(false);
+  const [isAdded, setIsAdded] = useState<boolean>(false);
 
   const initiallyBooleanValues = useRef<{
     retweeted: boolean;
@@ -119,6 +126,9 @@ function PostComponent({
 
       const twtAlreadyBookmarked = 
         (session.user as any).bookmarks?.some((bk: string) => bk === postInfo.id) ?? false;
+
+      if(postsAlreadyAddedByIds)
+        setIsAdded(postsAlreadyAddedByIds.some(pstId => pstId === postInfo.id));
 
       initiallyBooleanValues.current = {
         liked: twtAlreadyLiked,
@@ -208,13 +218,32 @@ function PostComponent({
 
 
   const userId = useMemo(() => session && session.user ? (session.user as any)['id'] : "", [session]);
-  const isSearchedPosts = useMemo(() => (filterKey ?? FilterKeys.Normal) !== FilterKeys.SearchPosts, [filterKey]);
-
+  const isSearchedPosts = useMemo(() => (filterKey ?? FilterKeys.Normal) === FilterKeys.SearchPosts, [filterKey]);
+  const onIsAlreadyAdded = async () => {
+      const beforeUpdate = isAdded;
+      try {
+          await checkUserIsLoggedInBeforeUpdatingTweet(async () => {
+            setIsAdded(!isAdded);
+            onAdd!(postToDisplay);
+          });
+      } catch {
+          setIsAdded(beforeUpdate);
+      }
+  };
+  
   return (
     <div
       className="flex flex-col space-x-3 border-y border-gray-100 p-5 hover:shadow-lg dark:border-gray-800 dark:hover:bg-[#000000]"
       onClick={navigateToTweet}
     >
+      {canAdd && (
+          <AddOrFollowButton
+            isAdded={isAdded ?? false}
+            filterKey={filterKey ?? FilterKeys.Normal}
+            onIsAlreadyAdded={onIsAlreadyAdded!}
+          />
+      )}
+       
       <div className="flex space-x-3 cursor-pointer">
         <img
           className="h-10 w-10 rounded-full object-cover "
@@ -269,7 +298,7 @@ function PostComponent({
         </div>
       </div>
       
-      {isSearchedPosts && (
+      {!isSearchedPosts && (
           <div className="mt-5 flex justify-between">
             <CommentIconButton
               onClick={(e) =>

@@ -58,7 +58,7 @@ export const authOptions: NextAuthOptions = {
           reposts: Array.from(new Set(userInDb.reposts.map((repost: any) => repost.id))),
           likedPosts: Array.from(new Set(userInDb.likedPosts.map((likedTweet: any) => likedTweet.id))),
         };
-        
+
       }
 
       return session;

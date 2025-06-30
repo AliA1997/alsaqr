@@ -33,7 +33,7 @@ const SideBar = ({}: SideBarProps) => {
   const router = useRouter();
   const [isDropdownOpen, setIsDropdownOpen] = React.useState<boolean>(false);
   const { modalStore } = useStore();
-  const { showModal } = modalStore;
+  const { closeModal, showModal } = modalStore;
 
   const openModal = () => showModal(<LoginModal />)
   const notLoggedIn = useMemo(() => (!session || !session!.user), [session]);
@@ -54,6 +54,8 @@ const SideBar = ({}: SideBarProps) => {
     }
     if(registrationNotCompleted && session?.user) 
       showModal(<RegisterModal userInfo={session?.user!} />);
+    if(!registrationNotCompleted && session?.user)
+      closeModal();
 
   }, [session, router]);
   

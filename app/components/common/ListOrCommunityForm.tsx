@@ -82,7 +82,7 @@ export const ListOrCommunityFormInputs = observer(({ type }: Props) => {
                 className="mb-4"
             />
             <FileUploadInput
-                name="avatarOrImage"
+                name="avatarOrBannerImage"
                 label={fileUploadLabel}
                 handleFileChange={handleFileChange}
             />

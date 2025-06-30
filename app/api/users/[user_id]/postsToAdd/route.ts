@@ -41,10 +41,10 @@ async function GET(
             {
                 userId
             },
-            "distinctTags"
+            ["distinctTags"]
         );
 
-        console.log('userPostTags', JSON.stringify(userPostTags));
+        // console.log('userPostTags', )
 
         // const user: User = users && users.length ? users[0] : undefined;
 
@@ -56,7 +56,7 @@ async function GET(
                 MATCH (post:Post), (user: User { id: post.userId })
                 WHERE post.text CONTAINS $searchTerm 
                         AND (
-                            ANY(scholar in post.tags WHERE postTag IN $userPostTags) 
+                            ANY(tag in post.tags WHERE tag IN $userPostTags) AND user.id <> $userId 
                         )  AND  user.id <> $userId 
                 OPTIONAL MATCH (post)-[:HAS_COMMENT]->(c:Comment)<-[:COMMENTED]-(u:User)
                 OPTIONAL MATCH (post)-[:RETWEETS]->(reposter:User)
@@ -83,7 +83,7 @@ async function GET(
                 {
                     searchTerm: searchTerm ?? "",
                     userId,
-                    userPostTags,
+                    userPostTags: userPostTags![0].distinctTags,
                     skip: int((currentPageParsed - 1) * itemsPerPageParsed),
                     itemsPerPage: int(itemsPerPageParsed)
                 },
@@ -102,7 +102,7 @@ async function GET(
         } else {
             selectQuery = `
                 MATCH (post:Post), (user: User { id: post.userId })
-                WHERE ANY(scholar in post.tags WHERE postTag IN $userPostTags) AND  user.id <> $userId 
+                WHERE ANY(tag in post.tags WHERE tag IN $userPostTags) AND user.id <> $userId 
                 OPTIONAL MATCH (post)-[:HAS_COMMENT]->(c:Comment)<-[:COMMENTED]-(u:User)
                 OPTIONAL MATCH (post)-[:RETWEETS]->(reposter:User)
                 OPTIONAL MATCH (post)-[:LIKED]->(liker:User)
@@ -127,7 +127,7 @@ async function GET(
                 `${selectQuery} ${pagingQuery}`,
                 {
                     userId,
-                    userPostTags,
+                    userPostTags: userPostTags![0].distinctTags,
                     skip: int((currentPageParsed - 1) * itemsPerPageParsed),
                     itemsPerPage: int(itemsPerPageParsed)
                 },

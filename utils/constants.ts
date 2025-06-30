@@ -1,4 +1,4 @@
-import { UserRegisterForm } from "typings";
+import { CreateListOrCommunityForm, UserRegisterForm } from "typings";
 
 export const ROUTES_USER_CANT_ACCESS = [
   '/communities',
@@ -166,4 +166,13 @@ export const DEFAULT_USER_REGISTRATION_FORM: UserRegisterForm = {
       religion: "",
       countryOfOrigin: undefined,
       followingUsers: []
+};
+
+export const DEFAULT_CREATED_LIST_OR_COMMUNITY_FORM: CreateListOrCommunityForm = {
+    name: "",
+    avatarOrBannerImage: "",
+    isPrivate: "public",
+    tags: [],
+    usersAdded: [],
+    postsAdded: []
 };

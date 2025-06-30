@@ -19,10 +19,10 @@ interface RePostedIconButtonProps extends React.ButtonHTMLAttributes<HTMLDivElem
 }
 interface AddOrFollowIconButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
     isAdded: boolean;
-    isFollowing: boolean;
+    isFollowing?: boolean;
     filterKey: FilterKeys;
-    onIsAlreadyAdded: () => Promise<void>;
-    onIsAlreadyFollowing: () => Promise<void>;
+    onIsAlreadyAdded: () => Promise<void> ;
+    onIsAlreadyFollowing?: () => Promise<void>;
 }
 
 export function CommentIconButton({ onClick, numberOfComments }: CommentIconButtonProps) {
@@ -130,7 +130,7 @@ export function AddOrFollowButton({ isAdded, isFollowing, onIsAlreadyAdded, onIs
                 ? (
                     <button
                         type='button'
-                        onClick={filterKey === FilterKeys.SearchUsers ? onIsAlreadyAdded : onIsAlreadyFollowing}
+                        onClick={filterKey === FilterKeys.SearchUsers || filterKey === FilterKeys.SearchPosts ? onIsAlreadyAdded : onIsAlreadyFollowing}
                         className={`w-[2.5rem] h-[2.5rem] border rounded-full bg-maydan p-2 hover:bg-[transparent]`}
                     >
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-6">
@@ -141,7 +141,7 @@ export function AddOrFollowButton({ isAdded, isFollowing, onIsAlreadyAdded, onIs
                 : (
                     <button
                         type='button'
-                        onClick={filterKey === FilterKeys.SearchUsers ? onIsAlreadyAdded : onIsAlreadyFollowing}
+                        onClick={filterKey === FilterKeys.SearchUsers || filterKey === FilterKeys.SearchPosts ? onIsAlreadyAdded : onIsAlreadyFollowing}
                         className='w-[2.5rem] h-[2.5rem] border rounded-full p-2 hover:bg-maydan cursor-pointer'
                     >
                         {filterKey === FilterKeys.SearchUsers

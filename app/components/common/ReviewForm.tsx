@@ -5,6 +5,8 @@ import { CommonUpsertBoxTypes, PostToDisplay, User, UserItemToDisplay } from "ty
 import UserItemComponent from "@components/users/UserItem";
 import { FilterKeys } from "@stores/index";
 import { ProfileImagePreview } from "./Containers";
+import PostComponent from "@components/posts/Post";
+import { NoRecordsTitle } from "./Titles";
 
 interface Section {
     jsx: React.ReactNode;
@@ -55,7 +57,7 @@ export const ReviewUsersAdded = ({
                         onModal={true}
                     />
                 ))
-                : null}
+                :  <NoRecordsTitle>No Users Added</NoRecordsTitle>}
         </div>
     )
 };
@@ -66,18 +68,15 @@ export const ReviewPostsAdded = ({
     const postsAddedByIds = useMemo(() => postsAdded.map(p => p.post.id), [postsAdded]);
     return (
         <div className='flex flex-col'>
-            {/* {usersAdded && usersAdded.length
-                ? usersAdded.map((u: UserItemToDisplay, uIdx: number) => (
-                    <UserItemComponent
-                        key={u.user.id ?? uIdx}
-                        userItemToDisplay={u}
-                        filterKey={FilterKeys.SearchUsers}
-                        usersAlreadyFollowedOrAddedIds={usersAddedByIds}
-                        canAddOrFollow={false}
-                        onModal={true}
-                    />
+            {postsAdded && postsAdded.length
+                ? postsAdded.map((postToDisplay: PostToDisplay, postIdx: number) => (
+                <PostComponent
+                  filterKey={FilterKeys.SearchPosts}
+                  key={postToDisplay.post.id ?? postIdx}
+                  postToDisplay={postToDisplay}
+                />
                 ))
-                : null} */}
+                : <NoRecordsTitle>No Posts Added</NoRecordsTitle>}
         </div>
     )
 };
@@ -92,7 +91,9 @@ export const ReviewNewListOrCommunity = ({
 }: ReviewNewCommunityProps) => (
     <div className='flex flex-col'>
         <div className='flex flex-col x-space-3 justify-items-between'>
-            <h5 className='font-bold'>Community Avatar:</h5>
+            <h5 className='font-bold mr-2'>
+                {type === CommonUpsertBoxTypes.Community ? 'Community Avatar' : 'List Banner Image'}:
+            </h5>
             <img
                 src={avatarOrImage}
                 alt={name}
@@ -101,19 +102,21 @@ export const ReviewNewListOrCommunity = ({
         </div>
 
         <div className='flex x-space-3 justify-items-between'>
-            <h5 className='font-bold'>Community Name:</h5>
+            <h5 className='font-bold mr-2'>
+                {type === CommonUpsertBoxTypes.Community ? 'Community Name' : 'List Name'}:
+            </h5>
             <p>{name}</p>
         </div>
 
         {type === CommonUpsertBoxTypes.Community && (
             <div className='flex x-space-3 justify-items-between'>
-                <h5 className='font-bold'>Visibility:</h5>
+                <h5 className='font-bold mr-2'>Visibility:</h5>
                 <p>{visibility === 'private' ? 'Private' : 'Public'}</p>
             </div>
         )}
 
         <div className='flex x-space-3 justify-items-between'>
-            <h5 className='font-bold'>Hashtags:</h5>
+            <h5 className='font-bold mr-2'>Hashtags:</h5>
             {
                 tags && tags.length
                     ? tags.map((t, tIdx) => <p key={tIdx}>{t}</p>)

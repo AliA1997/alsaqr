@@ -15,7 +15,10 @@ export enum TypeOfFeed {
 export enum NotificationType {
   Normal = "normal",
   Mentioned = "mentioned",
-  Verified = "verified"
+  Verified = "verified",
+  NewList = "new_list",
+  NewCommunity = "new_community",
+  NewPost = "new_post"
 }
 
 export enum MessageType {
@@ -152,6 +155,20 @@ export interface CommentToDisplay extends Comment {
   profileImg: string;
 }
 
+export interface CreateListOrCommunityFormDto extends CreateListOrCommunityForm {
+  usersAdded: string[];
+  postsAdded: string[];
+}
+
+export interface CreateListOrCommunityForm {
+  name: string;
+  avatarOrBannerImage: string;
+  isPrivate: "private" | "public";
+  tags: string[];
+  usersAdded: UserItemToDisplay[];
+  postsAdded: PostToDisplay[];
+}
+
 export interface ListRecord {
   id: string;
   userId: string;
@@ -196,9 +213,31 @@ export interface CommunityToDisplay {
   community: CommunityRecordToDisplay,
   founder: UserInfo
 }
-
+// CALL apoc.trigger.add('create_list_notification', 
+// 'UNWIND $createdNodes AS node
+//  WHERE labels(node)[0] = "List"
+//  MATCH (owner:User)-[:OWNS]->(node)
+//  CREATE (n:Notification {
+//    id: apoc.text.format("notification_%s", [randomUUID()]),
+//    message: "New list created by " + owner.username,
+//    read: false,
+//    relatedEntityId: node.id,
+//     link: null,
+//    createdAt: datetime(),
+//    updatedAt: null,
+//    _rev: null,
+//    _type: "notification",
+//    notificationType: "new_list"
+//  })
+//  CREATE (n)-[:NOTIFIES]->(owner)
+//  RETURN count(*)', 
+// {phase: 'after'})
 export interface NotificationRecord extends CommonRecordBody {
   id: string;
+  message: string;
+  read: boolean;
+  relatedEntityId?: string;
+  link?: string;
   createdAt: string;
   updatedAt: string;
   _rev: string;

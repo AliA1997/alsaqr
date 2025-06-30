@@ -5,19 +5,19 @@ import {
   DashboardPostToDisplay,
   PostToDisplay,
 } from "../../../typings";
-import TweetComponents from "../posts/Post";
+import PostComponent from "../posts/Post";
 // import { fetchTweets } from "../../utils/tweets/fetchTweets";
 import toast from "react-hot-toast";
 
 import { useSession } from "next-auth/react";
-import TweetBox from "../posts/PostBox";
+import PostBox from "../posts/PostBox";
 import { setFilterState } from "@utils/mobx";
 import { useSearchParams } from "next/navigation";
 import { convertQueryStringToObject, Params } from "@utils/neo4j";
-import CustomPageLoader from "../common/CustomLoader";
+import CustomPageLoader, { ModalLoader } from "../common/CustomLoader";
 import { observer } from "mobx-react-lite";
 import { FilterKeys, useStore } from "stores";
-import { PageTitle } from "../common/Titles";
+import { NoRecordsTitle, PageTitle } from "../common/Titles";
 import { ContentContainer, ContentContainerWithRef } from "../common/Containers";
 import { PagingParams } from "models/common";
 
@@ -26,6 +26,9 @@ interface Props {
   filterKey?: FilterKeys;
   hideTweetBox?: boolean;
   posts?: PostToDisplay[] | DashboardPostToDisplay[];
+  canAdd?: boolean;
+  onAdd?: (post: PostToDisplay) => void;
+  postsAlreadyAddedByIds?: string[];
 }
 
 function FeedContainer({ children }: React.PropsWithChildren<any>) {
@@ -37,7 +40,15 @@ function FeedContainer({ children }: React.PropsWithChildren<any>) {
 }
 
 
-const Feed = observer(({ title, filterKey, hideTweetBox, posts }: Props) => {
+const Feed = observer(({ 
+  title, 
+  filterKey, 
+  hideTweetBox, 
+  posts, 
+  canAdd,
+  onAdd,
+  postsAlreadyAddedByIds 
+}: Props) => {
   const searchParams = useSearchParams();
   const { data: session } = useSession();
   const { user } = session ?? {};
@@ -120,7 +131,7 @@ const Feed = observer(({ title, filterKey, hideTweetBox, posts }: Props) => {
   const loadPosts = async () => {
     if (filterKey === FilterKeys.Explore)
       await exploreStore.loadExplorePosts();
-    else if(filterKey === FilterKeys.MyBookmarks && userId) 
+    else if(filterKey === FilterKeys.SearchPosts && userId) 
       await searchStore.loadSearchedPosts(userId);
     else if(filterKey === FilterKeys.MyBookmarks && userId) 
       await bookmarkFeedStore.loadBookmarkedPosts(userId);
@@ -235,20 +246,34 @@ const Feed = observer(({ title, filterKey, hideTweetBox, posts }: Props) => {
       {title && <PageTitle>{title}</PageTitle>}
       <div>
         {session && !hideTweetBox && (
-          <TweetBox filterKey={filterKey ? filterKey : FilterKeys.Normal} />
+          <PostBox filterKey={filterKey ? filterKey : FilterKeys.Normal} />
         )}
       </div>
-      <ContentContainerWithRef ref={containerRef} style={{ minHeight: '100vh' }}>
+      <ContentContainerWithRef 
+        classNames={`
+          text-center overflow-y-auto scrollbar-hide
+          ${filterKey === FilterKeys.SearchPosts ? 'min-h-[30vh] max-h-[40vh]' : 'min-h-[100vh] max-h-[100vh]'}  
+        `}
+        ref={containerRef}
+      >
         {loading ? (
-          <CustomPageLoader title="Loading" />
+          <>
+            {filterKey === FilterKeys.SearchPosts ? <ModalLoader /> : <CustomPageLoader title="Loading" />}
+          </>
         ) : (
           <>
-            {(posts ? posts : loadedPosts ?? []).map((postRec, postKey) => (
-              <TweetComponents
-                key={postRec.post.id ?? postKey}
-                postToDisplay={postRec}
-              />
-            ))}
+            {loadedPosts && loadedPosts.length 
+              ? loadedPosts.map((postRec, postKey) => (
+                <PostComponent
+                  filterKey={filterKey}
+                  key={postRec.post.id ?? postKey}
+                  postToDisplay={postRec}
+                  onAdd={onAdd}
+                  canAdd={canAdd}
+                  postsAlreadyAddedByIds={postsAlreadyAddedByIds}
+                />
+              ))
+              : <NoRecordsTitle>No Posts to show</NoRecordsTitle>}
             <LoadMoreTrigger />
           </>
         )}

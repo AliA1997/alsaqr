@@ -34,6 +34,7 @@
     "next-auth": "^4.24.7",
     "next-sanity": "^0.8.5",
     "next-themes": "^0.2.1",
+    "node-mailjet": "^6.0.8",
     "react": "18.2.0",
     "react-datepicker": "^8.4.0",
     "react-dom": "18.2.0",

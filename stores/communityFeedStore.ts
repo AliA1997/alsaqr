@@ -1,8 +1,9 @@
 import { makeAutoObservable, reaction, runInAction } from "mobx";
-import { CommunityRecord, CommunityToDisplay } from "../typings.d";
+import { CommunityRecord, CommunityToDisplay, CreateListOrCommunityForm, CreateListOrCommunityFormDto } from "../typings.d";
 import { Pagination, PagingParams } from "models/common";
 import { fetchCommunities } from "@utils/communities/fetchCommunities";
 import agent from "@utils/common";
+import {DEFAULT_CREATED_LIST_OR_COMMUNITY_FORM } from "@utils/constants";
 
 export default class CommunityFeedStore {
 
@@ -32,6 +33,7 @@ export default class CommunityFeedStore {
 
     communityRegistry: Map<string, CommunityToDisplay> = new Map<string, CommunityToDisplay>();
     currentStepInCommunityCreation: number | undefined = undefined;
+    communityCreationForm: CreateListOrCommunityForm = DEFAULT_CREATED_LIST_OR_COMMUNITY_FORM;
 
     setLoadingInitial = (val: boolean) => {
         this.loadingInitial = val;
@@ -51,6 +53,9 @@ export default class CommunityFeedStore {
     setCurrentStepInCommunityCreation = (currentStep: number) => {
         this.currentStepInCommunityCreation = currentStep;
     }
+    setCommunityCreationForm = (val: CreateListOrCommunityForm) => {
+        this.communityCreationForm = val;
+    }
 
     resetListsState = () => {
         this.predicate.clear();
@@ -66,11 +71,21 @@ export default class CommunityFeedStore {
         return params;
     }
 
-    addCommunity = async (newCommunity: CommunityRecord, userId: string) => {
+    addCommunity = async (newCommunity: CreateListOrCommunityForm, userId: string) => {
 
         this.setLoadingInitial(true);
         try {
-            await agent.communityApiClient.addCommunity(newCommunity, userId);
+            const newCommunityDto: CreateListOrCommunityFormDto = { 
+                ...newCommunity, 
+                usersAdded: newCommunity.usersAdded.map(u => u.user.id),
+                postsAdded: newCommunity.postsAdded.map(p => p.post.id)
+            };
+            await agent.communityApiClient.addCommunity(newCommunityDto, userId);
+
+            runInAction(() => {
+                this.setCurrentStepInCommunityCreation(0);
+                this.setCommunityCreationForm(DEFAULT_CREATED_LIST_OR_COMMUNITY_FORM);
+            });
         } finally {
             this.setLoadingInitial(false);
         }
