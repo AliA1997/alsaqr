@@ -16,9 +16,14 @@ export enum NotificationType {
   Normal = "normal",
   Mentioned = "mentioned",
   Verified = "verified",
+  YourAccount = "your_account",
+  BookmarkedPost = 'bookmarked_post',
+  LikedPost = 'liked_post',
+  RePostedPost = 'reposted_post',
+  CommentedPost = 'commented_post',
   NewList = "new_list",
   NewCommunity = "new_community",
-  NewPost = "new_post"
+  NewPost = "new_post",
 }
 
 export enum MessageType {
@@ -139,15 +144,16 @@ export interface PostRecord extends CommonRecordBody {
   userId?: string;
 }
 
+export interface CommentForm extends Comment {};
 
 export interface Comment extends CommonRecordBody {
   id: string;
   postId: string;
   userId: string;
   image: string;
-  createdAt: string;
   text: string;
-  updatedAt: string;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface CommentToDisplay extends Comment {

@@ -52,8 +52,7 @@ const SideBar = ({}: SideBarProps) => {
     if(notLoggedIn && showLoginModal) {
       showModal(<LoginModal />);
     }
-    if(registrationNotCompleted && session?.user) 
-      showModal(<RegisterModal userInfo={session?.user!} />);
+      
     if(!registrationNotCompleted && session?.user)
       closeModal();
 

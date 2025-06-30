@@ -3,7 +3,7 @@ import { BookmarkIcon, HeartIcon, UploadIcon } from "@heroicons/react/outline";
 import { BookmarkIcon as BookmarkFillIcon } from "@heroicons/react/solid";
 import { FilterKeys } from "@stores/index";
 
-interface CommentIconButtonProps extends React.ButtonHTMLAttributes<HTMLDivElement> {
+interface CommentIconButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
     numberOfComments: number;
 }
 interface LikesIconButtonProps extends React.ButtonHTMLAttributes<HTMLDivElement> {
@@ -27,7 +27,8 @@ interface AddOrFollowIconButtonProps extends React.ButtonHTMLAttributes<HTMLButt
 
 export function CommentIconButton({ onClick, numberOfComments }: CommentIconButtonProps) {
     return (
-        <motion.div
+        <motion.button
+            type="button"
             whileHover={{ scale: 1.1 }}
             whileTap={{ scale: 0.9 }}
             onClick={onClick}
@@ -49,7 +50,7 @@ export function CommentIconButton({ onClick, numberOfComments }: CommentIconButt
             </svg>
 
             <p className="text-center">{numberOfComments}</p>
-        </motion.div>
+        </motion.button>
     );
 }
 

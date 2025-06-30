@@ -26,19 +26,23 @@ async function GET(
   try {
     // Adjust the Cypher query to fetch the tweet by ID
 
-    const tweets = await read(
+    const posts = await read(
       session,
       `
-        MATCH (tweet:Post { id: $tweetId })
-        OPTIONAL MATCH (tweet)-[:HAS_COMMENT]->(c:Comment)<-[:COMMENTED]-(u:User)
-        OPTIONAL MATCH (tweet)<-[:REPOSTED]-(reposter:User)
-        OPTIONAL MATCH (tweet)<-[:LIKED]-(liker:User)
-        WITH tweet,
+        MATCH (post:Post { id: $tweetId }), (user: User { id: post.userId })
+        OPTIONAL MATCH (post)-[:HAS_COMMENT]->(c:Comment)<-[:COMMENTED]-(u:User)
+        OPTIONAL MATCH (post)<-[:REPOSTED]-(reposter:User)
+        OPTIONAL MATCH (post)<-[:LIKED]-(liker:User)
+        WITH post,
+            user.username as username,
+            user.avatar as profileImg,
             COLLECT(DISTINCT c) AS comments,
             COLLECT(DISTINCT u) AS commenters,
             COLLECT(DISTINCT reposter) AS reposters,
             COLLECT(DISTINCT liker) AS likers
-        RETURN tweet,
+        RETURN post,
+              username,
+              profileImg,
               comments,
               commenters,
               reposters,
@@ -46,13 +50,13 @@ async function GET(
         LIMIT 100
       `,
       { tweetId },
-      ["tweet", "comments", "commenters", "reposters", "likers"]
+      ["post", "username", "profileImg", "comments", "commenters", "reposters", "likers"]
     );
     
-    const tweet = tweets ? tweets[0] : undefined;
+    const post = posts ? posts[0] : undefined;
 
-    if (tweet) {
-      return NextResponse.json({ tweet, success: true });
+    if (post) {
+      return NextResponse.json({ post, success: true });
     } else {
       throw new Error(`Post not found based on status id ${tweetId}`);
     }

@@ -2,7 +2,7 @@ import { defineDriver, write } from "@utils/neo4j/neo4j";
 import { NextRequest, NextResponse } from "next/server";
 import { UserRegisterFormDto } from "typings.d";
 
-async function POST(
+async function POST_COMPLETE_REGISTRATION(
     request: NextRequest,
     { params }: { params: { user_id: string } }
 ) {
@@ -39,10 +39,30 @@ async function POST(
       { ...data, userId }
     );
 
+    await write(
+      session,
+      `
+        MATCH (u:User {id: $userId})
+        CREATE (u)-[:NOTIFIED_BY]->(n:Notification {
+          id: "notification_" + randomUUID(),
+          message: "You Completed your account registration.",
+          read: false,
+          relatedEntityId: u.id,
+          link: "/users/" + u.username,
+          createdAt: datetime(),
+          updatedAt: null,
+          _rev: null,
+          _type: "notification",
+          notificationType: "your_account"
+        })
+        `,
+      { userId: userId }
+    );
+
     return NextResponse.json({ success: true });
   } catch (error) {
     return NextResponse.error();
   }
 }
 
-export { POST };
+export { POST_COMPLETE_REGISTRATION as POST };

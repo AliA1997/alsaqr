@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { defineDriver, read, write } from "@utils/neo4j/neo4j";
 import { PostToDisplay } from "typings";
 
-async function PATCH(
+async function PATCH_BOOKMARKED_POST(
   request: NextRequest,
   { params }: { params: { tweet_id: string } }
 ) {
@@ -33,6 +33,34 @@ async function PATCH(
         `,
         { userId: body["userId"], tweetId: tweet_id }
       );
+
+      
+      await write(
+        session,
+        `
+          // Match bookmarking user
+          MATCH (bookmarkingUser:User {id: $userId})
+          // Match the post node (fixed variable name from pst to post for consistency)
+          MATCH (post:Post {id: $tweetId})
+          // Match the post author (fixed relationship direction)
+          MATCH (author:User)-[:POSTED]->(post)
+          // Create notification connected to author
+          CREATE (author)-[:NOTIFIED_BY]->(n:Notification {
+            id: "notification_" + randomUUID(),
+            message: "Post bookmarked by " + bookmarkingUser.username,
+            read: false,
+            relatedEntityId: post.id,
+            link: "/status/" + post.id,
+            createdAt: datetime(),
+            updatedAt: null,
+            _rev: null,
+            _type: "notification",
+            notificationType: "bookmarked_post"
+          })
+          `,
+        { userId: body["userId"], tweetId: tweet_id }
+      );
+
     } else if (body["bookmarked"]) {
       await write(
         session,
@@ -40,6 +68,24 @@ async function PATCH(
         MATCH (u:User {id: $userId})-[r:BOOKMARKED]->(t:Post {id: $tweetId})
         DELETE r
         `,
+        { userId: body["userId"], tweetId: tweet_id }
+      );
+
+      await write(
+        session,
+        `
+          // Match the bookmarking user and post
+          MATCH (bookmarkingUser:User {id: $userId})
+          MATCH (post:Post {id: $tweetId})
+          // Match the author who created the post
+          MATCH (author:User)-[:POSTED]->(post)
+          // Find and delete the specific notification
+          MATCH (author)-[r:NOTIFIED_BY]->(n:Notification {
+            relatedEntityId: post.id,
+            notificationType: "bookmarked_post"
+          })
+          DELETE r, n
+          `,
         { userId: body["userId"], tweetId: tweet_id }
       );
     }
@@ -51,4 +97,4 @@ async function PATCH(
   }
 }
 
-export {  PATCH };
+export { PATCH_BOOKMARKED_POST as PATCH };

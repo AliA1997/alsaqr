@@ -79,7 +79,7 @@ export default async function RootLayout({
                       <LoadingSpinner color="text-green-500" size="w-8 h-8" />
                     }
                   >
-                    <PageContainer>{children}</PageContainer>
+                  <PageContainer>{children}</PageContainer>
                   </Suspense>
                 </main>
               </div>

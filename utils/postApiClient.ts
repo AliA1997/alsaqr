@@ -3,11 +3,13 @@ import axios from "axios";
 import { axiosRequests, axiosResponseBody } from "./common";
 // import { APIResult, PaginatedResult } from "../models/common";
 // import { QueriedAutocompleteOption, WikiPageSearchResult } from "../models/search";
-import { PostRecord } from "typings";
+import { CommentForm, PostRecord } from "typings";
 
 export const postApiClient = {
     addPost: (values: PostRecord) =>
-        axiosRequests.post(`/api/posts`, { values }).then(axiosResponseBody),     
+        axiosRequests.post(`/api/posts`, { values }).then(axiosResponseBody),  
+    addComment: (values: CommentForm) =>
+        axiosRequests.post(`/api/comments`, { values }).then(axiosResponseBody),     
     getPosts: (params: URLSearchParams | undefined) =>
         axios.get(`/api/posts`, { params }).then(axiosResponseBody),
     getPostsToAdd: (userId: string, params: URLSearchParams) =>

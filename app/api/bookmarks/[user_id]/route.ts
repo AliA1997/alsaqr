@@ -106,13 +106,14 @@ async function POST(
             // Match the user node
             MERGE (u:User {id: $userId})
             // Match the tweet node
-            MERGE (t:Post {id: $tweetId})
+            MERGE (pst:Post {id: $tweetId})
             // Create the 'BOOKMARKED' relationship with a timestamp
-            MERGE (u)-[r:BOOKMARKED]->(t)
+            MERGE (u)-[r:BOOKMARKED]->(pst)
             ON CREATE SET r.timestamp = timestamp()
           `,
         { userId, tweetId }
       );
+
     } else if (isBookmarked === true) {
       await write(
         session,
@@ -128,6 +129,7 @@ async function POST(
           `,
         { userId, tweetId }
       );
+      
     }
 
     return NextResponse.json({ success: true });

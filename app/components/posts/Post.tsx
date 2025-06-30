@@ -1,5 +1,5 @@
 "use client";
-import { BookmarkIcon, HeartIcon, UploadIcon } from "@heroicons/react/outline";
+import { BookmarkIcon, HeartIcon, UploadIcon, XIcon } from "@heroicons/react/outline";
 import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
 import React, {
@@ -12,7 +12,7 @@ import toast from "react-hot-toast";
 import TimeAgo from "react-timeago";
 
 // import { auth } from "../firebase/firebase";
-import { CommentToDisplay, PostToDisplay, User } from "../../../typings";
+import { CommentForm, CommentToDisplay, PostToDisplay, User } from "../../../typings";
 import {
   getPercievedNumberOfRecord,
   stopPropagationOnClick,
@@ -24,6 +24,10 @@ import { FilterKeys, useStore } from "@stores/index";
 import { LoginModal } from "../common/AuthModals";
 import { convertDateToDisplay } from "@utils/neo4j/neo4j";
 import { AddOrFollowButton, BookmarkedIconButton, CommentIconButton, LikesIconButton, RePostedIconButton } from "../common/IconButtons";
+import { faker } from "@faker-js/faker";
+import UpsertBoxIconButton from "@components/common/UpsertBoxIconButtons";
+import { ModalLoader } from "@components/common/CustomLoader";
+import NextImage from 'next/image';
 
 interface Props {
   postToDisplay: PostToDisplay;
@@ -44,7 +48,7 @@ function PostComponent({
   const { data: session } = useSession();
   const { feedStore, modalStore } = useStore();
   const { showModal } = modalStore;
-  const { rePost, likedPost, bookmarkPost, loadComments, comments, posts } = feedStore;
+  const { rePost, likedPost, bookmarkPost, loadComments, comments, posts, addComment, loadingComments } = feedStore;
 
   const [currentComments, setCurrentComments] = useState<CommentToDisplay[]>(() => {
     const comments = session && session.user ? (session.user as any).comments : [];
@@ -52,6 +56,8 @@ function PostComponent({
   });
 
   const [input, setInput] = useState<string>("");
+  const [image, setImage] = useState<string>("");
+
   const [commentBoxOpen, setCommentBoxOpen] = useState<boolean>(false);
   const [isBookmarked, setIsBookmarked] = useState<boolean>(false);
   const [isRePosted, setIsRePosted] = useState<boolean>(false);
@@ -124,10 +130,10 @@ function PostComponent({
       const twtAlreadyRetweeted =
         reposts?.some((repost: string) => repost === postInfo.id) ?? false;
 
-      const twtAlreadyBookmarked = 
+      const twtAlreadyBookmarked =
         (session.user as any).bookmarks?.some((bk: string) => bk === postInfo.id) ?? false;
 
-      if(postsAlreadyAddedByIds)
+      if (postsAlreadyAddedByIds)
         setIsAdded(postsAlreadyAddedByIds.some(pstId => pstId === postInfo.id));
 
       initiallyBooleanValues.current = {
@@ -141,18 +147,25 @@ function PostComponent({
     }
   }, [session]);
 
-  const handleSubmit = async (
-    e: React.MouseEvent<HTMLButtonElement, globalThis.MouseEvent>
-  ) => {
-    e.preventDefault();
+  const handleSubmit = async () => {
 
     const commentToast = toast.loading("Posting Comment...");
+
+    const newComment: CommentForm = {
+      id: `comment_${faker.datatype.uuid()}`,
+      postId: postInfo.id,
+      userId: postInfo.userId!,
+      text: input,
+      image: image,
+    }
 
     toast.success("Comment Posted!", {
       id: commentToast,
     });
 
+    await addComment(newComment);
     setInput("");
+    setImage("");
     setCommentBoxOpen(false);
     refreshComments();
   };
@@ -207,7 +220,7 @@ function PostComponent({
         setIsBookmarked(!isBookmarked);
         await bookmarkPost({
           statusId: postInfo.id,
-          userId: userId!, 
+          userId: userId!,
           bookmarked: isBookmarked
         });
       });
@@ -220,30 +233,29 @@ function PostComponent({
   const userId = useMemo(() => session && session.user ? (session.user as any)['id'] : "", [session]);
   const isSearchedPosts = useMemo(() => (filterKey ?? FilterKeys.Normal) === FilterKeys.SearchPosts, [filterKey]);
   const onIsAlreadyAdded = async () => {
-      const beforeUpdate = isAdded;
-      try {
-          await checkUserIsLoggedInBeforeUpdatingTweet(async () => {
-            setIsAdded(!isAdded);
-            onAdd!(postToDisplay);
-          });
-      } catch {
-          setIsAdded(beforeUpdate);
-      }
+    const beforeUpdate = isAdded;
+    try {
+      await checkUserIsLoggedInBeforeUpdatingTweet(async () => {
+        setIsAdded(!isAdded);
+        onAdd!(postToDisplay);
+      });
+    } catch {
+      setIsAdded(beforeUpdate);
+    }
   };
-  
+
   return (
     <div
       className="flex flex-col space-x-3 border-y border-gray-100 p-5 hover:shadow-lg dark:border-gray-800 dark:hover:bg-[#000000]"
-      onClick={navigateToTweet}
     >
       {canAdd && (
-          <AddOrFollowButton
-            isAdded={isAdded ?? false}
-            filterKey={filterKey ?? FilterKeys.Normal}
-            onIsAlreadyAdded={onIsAlreadyAdded!}
-          />
+        <AddOrFollowButton
+          isAdded={isAdded ?? false}
+          filterKey={filterKey ?? FilterKeys.Normal}
+          onIsAlreadyAdded={onIsAlreadyAdded!}
+        />
       )}
-       
+
       <div className="flex space-x-3 cursor-pointer">
         <img
           className="h-10 w-10 rounded-full object-cover "
@@ -297,23 +309,25 @@ function PostComponent({
           )}
         </div>
       </div>
-      
+
       {!isSearchedPosts && (
-          <div className="mt-5 flex justify-between">
-            <CommentIconButton
-              onClick={(e) =>
-                stopPropagationOnClick(e, () => {
+        <div className="mt-5 flex justify-between">
+          <CommentIconButton
+            onClick={(e) =>
+              stopPropagationOnClick(e, () => {
+                if (!session || !session.user)
                   showModal(<LoginModal />);
-                  setCommentBoxOpen(!commentBoxOpen);
-                })}
-              numberOfComments={numberOfComments}
-            />
-            <RePostedIconButton
-              onClick={(e) => stopPropagationOnClick(e, onRetweet)}
-              numberOfRePosts={numberOfRetweets}
-              isRePosted={isRePosted}
-            />
-            <LikesIconButton
+
+                setCommentBoxOpen(!commentBoxOpen);
+              })}
+            numberOfComments={numberOfComments}
+          />
+          <RePostedIconButton
+            onClick={(e) => stopPropagationOnClick(e, onRetweet)}
+            numberOfRePosts={numberOfRetweets}
+            isRePosted={isRePosted}
+          />
+          <LikesIconButton
             onClick={(e) => stopPropagationOnClick(e, onLikeTweet)}
             numberOfLikes={numberOfLikes}
             isLiked={isLiked}
@@ -341,8 +355,35 @@ function PostComponent({
               initial={{ opacity: 0 }}
               whileInView={{ opacity: 1 }}
               viewport={{ once: true }}
+              className='flex flex-col justify-items-start'
             >
-              <form className="mt-3 flex space-x-3">
+              <form
+                onSubmit={handleSubmit}
+                className="mt-3 flex space-x-3"
+              >
+                {image && (
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    whileInView={{ opacity: 1 }}
+                    viewport={{ once: true }}
+                    className='relative'
+                  >
+                    <button
+                      onClick={() => setImage("")} // Replace with your close logic
+                      className="absolute left-2 top-2 z-10 rounded-full bg-red-800 p-2 text-white hover:bg-red-700 focus:outline-none"
+                      aria-label="Close"
+                    >
+                      <XIcon className="h-5 w-5" /> 
+                    </button>
+                    <NextImage
+                      className="mt-10 h-40 w-full rounded-xl object-contain shadow-lg"
+                      src={image}
+                      width={20}
+                      height={20}
+                      alt="image/tweet"
+                    />
+                  </motion.div>
+                )}
                 <input
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
@@ -351,52 +392,58 @@ function PostComponent({
                   placeholder="Write a comment..."
                 />
                 <button
-                  onClick={handleSubmit}
                   disabled={!input}
                   type="submit"
-                  className="text-maydan  disabled:text-gray-200 cursor-pointer"
+                  className="text-maydan disabled:text-gray-200 cursor-pointer"
                 >
                   Post
                 </button>
               </form>
+              <UpsertBoxIconButton setInput={setInput} input={input} setImage={setImage} />
             </motion.div>
           )}
         </>
       )}
       {!isSearchedPosts && commentBoxOpen && (
         <>
-          {currentComments?.length > 0 && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              whileInView={{ opacity: 1 }}
-              viewport={{ once: true }}
-              className="my-2 mt-5 max-h-44 space-y-5 overflow-y-scroll border-t border-gray-100 p-5 scrollbar-thin scrollbar-thumb-blue-100"
-            >
-              {currentComments.map((comment: CommentToDisplay) => (
-                <div key={comment.id} className="flex space-x-2">
-                  <hr className="top-10 h-8 border-x border-maydan/30" />
-                  <img
-                    src={comment.profileImg}
-                    className="mt-2 h-7 w-7 rounded-full object-cover"
-                    alt=""
-                  />
-                  <div>
-                    <div className="flex items-center space-x-l">
-                      <p className="mr-1 font-bold">{comment.username}</p>
-                      <p className="hidden text-sm text-gray-500 lg:inline">
-                        @{comment.username.replace(/\s+/g, "")}.
-                      </p>
-                      <TimeAgo
-                        className="text-sm text-gray-500"
-                        date={convertDateToDisplay(comment.createdAt)}
-                      />
-                    </div>
-                    <p>{comment.text}</p>
-                  </div>
-                </div>
-              ))}
-            </motion.div>
-          )}
+          {loadingComments
+            ? (<ModalLoader />)
+            : (
+              <>
+                {currentComments?.length > 0 && (
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    whileInView={{ opacity: 1 }}
+                    viewport={{ once: true }}
+                    className="my-2 mt-5 max-h-44 space-y-5 overflow-y-scroll border-t border-gray-100 p-5 scrollbar-thin scrollbar-thumb-blue-100"
+                  >
+                    {currentComments.map((comment: CommentToDisplay) => (
+                      <div key={comment.id} className="flex space-x-2">
+                        <hr className="top-10 h-8 border-x border-maydan/30" />
+                        <img
+                          src={comment.profileImg}
+                          className="mt-2 h-7 w-7 rounded-full object-cover"
+                          alt=""
+                        />
+                        <div>
+                          <div className="flex items-center space-x-l">
+                            <p className="mr-1 font-bold">{comment.username}</p>
+                            <p className="hidden text-sm text-gray-500 lg:inline">
+                              @{comment.username.replace(/\s+/g, "")}.
+                            </p>
+                            <TimeAgo
+                              className="text-sm text-gray-500"
+                              date={convertDateToDisplay(comment.createdAt)}
+                            />
+                          </div>
+                          <p>{comment.text}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </motion.div>
+                )}
+              </>
+            )}
         </>
       )}
     </div>

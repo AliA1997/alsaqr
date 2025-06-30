@@ -1,7 +1,7 @@
 'use client';
 import dynamic from "next/dynamic";
 import React, { Suspense, useEffect, useRef, useState } from "react";
-const TweetComponent = dynamic(() => import("../../components/posts/Post"), {
+const PostComponent = dynamic(() => import("../../components/posts/Post"), {
   ssr: false,
 });
 import { getServerSession } from "next-auth";
@@ -24,25 +24,15 @@ const StatusPage = ({ params }: StatusPageProps) => {
   const { loadPost, loadedPost, loadingPost } = feedStore;
   useEffect(() => {
     loadPost(params.status_id);
-    alert("Params Status Id " + params.status_id)
   },[params.status_id])
 
   return (
     <div className="col-span-7 scrollbar-hide border-x max-h-screen overflow-scroll lg:col-span-5 dark:border-gray-800">
-      {/* <div className="flex items-center justify-between"> */}
-        {/* <h1>User Status</h1> */}
-        {/* <p>{JSON.stringify(tweet)}</p> */}
-        {/* <Suspense fallback={<h4 className="text-body">Loading...</h4>}>
-          <TweetComponent
-            postToDisplay={loadingPost ?? {}}
-          />
-        </Suspense>
-      </div> */}
       <ContentContainerWithRef ref={containerRef} style={{ minHeight: '100vh' }}>
-        {loadingPost ? (
+        {loadingPost && !loadedPost ? (
           <CustomPageLoader title="Loading" />
         ) : (
-          <TweetComponent
+          <PostComponent
             postToDisplay={loadedPost!}
           />
         )}

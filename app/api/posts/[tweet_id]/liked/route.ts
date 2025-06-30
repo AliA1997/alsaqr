@@ -4,7 +4,7 @@ import { defineDriver, read, write } from "@utils/neo4j/neo4j";
 import { PostToDisplay } from "typings";
 
 
-async function PATCH(
+async function PATCH_LIKED_POST(
     request: NextRequest,
     { params }: { params: { tweet_id: string } }
   ) {
@@ -36,6 +36,33 @@ async function PATCH(
           `,
           { userId: body["userId"], tweetId: tweet_id }
         );
+
+        await write(
+          session,
+          `
+            // Match liking user
+            MATCH (likingUser:User {id: $userId})
+            // Match the post node (fixed variable name from pst to post for consistency)
+            MATCH (post:Post {id: $tweetId})
+            // Match the post author (fixed relationship direction)
+            MATCH (author:User)-[:POSTED]->(post)
+            // Create notification connected to author
+            CREATE (author)-[:NOTIFIED_BY]->(n:Notification {
+              id: "notification_" + randomUUID(),
+              message: "Post liked by " + likingUser.username,
+              read: false,
+              relatedEntityId: post.id,
+              link: "/status/" + post.id,
+              createdAt: datetime(),
+              updatedAt: null,
+              _rev: null,
+              _type: "notification",
+              notificationType: "liked_post"
+            })
+            `,
+          { userId: body["userId"], tweetId: tweet_id }
+        );
+      
       } else if (body["liked"]) {
         await write(
           session,
@@ -50,6 +77,24 @@ async function PATCH(
           `,
           { userId: body["userId"], tweetId: tweet_id }
         );
+
+        await write(
+          session,
+          `
+            // Match the liking user and post
+            MATCH (likingUser:User {id: $userId})
+            MATCH (post:Post {id: $tweetId})
+            // Match the author who created the post
+            MATCH (author:User)-[:POSTED]->(post)
+            // Find and delete the specific notification
+            MATCH (author)-[r:NOTIFIED_BY]->(n:Notification {
+              relatedEntityId: post.id,
+              notificationType: "liked_post"
+            })
+            DELETE r, n
+            `,
+          { userId: body["userId"], tweetId: tweet_id }
+        );
       }
   
       return NextResponse.json({ success: true });
@@ -59,4 +104,4 @@ async function PATCH(
     }
   }
 
-export {  PATCH };
+export { PATCH_LIKED_POST as PATCH };

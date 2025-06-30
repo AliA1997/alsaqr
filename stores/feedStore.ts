@@ -1,10 +1,11 @@
 import { makeAutoObservable, reaction, runInAction } from "mobx";
 import Auth from "../utils/auth"
-import { Comment, CommentToDisplay, PostRecord, PostToDisplay } from "../typings.d";
+import { Comment, CommentForm, CommentToDisplay, PostRecord, PostToDisplay } from "../typings.d";
 import { Pagination, PagingParams } from "models/common";
 // import { fetchTweets } from "@utils/tweets/fetchTweets";
 import agent from "@utils/common";
 import { BookmarkParams, LikedPostParams, RePostParams } from "models/posts";
+import { faker } from "@faker-js/faker";
 
 export default class FeedStore {
 
@@ -23,6 +24,7 @@ export default class FeedStore {
 
     loadingInitial = false;
     loadingPost = false;
+    loadingComments = false;
     predicate = new Map();
     setPredicate = (predicate: string, value: string | number | Date | undefined) => {
         if(value) {
@@ -60,6 +62,9 @@ export default class FeedStore {
     }
     setLoadingPost = (value: boolean) => {
         this.loadingPost = value;
+    }
+    setLoadingComments = (value: boolean) => {
+        this.loadingComments = value;
     }
     setLoadedPost = (value: PostToDisplay) => {
         this.loadedPost = value;
@@ -116,6 +121,17 @@ export default class FeedStore {
         }
 
     }
+    addComment = async (newComment: CommentForm) => {
+
+        this.setLoadingInitial(true);
+        try {
+            await agent.postApiClient.addComment(newComment) ?? {};
+
+        } finally {
+            this.setLoadingInitial(false);
+        }
+
+    }
     rePost = async (rePostParams: RePostParams) => {
 
         this.setLoadingInitial(true);
@@ -154,8 +170,8 @@ export default class FeedStore {
 
         this.setLoadingPost(true);
         try {
-            const post = await agent.postApiClient.getPost(postId) ?? {};
-
+            const {post} = await agent.postApiClient.getPost(postId) ?? {};
+            console.log('loaded Post:', JSON.stringify(post));
             runInAction(() => {
                 this.setLoadedPost(post);
             });
@@ -167,7 +183,7 @@ export default class FeedStore {
 
     loadComments = async (postId: string) => {
 
-        this.setLoadingInitial(true);
+        this.setLoadingComments(true);
         let results: CommentToDisplay[] = [];
         try {
             const comments = await agent.postApiClient.getComments(postId) ?? {};
@@ -180,7 +196,7 @@ export default class FeedStore {
 
             results = comments;
         } finally {
-            this.setLoadingInitial(false);
+            this.setLoadingComments(false);
         }
         return results;
     }
