@@ -1,26 +1,29 @@
+import { faker } from "@faker-js/faker";
 import { extractQryParams } from "@utils/common";
 import { commonCountCipher } from "@utils/neo4j";
-import { defineDriver, read } from "@utils/neo4j/neo4j";
+import { defineDriver, read, write } from "@utils/neo4j/neo4j";
 import { PaginatedResult, Pagination } from "models/common";
-import {  CommunityDiscussionMessageToDisplay } from "models/community";
+import {  CommunityDiscussionInfoForMessageRoom, CommunityDiscussionMessage, CommunityDiscussionMessageDto, CommunityDiscussionMessageToDisplay } from "models/community";
 import { int } from "neo4j-driver";
 import { NextRequest, NextResponse } from "next/server";
 
 
-async function GET(
+async function GET_COMMUNITY_DISCUSSION_INFO(
   request: NextRequest,
-  { params }: { params: { community_discussion_id: string } }
+  { params }: { params: { community_id: string, community_discussion_id: string } }
 ) {
-  const { community_discussion_id } = params;
+  const { community_id, community_discussion_id } = params;
   const communityDiscussionId = community_discussion_id as string;
-
-  const [currentPage, itemsPerPage, searchTerm] = extractQryParams(request, ['currentPage', 'itemsPerPage', 'searchTerm']);
-  const currentPageParsed = parseInt(currentPage!);
-  const itemsPerPageParsed = parseInt(itemsPerPage!);
+  const communityId = community_id as string;
 
   let communityDiscussionMessages: CommunityDiscussionMessageToDisplay[] = [];
   let pagination: Pagination | undefined = undefined;
+  let communityDiscussionInfo: CommunityDiscussionInfoForMessageRoom | undefined; 
   
+if (!communityId) {
+    return new NextResponse("Community Discussion must have an community id", { status: 400 });
+  }
+
   if (!communityDiscussionId) {
     return new NextResponse("Community Discussion must have an id", { status: 400 });
   }
@@ -29,84 +32,39 @@ async function GET(
   const session = driver.session();
 
   try {
-    let selectResult,  pagingResult, selectQuery;
-
-    let pagingQuery = `SKIP $skip LIMIT $itemsPerPage`;
-
-    if(searchTerm){
-      selectQuery = `
-          MATCH (cd: CommunityDiscussion { id: $communityDiscussionId })-[:DISCUSSION_MESSAGE_POSTED]->(communityDiscussionMessage: CommunityDiscussionMessage)
-          WHERE communityDiscussionMessage.messageText CONTAINS $searchTerm
-          WITH communityDiscussionMessage
-          RETURN communityDiscussionMessage
-      `;
-
-      selectResult = await read(
+    const result = await read(
         session,
-        `${selectQuery} ${pagingQuery}`,
-        {
-          communityDiscussionId,
-          searchTerm: searchTerm ?? "",
-          skip: int((currentPageParsed - 1) *  itemsPerPageParsed),
-          itemsPerPage: int(itemsPerPageParsed)
-        },
-        ["communityDiscussionMessage"]
-    );
-      
-      pagingResult = await read(
-        session,
-        commonCountCipher(selectQuery, 'communityDiscussionMessage'),
-        {
-          communityDiscussionId,
-          searchTerm: searchTerm ?? "",
-        },
-        'total'
-      );
-    } else {
-      selectQuery = `
-          MATCH (cd: CommunityDiscussion { id: $communityDiscussionId })-[:DISCUSSION_MESSAGE_POSTED]->(communityDiscussionMessage: CommunityDiscussionMessage)
-          WITH communityDiscussionMessage
-          RETURN communityDiscussionMessage
-      `;
-      selectResult = await read(
-        session,
-        `${selectQuery} ${pagingQuery}`,
-        {
-          communityDiscussionId,
-          skip: int((currentPageParsed - 1) *  itemsPerPageParsed),
-          itemsPerPage: int(itemsPerPageParsed)
-        },
-        ["communityDiscussionMessage"]
-      );
-
-      pagingResult = await read(
-        session,
-        commonCountCipher(selectQuery, 'communityDiscussionMessage'),
+        `
+          MATCH (cmtyDisc:CommunityDiscussion {id: $communityDiscussionId})-[:POSTED_DISCUSSION_ON]->(cmty:Community)
+          OPTIONAL MATCH (cmtyDisc)-[:INVITED_TO_DISCUSSION]->(iUsers: User)
+          OPTIONAL MATCH (cmtyDisc)-[:JOINED_DISCUSSION]->(jUsers: User)
+          WITH cmtyDisc as communityDiscussion,
+                cmty as community,
+                collect(DISTINCT iUsers) as invitedUsers,
+                collect(DISTINCT jUsers) as joinedUsers
+          RETURN communityDiscussion, community, invitedUsers, joinedUsers
+        `,
         {
           communityDiscussionId
         },
-        'total'
-      );
-    }
-    const pagingResultParsed = parseInt((pagingResult ?? ['0'])[0]);
+        ["communityDiscussion", 'community', 'invitedUsers', 'joinedUsers']
+    );
+    
+    communityDiscussionInfo = result && result.length ? result[0] : undefined;
 
-    pagination = {
-      itemsPerPage: itemsPerPageParsed,
-      currentPage: currentPageParsed, 
-      totalItems: pagingResultParsed,
-      totalPages: pagingResultParsed / itemsPerPageParsed
-    };
-    
-    communityDiscussionMessages = selectResult ?? []; // Adjust based on your schema
-    
   } catch (err) {
-    return NextResponse.json({ message: "Fetch community discussion messages error!", success: false });
+    return NextResponse.json({ message: "Fetch community discussion info error!", success: false });
   }
   finally {
     await session.close();
   }
 
-  return NextResponse.json({ 
-      result: new PaginatedResult<any>(communityDiscussionMessages, pagination!) 
-   });
+  return NextResponse.json(communityDiscussionInfo ?? {});
 }
+
+
+
+
+export {
+  GET_COMMUNITY_DISCUSSION_INFO as GET,
+};

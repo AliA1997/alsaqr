@@ -60,7 +60,8 @@ export const authOptions: NextAuthOptions = {
         };
 
       }
-
+      
+      // console.log("session.user:", session.user)
       return session;
     },
     async signIn({ account, profile }) {

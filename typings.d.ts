@@ -17,6 +17,7 @@ export enum NotificationType {
   Mentioned = "mentioned",
   Verified = "verified",
   YourAccount = "your_account",
+  FollowUser = "follow_user",
   BookmarkedPost = 'bookmarked_post',
   LikedPost = 'liked_post',
   RePostedPost = 'reposted_post',
@@ -35,6 +36,7 @@ export enum CommonUpsertBoxTypes {
   Post = "Post",
   List = "List",
   Community = "Community",
+  CommunityDiscussion = "CommunityDiscussion",
   Register = "Register"
 }
 
@@ -52,6 +54,8 @@ export type CommonRecordBody = {
 export interface ProfileUser {
   user: User;
   bookmarks: string[];
+  following?: User[];
+  followers?: User[];
 }
 
 
@@ -208,6 +212,7 @@ export interface CommunityRecord {
   _type: "community";
   isPrivate: boolean;
   tags: string[];
+  joinedUsersToDisplay: User[];
 }
 
 export interface CommunityRecordToDisplay extends CommunityRecord {

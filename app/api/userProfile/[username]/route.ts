@@ -24,11 +24,15 @@ async function GET_USER_PROFILE_INFO(
       `
         MATCH (user:User {username: $username})
         OPTIONAL MATCH (user)-[:BOOKMARKED]->(bookmark:Post)
+        OPTIONAL MATCH (user)-[:FOLLOW_USER]->(followedUser:User)
+        OPTIONAL MATCH (follower:User)-[fr:FOLLOW_USER]->(user)
         RETURN user,
-              COLLECT(DISTINCT bookmark.id) AS bookmarks
+          COLLECT(DISTINCT bookmark.id) AS bookmarks,
+          COLLECT(DISTINCT followedUser) AS following,
+          COLLECT(DISTINCT follower) AS followers
       `,
       { username },
-      ["user", 'bookmarks']
+      ["user", 'bookmarks', 'following', 'followers']
     );
     const user: ProfileUser = users && users.length ? users[0] : undefined;
     return NextResponse.json({ user, success: true });

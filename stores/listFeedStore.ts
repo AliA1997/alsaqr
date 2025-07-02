@@ -5,6 +5,7 @@ import { Pagination, PagingParams } from "models/common";
 import agent from "@utils/common";
 import { ListItemToDisplay } from "models/list";
 import { DEFAULT_CREATED_LIST_OR_COMMUNITY_FORM } from "@utils/constants";
+import { store } from ".";
 
 export default class ListFeedStore {
     
@@ -38,9 +39,13 @@ export default class ListFeedStore {
 
     listsRegistry: Map<string, ListToDisplay> = new Map<string, ListToDisplay>();
     savedListItemsRegistry: Map<string, ListItemToDisplay> = new Map<string, ListItemToDisplay>();
+    loadingUpsert = false;
     listCreationForm: CreateListOrCommunityForm = DEFAULT_CREATED_LIST_OR_COMMUNITY_FORM;
     currentStepInListCreation: number | undefined = undefined;
 
+    setLoadingUpsert = (value: boolean) => {
+        this.loadingUpsert = value;
+    }
     setLoadingInitial = (value: boolean) => {
         this.loadingInitial = value;
     }
@@ -106,7 +111,7 @@ export default class ListFeedStore {
 
     addList = async (newList: CreateListOrCommunityForm, userId: string) => {
 
-        this.setLoadingInitial(true);
+        this.setLoadingUpsert(true);
         try {
             const newListDto: CreateListOrCommunityFormDto = {
                 name: newList.name,
@@ -116,14 +121,10 @@ export default class ListFeedStore {
                 postsAdded: newList.postsAdded.map(p => p.post.id),
                 isPrivate: 'private'
             };
-            await agent.listApiClient.addList(newListDto, userId);
+            await agent.listApiClient.addList(newListDto, userId)
 
-            runInAction(() => {
-                this.setCurrentStepInListCreation(0);
-                this.setListCreationForm(DEFAULT_CREATED_LIST_OR_COMMUNITY_FORM);
-            });
         } finally {
-            this.loadingInitial = false;
+            this.setLoadingUpsert(false);
         }
 
     }

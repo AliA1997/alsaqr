@@ -4,6 +4,7 @@ export interface CommonLinkProps {
   animatedLink: boolean;
   onClick: Function;
   activeInd?: boolean;
+  classNames?: string;
 }
 
 export function CommonLink(props: React.PropsWithChildren<CommonLinkProps>) {
@@ -22,6 +23,7 @@ export function CommonLink(props: React.PropsWithChildren<CommonLinkProps>) {
       transition-all duration-200 hover:bg-gray-100 dark:hover:bg-gray-600`
         }
         ${props.activeInd ? "bg-gray-100 dark:bg-gray-600 text-maydan" : ""}
+        ${props.classNames ?? ""}
         `}
     >
       {props.children}

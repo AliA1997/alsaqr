@@ -4,6 +4,8 @@ import { Pagination, PagingParams } from "models/common";
 import { fetchCommunities } from "@utils/communities/fetchCommunities";
 import agent from "@utils/common";
 import {DEFAULT_CREATED_LIST_OR_COMMUNITY_FORM } from "@utils/constants";
+import ModalStore from "./modalStore";
+import { store } from ".";
 
 export default class CommunityFeedStore {
 
@@ -35,6 +37,10 @@ export default class CommunityFeedStore {
     currentStepInCommunityCreation: number | undefined = undefined;
     communityCreationForm: CreateListOrCommunityForm = DEFAULT_CREATED_LIST_OR_COMMUNITY_FORM;
 
+    navigatedCommunity: CommunityToDisplay | undefined = undefined;
+    setNavigateCommunity = (val: CommunityToDisplay | undefined) => {
+        this.navigatedCommunity = val;
+    }
     setLoadingInitial = (val: boolean) => {
         this.loadingInitial = val;
     }
@@ -80,7 +86,10 @@ export default class CommunityFeedStore {
                 usersAdded: newCommunity.usersAdded.map(u => u.user.id),
                 postsAdded: newCommunity.postsAdded.map(p => p.post.id)
             };
-            await agent.communityApiClient.addCommunity(newCommunityDto, userId);
+            agent.communityApiClient.addCommunity(newCommunityDto, userId)
+                .then(() => {
+                    store.modalStore.closeModal();
+                })
 
             runInAction(() => {
                 this.setCurrentStepInCommunityCreation(0);

@@ -60,6 +60,7 @@ export default class NotificationStore {
         const params = new URLSearchParams();
         params.append("currentPage", this.pagingParams.currentPage.toString());
         params.append("itemsPerPage", this.pagingParams.itemsPerPage.toString());
+        params.append('all', 'true');
         this.predicate.forEach((value, key) => params.append(key, value));
 
         return params;

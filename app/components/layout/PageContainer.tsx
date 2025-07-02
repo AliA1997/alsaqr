@@ -24,10 +24,10 @@ const PageContainer = ({
 
   useLayoutEffect(() => {
     
-    if(session && session.user && !session.user.isCompleted && retryCount.current > 2)
+    if(session && session.user && !session.user.isCompleted && retryCount.current > 1)
       showModal(<RegisterModal userInfo={session?.user!} />);
     else
-    closeModal();
+      closeModal();
 
     retryCount.current += 1;
 

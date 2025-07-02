@@ -4,7 +4,7 @@ import Image from 'next/image';
 
 export const ContentContainerWithRef = React.forwardRef(({ children, classNames, ...otherProps }: React.PropsWithChildren<any>, ref) => {
   return (
-    <div className={`max-w-xl mx-auto bg-white dark:bg-[#000000] shadow-md rounded-lg mt-10 ${classNames}`} {...otherProps}>
+    <div className={`max-w-xl mx-auto bg-white dark:bg-[#0e1517] shadow-md rounded-lg mt-10 ${classNames}`} {...otherProps}>
       {children}
     </div>    
   );
@@ -12,7 +12,7 @@ export const ContentContainerWithRef = React.forwardRef(({ children, classNames,
 
 export function ContentContainer({ children, ...otherProps }: React.PropsWithChildren<any>) {
   return (
-    <div className="max-w-xl mx-auto bg-white dark:bg-[#000000] shadow-md rounded-lg mt-10" {...otherProps}>
+    <div className="max-w-xl mx-auto bg-white dark:bg-[#0e1517] shadow-md rounded-lg mt-10" {...otherProps}>
       {children}
     </div>
   );

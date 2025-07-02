@@ -1,12 +1,12 @@
-// app/api/tweets/[tweet_id]/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import { defineDriver, write } from "@utils/neo4j/neo4j";
+import { FollowUserFormDto } from "models/users";
 
-async function PATCH(
+async function PATCH_FOLLOW_USER(
   request: NextRequest,
   { params }: { params: { user_id: string } }
 ) {
-  const body = await request.json();
+  const { values:data }: { values: FollowUserFormDto }= await request.json();
   const { user_id } = params;
   const userId = user_id as string;
 
@@ -33,7 +33,31 @@ async function PATCH(
         ON CREATE SET followUserRel.timestamp = timestamp()
         ON CREATE SET followedRel.timestamp = timestamp()
       `,
-      { userToFollowId: body["userToFollowId"], userId }
+      { userToFollowId: data.userToFollowId, userId }
+    );
+
+    await write(
+      session,
+      `
+        // Match following user
+        MATCH (followingUser:User {id: $userId})
+        // Match the followed user (fixed relationship direction)
+        MATCH (followedUser:User {id: $userToFollowId})
+        // Create notification connected to author
+        CREATE (followedUser)-[:NOTIFIED_BY]->(n:Notification {
+          id: "notification_" + randomUUID(),
+          message: followingUser.username " is following you",
+          read: false,
+          relatedEntityId: followingUser.id,
+          link: "/users/" + followingUser.id,
+          createdAt: datetime(),
+          updatedAt: null,
+          _rev: null,
+          _type: "notification",
+          notificationType: "follow_user"
+        })
+        `,
+      { userId,userToFollowId: data.userToFollowId }
     );
     return NextResponse.json({ success: true });
   } catch (err) {
@@ -42,4 +66,4 @@ async function PATCH(
   }
 }
 
-export {  PATCH };
+export { PATCH_FOLLOW_USER as PATCH };

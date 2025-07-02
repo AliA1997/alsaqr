@@ -90,20 +90,26 @@ export const ReviewNewListOrCommunity = ({
     type
 }: ReviewNewCommunityProps) => (
     <div className='flex flex-col'>
-        <div className='flex flex-col x-space-3 justify-items-between'>
-            <h5 className='font-bold mr-2'>
-                {type === CommonUpsertBoxTypes.Community ? 'Community Avatar' : 'List Banner Image'}:
-            </h5>
-            <img
-                src={avatarOrImage}
-                alt={name}
-                className='h-[5em] w-[5em] rounded-full'
-            />
-        </div>
+        {!(type === CommonUpsertBoxTypes.CommunityDiscussion) && (
+            <div className='flex flex-col x-space-3 justify-items-between'>
+                <h5 className='font-bold mr-2'>
+                    {type === CommonUpsertBoxTypes.Community ? 'Community Avatar' : 'List Banner Image'}:
+                </h5>
+                <img
+                    src={avatarOrImage}
+                    alt={name}
+                    className='h-[5em] w-[5em] rounded-full'
+                />
+            </div>
+        )}
 
         <div className='flex x-space-3 justify-items-between'>
             <h5 className='font-bold mr-2'>
-                {type === CommonUpsertBoxTypes.Community ? 'Community Name' : 'List Name'}:
+                {type === CommonUpsertBoxTypes.Community 
+                    ? 'Community Name' 
+                    : type === CommonUpsertBoxTypes.CommunityDiscussion
+                        ? 'Discussion Name'
+                        : 'List Name'}:
             </h5>
             <p>{name}</p>
         </div>

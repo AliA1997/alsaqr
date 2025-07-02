@@ -1,37 +1,44 @@
 "use client";
-// import { useRouter } from "next/navigation";
 import React, { useCallback, useEffect, useLayoutEffect, useState } from "react";
 import {
   DashboardPostToDisplay,
-  ProfileUser,
-  PostToDisplay,
 } from "../../../typings";
-import TweetComponents from "../posts/Post";
 import UserHeader from "./UserHeader";
-import Feed from "../shared/Feed";
 import { useParams } from "next/navigation";
-import { fetchUserInfo } from "@utils/user/fetchUserInfo";
 import Tabs from "@components/common/Tabs";
-import { useSession } from "next-auth/react";
 import CustomPageLoader  from "@components/common/CustomLoader";
 import { observer } from "mobx-react-lite";
 import { useStore } from "@stores/index";
+import PostComponent from "../posts/Post";
+import { Session } from "next-auth";
+import { getSession } from "next-auth/react";
 
 
 const MainProfile = () => {
-  const { data: session } = useSession();
+  // const { data: session } = useSession();
   const { userStore } = useStore();
   const { loadProfile, currentUserProfile, loadProfilePosts, currentUserProfilePosts } = userStore;
   const params = useParams();
   const { name } = params;
   const username = name as string;
+  const [currentSession, setCurrentSession] = useState<Session | undefined>(undefined);
+
+
+  async function refreshProfileInfo() {
+    await loadProfile(username);
+  }
 
   useLayoutEffect(() => {
     async function getProfileInfo() {
-    loadProfile(username)
-      .then(async ({ user }) => {
-        await loadProfilePosts(user.id);
-      })
+      getSession()
+        .then(currentSessionResult => {
+          setCurrentSession(currentSessionResult ?? undefined);
+          return loadProfile(username)
+        })
+        .then(async ({ user }) => {
+          await loadProfilePosts(user.id);
+        })
+      
     }
 
     getProfileInfo();
@@ -41,7 +48,7 @@ const MainProfile = () => {
   // const router = useRouter();
   const renderer = useCallback(
     (postToDisplay: DashboardPostToDisplay) => (
-      <TweetComponents
+      <PostComponent
         key={postToDisplay.post.id}
         postToDisplay={postToDisplay}
       />
@@ -61,10 +68,12 @@ const MainProfile = () => {
         {currentUserProfile && (
           <>
             <UserHeader
+              currentSession={currentSession}
+              refreshProfileInfo={refreshProfileInfo}
               profileInfo={currentUserProfile}
               numberOfPosts={currentUserProfilePosts?.userPosts?.length ?? 0}
-              followerCount={0}
-              followingCount={0}
+              followerCount={currentUserProfile.followers?.length ?? 0}
+              followingCount={currentUserProfile.following?.length ?? 0}
             />
             <React.Suspense fallback={<h2>Loading...</h2>}>
               <Tabs
@@ -78,7 +87,7 @@ const MainProfile = () => {
                   },
                   {
                     tabKey: "reposts",
-                    title: "RePosts",
+                    title: "Reposts",
                     content: currentUserProfilePosts?.repostedPosts ?? [],
                     renderer,
                     noRecordsContent: 'No reposts found'

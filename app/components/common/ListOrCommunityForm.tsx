@@ -71,8 +71,23 @@ export const ListOrCommunityFormInputs = observer(({ type }: Props) => {
         []
     );
 
-    const namePlaceholder = useMemo(() => type === CommonUpsertBoxTypes.Community ? 'New Community' : 'New List', [type])
+    const namePlaceholder = useMemo(() => {
+        if(type === CommonUpsertBoxTypes.Community) return 'New Community';
+        else if(type === CommonUpsertBoxTypes.CommunityDiscussion) return 'New Community Discussion';
+        else return 'New List';
+    }, [type])
+
     const fileUploadLabel = useMemo(() => type === CommonUpsertBoxTypes.Community ? 'Avatar' : 'Banner Image', [type])
+    
+    const tagsLabel = useMemo(() => {
+        if(type === CommonUpsertBoxTypes.Community)
+            return "Select Hashtags associated with Community";
+        else if(type === CommonUpsertBoxTypes.CommunityDiscussion)
+            return "Select Hashtags associated with the Discussion";
+        else
+            return "Select Hashtags associated with List";
+    }, [type])
+
 
     return (
         <>
@@ -81,13 +96,15 @@ export const ListOrCommunityFormInputs = observer(({ type }: Props) => {
                 placeholder={namePlaceholder}
                 className="mb-4"
             />
-            <FileUploadInput
-                name="avatarOrBannerImage"
-                label={fileUploadLabel}
-                handleFileChange={handleFileChange}
-            />
+            {type === CommonUpsertBoxTypes.Community || type === CommonUpsertBoxTypes.List && (
+                <FileUploadInput
+                    name="avatarOrBannerImage"
+                    label={fileUploadLabel}
+                    handleFileChange={handleFileChange}
+                />
+            )}
             
-            {type === CommonUpsertBoxTypes.Community && (
+            {!(type === CommonUpsertBoxTypes.List) && (
                 <div>
                     <h3 className="text-lg font-medium text-gray-900 dark:text-white">
                         Visibility Status
@@ -109,7 +126,7 @@ export const ListOrCommunityFormInputs = observer(({ type }: Props) => {
 
             <MultiSelect
                 name="tags"
-                label={type === CommonUpsertBoxTypes.Community ? "Select Hashtags associated with Community" : "Select Hashtags associated with List"}
+                label={tagsLabel}
                 placeholder="Select Hashtags"
                 options={tagOptions}
             />

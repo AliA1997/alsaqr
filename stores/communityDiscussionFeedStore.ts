@@ -1,9 +1,11 @@
 import { makeAutoObservable, reaction, runInAction } from "mobx";
-import { CommunityRecord, CommunityToDisplay } from "../typings.d";
+import { CommunityRecord, CommunityToDisplay, CreateListOrCommunityForm, CreateListOrCommunityFormDto } from "../typings.d";
 import { Pagination, PagingParams } from "models/common";
 import { fetchCommunities } from "@utils/communities/fetchCommunities";
 import agent from "@utils/common";
 import { CommunityDiscussionRecord, CommunityDiscussionToDisplay } from "models/community";
+import { DEFAULT_CREATED_LIST_OR_COMMUNITY_FORM } from "@utils/constants";
+import { store } from ".";
 
 export default class CommunityDiscussionFeedStore {
 
@@ -20,6 +22,7 @@ export default class CommunityDiscussionFeedStore {
 
 
     loadingInitial = false;
+    loadingUpsert = false;
     predicate = new Map();
     setPredicate = (predicate: string, value: string | number | Date | undefined) => {
         if(value) {
@@ -32,15 +35,26 @@ export default class CommunityDiscussionFeedStore {
     pagingParams: PagingParams = new PagingParams(1, 10);
 
     communityDiscussionsRegistry: Map<string, CommunityDiscussionToDisplay> = new Map<string, CommunityDiscussionToDisplay>();
+    currentStepInCommunityDiscussionCreation: number | undefined = undefined;
+    communityDiscussionCreationForm: CreateListOrCommunityForm = DEFAULT_CREATED_LIST_OR_COMMUNITY_FORM;
 
     setLoadingInitial = (val: boolean) => {
         this.loadingInitial = val;
+    }
+    setLoadingUpsert = (val: boolean) => {
+        this.loadingUpsert = val;
     }
     setPagingParams = (pagingParams: PagingParams) => {
         this.pagingParams = pagingParams;
     }
     setPagination = (pagination: Pagination) => {
         this.pagination = pagination;
+    }
+    setCurrentStepInCommunityDiscussionCreation = (val: number) => {
+        this.currentStepInCommunityDiscussionCreation = val;
+    }
+    setCommunityDiscussionCreationForm = (val: CreateListOrCommunityForm) => {
+        this.communityDiscussionCreationForm = val;
     }
     setSearchQry = (val: string) => this.predicate.set('searchQry', val);
 
@@ -63,13 +77,27 @@ export default class CommunityDiscussionFeedStore {
         return params;
     }
 
-    addCommunityDiscussion = async (newCommunity: CommunityDiscussionRecord, userId: string) => {
+    addCommunityDiscussion = async (newCommunityDiscussion: CreateListOrCommunityForm, userId: string, communityId: string) => {
 
-        this.setLoadingInitial(true);
+        this.setLoadingUpsert(true);
         try {
-            // await agent.communityApiClient.addCommunity(newCommunity, userId);
+            const newCommunityDiscussionDto: CreateListOrCommunityFormDto = {
+                ...newCommunityDiscussion,
+                postsAdded: [],
+                usersAdded: newCommunityDiscussion.usersAdded.map(u => u.user.id)
+            };
+
+            agent.communityApiClient.addCommunityDiscussion(newCommunityDiscussionDto, userId, communityId)
+                .then(() => {
+                    store.modalStore.closeModal();
+                });
+
+            runInAction(() => {
+                this.setCommunityDiscussionCreationForm(DEFAULT_CREATED_LIST_OR_COMMUNITY_FORM);
+                this.setCurrentStepInCommunityDiscussionCreation(0);
+            });
         } finally {
-            this.setLoadingInitial(false);
+            this.setLoadingUpsert(false);
         }
 
     }
@@ -78,7 +106,8 @@ export default class CommunityDiscussionFeedStore {
 
         this.setLoadingInitial(true);
         try {
-            const { result } = await agent.communityApiClient.getCommunity(this.axiosParams, userId, communityId) ?? [];
+            const { result } = await agent.communityApiClient.getCommunityDiscussions(this.axiosParams, userId, communityId) ?? [];
+            debugger;
             runInAction(() => {
                 result.data.forEach((communityDiscussion: CommunityDiscussionToDisplay) => {
                     this.setCommunityDiscussion(communityDiscussion.communityDiscussion.id, communityDiscussion)

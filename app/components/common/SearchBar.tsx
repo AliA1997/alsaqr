@@ -41,7 +41,7 @@ function SearchBar({ fullWidth }: SearchBarProps) {
   const searchQry = useMemo(() => predicate.get('searchTerm'), [predicate.values()])
 
   return (
-    <div className={`relative text-gray-800 ${fullWidth ? "w-full" : "w-80"} p-5 dark:text-gray-500 flex`}>
+    <div className={`relative text-gray-800 ${fullWidth ? "w-full" : "w-64 xl:w-80"} p-5 dark:text-gray-500 flex`}>
       <motion.div
         whileHover={{ scale: 1.1 }}
         whileTap={{ scale: 0.9 }}

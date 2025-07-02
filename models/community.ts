@@ -1,9 +1,14 @@
 // Relationship when posting is 
 // user - [:CREATED_DISCUSSION]-> CommunityDiscussion
 // community - [:DISCUSSION_POSTED] -> CommunityDiscussion
+
+import { CommunityRecord, User } from "typings";
+
 // communityDiscussion - [:POSTED_DISCUSSION_ON] -> community
 export interface CommunityDiscussion {
     id: string;
+    userId: string;
+    communityId: string;
     name: string;
     createdAt: string;
     lastMessagedAt: string;
@@ -12,10 +17,21 @@ export interface CommunityDiscussion {
     isPrivate: boolean;
 }
 
-export interface CommunityDiscussionRecord extends CommunityDiscussion {}
+export interface CommunityDiscussionRecord extends CommunityDiscussion {
+
+}
+
+export interface CommunityDiscussionInfoForMessageRoom {
+  communityDiscussion: CommunityDiscussionRecord;
+  community: CommunityRecord;
+  invitedUsers: User[];
+  joinedUsers: User[];
+}
 
 export interface CommunityDiscussionToDisplay {
   communityDiscussion: CommunityDiscussionRecord;
+  invitedUsers: User[];
+  joinedUsers: User[];
 }
 
 // Relationship when posting is 
@@ -34,8 +50,20 @@ export interface CommunityDiscussionMessage {
     tags: string[];
 }
 
+export interface CommunityDiscussionMessageDto {
+  userId: string;
+  communityDiscussionId: string;
+  communityId: string;
+  messageText: string;
+  image: string;
+  _type: "community_discussion_message";
+  tags: string[];
+}
+
 export interface CommunityDiscussionMessageRecord extends CommunityDiscussionMessage {}
 
 export interface CommunityDiscussionMessageToDisplay {
-  communityDiscussionMsg: CommunityDiscussionMessageRecord;
+  username: string;
+  profileImg: string;
+  communityDiscussionMessage: CommunityDiscussionMessageRecord;
 }

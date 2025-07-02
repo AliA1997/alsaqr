@@ -1,13 +1,25 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 
-import Content from "./Content";
 import { faker } from "@faker-js/faker";
 import { shuffle } from "lodash";
 import { useRouter } from "next/navigation";
 import { ProfileUser } from "typings";
+import TimeAgo from "react-timeago";
+import { convertDateToDisplay } from "@utils/neo4j/neo4j";
+import { getSession } from "next-auth/react";
+import { CommonLink } from "@components/common/Links";
+import { observer } from "mobx-react-lite";
+import { useStore } from "@stores/index";
+import SidebarRow from "@components/layout/SidebarRow";
+import { MailIcon, UserAddIcon } from "@heroicons/react/outline";
+import { ButtonLoader } from "@components/common/CustomLoader";
+import toast from "react-hot-toast";
+import { Session } from "next-auth";
 
 type UserHeaderProps = {
+  currentSession: Session | undefined;
   profileInfo: ProfileUser;
+  refreshProfileInfo: () => Promise<void>;
   numberOfPosts: number;
   followerCount: number;
   followingCount: number;
@@ -29,18 +41,47 @@ const years = [
   "2023",
 ];
 const UserHeader: React.FC<UserHeaderProps> = ({
+  currentSession,
   profileInfo,
+  refreshProfileInfo,
   numberOfPosts,
   followerCount,
   followingCount
 }) => {
   const router = useRouter();
+  const { userStore, messageStore } = useStore();
+  const { followUser, unFollowUser, loadingFollow } = userStore;
+  const { currentProfileToMessage, setCurrentProfileToMessage } = messageStore;
+  const [isDropdownOpen, setIsDropdownOpen] = React.useState<boolean>(false);
 
-  const [userYear, setUseYear] = useState<any>("");
 
-  useEffect(() => {
-    setUseYear(shuffle(years).pop());
-  }, [profileInfo]);
+  const profileIsLoggedInUser = useMemo(() => profileInfo.user.username === (currentSession?.user?.username ?? ""), [currentSession, profileInfo]);
+  const isFollowingUser = useMemo(() => currentSession?.user?.followingUsers.some((fU: any) => fU.id === profileInfo.user.id) ?? false, [profileInfo, currentSession]);
+  const handleDropdownEnter = useCallback(
+      () => setIsDropdownOpen(!isDropdownOpen),
+      [isDropdownOpen]
+    );
+
+  const handleOnMessage = useCallback(
+    () => {
+      setCurrentProfileToMessage(profileInfo);
+    },
+    [profileInfo]
+  );
+
+  const onFollow = useCallback(async () => {
+    if(isFollowingUser)
+      await unFollowUser(currentSession?.user?.id, profileInfo.user.id)
+    else
+      await followUser(currentSession?.user?.id, profileInfo.user.id)
+
+    await refreshProfileInfo();
+
+
+    toast(isFollowingUser ? `${profileInfo.user.username} unfollowed` : `${profileInfo.user.username} followed`, {
+      icon: "🚀",
+    });
+  }, [profileInfo, isFollowingUser]);
 
   return (
     <div>
@@ -72,7 +113,7 @@ const UserHeader: React.FC<UserHeaderProps> = ({
               {profileInfo.user.username}
             </h2>
             <p className="mb-0 w-48 text-xs text-gray-400 dark:text-gray-300">
-              {faker.datatype.number({ min: 10, max: 500 })} Tweets
+              {numberOfPosts ?? 0} Tweets
             </p>
           </div>
         </div>
@@ -88,10 +129,10 @@ const UserHeader: React.FC<UserHeaderProps> = ({
           }}
         >
         </div>
-        <div className="p-4">
+        <div className="relative p-4">
           <div className="relative flex w-full">
             <div className="flex flex-1">
-              <div style={{ marginTop: "-6rem" }}>
+              <div className='relative' style={{ marginTop: "-6rem" }}>
                 <div
                   style={{ height: "9rem", width: "9rem" }}
                   className="md rounded-full relative avatar"
@@ -102,7 +143,6 @@ const UserHeader: React.FC<UserHeaderProps> = ({
                     src={profileInfo.user.avatar}
                     alt=""
                   />
-                  <div className="absolute"></div>
                 </div>
               </div>
             </div>
@@ -113,7 +153,70 @@ const UserHeader: React.FC<UserHeaderProps> = ({
                 </button>
               </div>
             )} */}
+            <div className="absolute w-full flex justify-end top-0 right-0">
+              {
+                profileIsLoggedInUser
+                  ? (
+                    <CommonLink 
+                      onClick={() => {}}
+                      animatedLink={false}
+                      classNames='border border-[0.1rem] hover:text-maydan'
+                    >
+                      Edit Profile
+                    </CommonLink>
+                  )
+                  : (
+                    <>
+                      <CommonLink
+                        onClick={handleOnMessage}
+                        animatedLink={false}
+                        classNames='border border-[0.1rem]'
+                      >
+                        <MailIcon className="h-6 w-6"/>
+                      </CommonLink>
+                      <CommonLink
+                        onClick={handleDropdownEnter}
+                        animatedLink={false}
+                        classNames='border border-[0.1rem]'
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-9">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 12a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0ZM12.75 12a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0ZM18.75 12a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Z" />
+                        </svg>
+                      </CommonLink>
+                      <button
+                        type='button'
+                        className={`
+                          rounded-full bg-maydan px-5 py-2 font-bold text-white disabled:opacity-40
+                        `}
+                        onClick={onFollow}
+                      >
+                        {
+                          loadingFollow
+                          ? <ButtonLoader />
+                          : (
+                            <>
+                              {isFollowingUser ? 'Unfollow' : 'Follow'}
+                            </>
+                          )
+                        }
+                      </button>
+                    </>
+                  )
+              }
+            </div>
           </div>
+          {isDropdownOpen && (
+            <div className="absolute right-0 bottom-100 mt-2 w-48 rounded-md shadow-lg ring-1 bg-white dark:bg-[#000000] ring-black ring-opacity-5 z-40">
+              <div
+                className="py-1"
+                role="menu"
+                aria-orientation="vertical"
+                aria-labelledby="options-menu"
+              >
+                <SidebarRow Icon={UserAddIcon} title="Add to List" />
+              </div>
+            </div>
+          )}
 
           <div className="space-y-1 justify-center w-full mt-3 ml-3">
             <div>
@@ -127,35 +230,10 @@ const UserHeader: React.FC<UserHeaderProps> = ({
 
             <div className="mt-3">
               <p className="text-gray-500 leading-tight mb-2 dark:text-gray-300">
-                {faker.name.jobType()} / {faker.name.jobTitle()} /
-                {faker.company.name()} <br />
-                {profileInfo.user.bio ?? faker.animal.bird()}
+                {/* Company & Employment Information Version 2 */}
+                {profileInfo.user?.bio ?? ''}
               </p>
               <div className="text-gray-600 flex dark:text-gray-400">
-                <span className="flex mr-2">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    strokeWidth={1.5}
-                    stroke="currentColor"
-                    className="w-5 h-5 text-black dark:text-gray-500"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="M13.19 8.688a4.5 4.5 0 011.242 7.244l-4.5 4.5a4.5 4.5 0 01-6.364-6.364l1.757-1.757m13.35-.622l1.757-1.757a4.5 4.5 0 00-6.364-6.364l-4.5 4.5a4.5 4.5 0 001.242 7.244"
-                    />
-                  </svg>
-
-                  {/* <a
-                    href="https://ricardoribeirodev.com/personal/"
-                    target="#"
-                    className="leading-5 ml-1 text-blue-400"
-                  >
-                    {faker.internet.domainName()}
-                  </a> */}
-                </span>
                 <span className="flex mr-2">
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
@@ -172,8 +250,17 @@ const UserHeader: React.FC<UserHeaderProps> = ({
                     />
                   </svg>
 
+
+                  {/* Put any associated domain names for version 2 */}
+                </span>
+                <span className="flex mr-2">
                   <span className="leading-5 ml-1">
-                    Joined {profileInfo.user.createdAt ? new Date(profileInfo.user.createdAt).toLocaleString('default', { month: 'long' }) : ""}
+                    {/* Joined {profileInfo.user.createdAt ? new Date(profileInfo.user.createdAt).toLocaleString('default', { month: 'long' }) : ""} */}
+                    Joined{" "}
+                    <TimeAgo
+                      className="leading-5"
+                      date={convertDateToDisplay(profileInfo.user.createdAt)}
+                    />
                   </span>
                 </span>
               </div>
@@ -181,19 +268,17 @@ const UserHeader: React.FC<UserHeaderProps> = ({
             <div className="pt-3 flex justify-start items-start w-full divide-x divide-gray-800 dark:divide-gray-400 divide-solid">
               <div className="text-center pr-3">
                 <span className="font-bold text-gray-600 dark:text-gray-200">
-                  {followingCount}
+                  {followingCount}{" "}
                 </span>
                 <span className="text-gray-600 dark:text-gray-300">
-                  {" "}
                   Following
                 </span>
               </div>
               <div className="text-center px-3">
                 <span className="font-bold text-gray-600 dark:text-gray-200">
-                 {followerCount}
+                  {followerCount}{" "}
                 </span>
                 <span className="text-gray-600 dark:text-gray-300">
-                  {" "}
                   Followers
                 </span>
               </div>
@@ -205,4 +290,4 @@ const UserHeader: React.FC<UserHeaderProps> = ({
     </div>
   );
 };
-export default UserHeader;
+export default observer(UserHeader);

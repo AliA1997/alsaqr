@@ -34,8 +34,9 @@ function CommunityItemComponent({
   const router = useRouter();
   const { data: session } = useSession();
 
-  const { modalStore } = useStore();
+  const { communityFeedStore, modalStore } = useStore();
   const { showModal } = modalStore;
+  const { setNavigateCommunity } = communityFeedStore;
 
   const [currentComments, setCurrentComments] = useState<CommentToDisplay[]>(() => {
     const comments = session && session.user ? (session.user as any).comments : [];
@@ -113,7 +114,8 @@ function CommunityItemComponent({
     // refreshComments();
   };
   const navigateToCommunity = () => {
-    router.push(`status/${communityInfo.id}`);
+    setNavigateCommunity(community);
+    router.push(`communities/${communityInfo.id}`);
   };
 
   const onIsAlreadyJoined = async () => {
@@ -135,7 +137,17 @@ function CommunityItemComponent({
   return (
     <>
       <div
-        className="flex flex-col relative justify-between space-x-3 border-y border-gray-100 p-5 hover:shadow-lg dark:border-gray-800 dark:hover:bg-[#000000] rounded-full w-[49%] md:w-[30%] lg:w-[24%] h-[5em]"
+        className={`
+          flex flex-col relative justify-between space-x-3 border-y border-gray-100 p-5 
+          hover:shadow-lg dark:border-gray-800 dark:hover:bg-[#000000] rounded-full 
+          p-2 hover:shadow-lg dark:border-gray-800 dark:hover:bg-[#0e1517] rounded-full
+          w-full       /* Full width on mobile */
+          md:w-[20vw] 
+          lg:w-[48%]
+          2xl:w-[48%]
+          h-[5em]
+          cursor-pointer
+        `}
         onClick={navigateToCommunity}
       >
         <div className="absolute m-0 inset-0"></div>
@@ -147,9 +159,9 @@ function CommunityItemComponent({
               alt={communityInfo.name}
               onClick={(e) => stopPropagationOnClick(e, navigateToCommunity)}
             />
-            <h6>
+            <p className='text-sm'>
               {communityInfo.name}
-            </h6>
+            </p>
             <p className='text-italic'>
 
             </p>

@@ -63,7 +63,9 @@ const SideBar = ({}: SideBarProps) => {
 
   return (
     <>
-      <div className="col-span-1 md:col-span-2 flex flex-col item-center mt-2 md:mt-0 md:px-1 md:px-4 md:items-start">
+      <div className={`
+          col-span-1 md:col-span-2 flex flex-col item-center mt-2 md:mt-0 md:px-1 md:px-4 md:items-start
+        `}>
         <div className="flex justify-start">
           <img
             className={`
@@ -134,9 +136,11 @@ const SideBar = ({}: SideBarProps) => {
             {/* <div className="flex align-center p-2 cursor-pointer hover:opacity-75"> */}
             <div
               onClick={() => router.push(`/users/${username}`)}
-              className="group flex max-w-fit
-        cursor-pointer items-center space-x-2 rounded-full px-1 md:px-4 py-1 py-3
-        transition-all duration-200 hover:bg-maydan dark:hover:bg-gray-600 mb-1 mt-1"
+              className={`
+                group flex max-w-fit
+                cursor-pointer items-center space-x-2 rounded-full px-1 md:px-4 py-1 py-3
+                transition-all duration-200 hover:bg-gray-100 dark:hover:bg-gray-600 mb-1 mt-1 
+              `}
             >
               <img
                 className="m-0 mt-3 w-full h-full md:h-14 md:w-14 rounded-full"

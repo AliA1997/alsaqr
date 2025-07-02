@@ -1,12 +1,13 @@
 // app/api/tweets/[tweet_id]/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import { defineDriver, write } from "@utils/neo4j/neo4j";
+import { UnFollowUserFormDto } from "models/users";
 
-async function PATCH(
+async function PATCH_UNFOLLOW_USER(
   request: NextRequest,
   { params }: { params: { user_id: string } }
 ) {
-  const body = await request.json();
+  const { values:data }: { values: UnFollowUserFormDto }= await request.json();
   const { user_id } = params;
   const userId = user_id as string;
 
@@ -21,12 +22,37 @@ async function PATCH(
     await write(
       session,
       `
-        MATCH (user:User {id: $userId})-[followUserRel:FOLLOW_USER]->(userToFollow:User {id: $userToFollowId})
+        MATCH (user:User {id: $userId})-[followUserRel:FOLLOW_USER]->(userToUnFollow:User {id: $userToUnFollowId})
         DELETE followUserRel
-        MATCH (userToFollow:User {id: $userToFollowId})-[followedRel:FOLLOWED]->(user:User {id: $userId})
+      `,
+      { userToUnFollowId: data.userToUnFollowId, userId }
+    );
+
+
+    await write(
+      session,
+      `
+        MATCH (userToUnFollow:User {id: $userToUnFollowId})-[followedRel:FOLLOWED]->(user:User {id: $userId})
         DELETE followedRel
       `,
-      { userToFollowId: body["userToFollowId"], userId }
+      { userToUnFollowId: data.userToUnFollowId, userId }
+    );
+
+
+    await write(
+        session,
+        `
+        // Match following user
+        MATCH (followingUser:User {id: $userId})
+        // Match the followed user (fixed relationship direction)
+        MATCH (followedUser:User {id: $userToFollowId})
+        MATCH (followedUser)-[r:NOTIFIED_BY]->(n:Notification {
+          relatedEntityId: followingUser.id,
+          notificationType: "follow_user"
+        })
+        DELETE r, n
+        `,
+      { userToUnFollowId: data.userToUnFollowId, userId }
     );
     return NextResponse.json({ success: true });
   } catch (err) {
@@ -35,4 +61,4 @@ async function PATCH(
   }
 }
 
-export {  PATCH };
+export { PATCH_UNFOLLOW_USER as PATCH };
