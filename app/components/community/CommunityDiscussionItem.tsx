@@ -19,11 +19,11 @@ import {
 } from "@utils/neo4j/index";
 import { SaveIcon as SaveIconFillIcon } from "@heroicons/react/solid";
 import { useSession } from "next-auth/react";
-import { joinCommunity } from "@utils/communities/joinCommunity";
 import { useStore } from "@stores/index";
 import { LoginModal } from "../common/AuthModals";
 import { convertDateToDisplay } from "@utils/neo4j/neo4j";
 import { CommunityDiscussionToDisplay } from "models/community";
+import { MessagesImagePreview } from "@components/common/Containers";
 
 interface Props {
   communityDiscussionToDisplay: CommunityDiscussionToDisplay;
@@ -173,18 +173,7 @@ function CommunityDiscussionItemComponent({
             <div className="flex space-x-2">
               {
                 communityDiscussionUsers.slice(0, 3).map((user, index) => (
-                  <img
-                    key={user.id}
-                    src={user.avatar}
-                    alt={user.username}
-                    className={`
-                      w-10 h-10 rounded-full border-2 border-white dark:border-gray-800
-                      relative  /* Enables z-index */
-                      ${index === 0 ? 'z-0' : index === 1 ? 'z-10' : 'z-20'}  /* Stacking order */`}
-                    style={{
-                      marginLeft: `${index > 0 ? '-1rem' : ''}`
-                    }}
-                  />
+                  <MessagesImagePreview user={user}  index={index} />
                 ))}
             </div>
           </div>

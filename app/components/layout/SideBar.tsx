@@ -17,10 +17,8 @@ import {
 import SidebarRow from "./SidebarRow";
 // import { auth } from "../firebase/firebase";
 import DarkSwitch from "./DarkSwitch";
-import { signIn, signOut, useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { getEmailUsername, stopPropagationOnClick } from "@utils/neo4j/index";
-import { User } from "typings";
 import { useStore } from "@stores/index";
 import { observer } from "mobx-react-lite";
 import { LoginModal, RegisterModal } from "../common/AuthModals";
@@ -29,16 +27,16 @@ import { ROUTES_USER_CANT_ACCESS } from "@utils/constants";
 type SideBarProps = {};
 
 const SideBar = ({}: SideBarProps) => {
-  const { data: session } = useSession();
   const router = useRouter();
   const [isDropdownOpen, setIsDropdownOpen] = React.useState<boolean>(false);
-  const { modalStore } = useStore();
+  const { authStore, modalStore } = useStore();
+  const { currentSessionUser } = authStore;
   const { closeModal, showModal } = modalStore;
 
   const openModal = () => showModal(<LoginModal />)
-  const notLoggedIn = useMemo(() => (!session || !session!.user), [session]);
-  console.log('session?.user.isCompleted', session?.user.isCompleted);
-  const registrationNotCompleted = useMemo(() => !session?.user.isCompleted, [])
+  const notLoggedIn = useMemo(() => (!currentSessionUser), [currentSessionUser]);
+  console.log('session?.user.isCompleted', currentSessionUser?.isCompleted);
+  const registrationNotCompleted = useMemo(() => !(currentSessionUser?.isCompleted ?? false), [])
 
   const handleDropdownEnter = useCallback(
     () => setIsDropdownOpen(!isDropdownOpen),
@@ -53,13 +51,13 @@ const SideBar = ({}: SideBarProps) => {
       showModal(<LoginModal />);
     }
       
-    if(!registrationNotCompleted && session?.user)
+    if(!registrationNotCompleted && currentSessionUser)
       closeModal();
 
-  }, [session, router]);
+  }, [currentSessionUser, router]);
   
   // console.log("session.user:", session!.user);
-  const username = session ? (session!.user as User).username : "";
+  const username = currentSessionUser?.username ?? "";
 
   return (
     <>
@@ -72,6 +70,7 @@ const SideBar = ({}: SideBarProps) => {
               m-0 h-full w-full md:w-[90%] transition-all duration-200 
               hover:bg-gray-100 dark:hover:bg-gray-600
               sidebarLogo
+              cursor-pointer
           `}
             alt=""
             style={{ maxWidth: "unset" }}
@@ -113,7 +112,7 @@ const SideBar = ({}: SideBarProps) => {
                 aria-orientation="vertical"
                 aria-labelledby="options-menu"
               >
-                {session ? (
+                {currentSessionUser ? (
                   <>
                     <SidebarRow Icon={CogIcon} title="Settings" />
                     <SidebarRow Icon={LoginIcon} title="Sign Out" />
@@ -130,7 +129,7 @@ const SideBar = ({}: SideBarProps) => {
           )}
         </div>
         <DarkSwitch />
-        {session && (
+        {currentSessionUser && (
           <>
             <hr />
             {/* <div className="flex align-center p-2 cursor-pointer hover:opacity-75"> */}
@@ -144,14 +143,14 @@ const SideBar = ({}: SideBarProps) => {
             >
               <img
                 className="m-0 mt-3 w-full h-full md:h-14 md:w-14 rounded-full"
-                src={session!.user!.image!}
+                src={currentSessionUser?.avatar ?? ''}
                 alt="Avatar"
                 loading="lazy"
               />
               {/* <div className="flex flex-col justify-center  p-3 opacity-50 text-xs sm:text-sm lg:text-md"> */}
               <div className="flex flex-col display-none md:display-initial hidden group-hover:text-maydan md:inline-flex text-base font-light text-xs lg:text-sm">
-                <p>{session!.user!.name}</p>
-                <p>@{getEmailUsername(session!.user!.email!)}</p>
+                <p>{currentSessionUser?.username}</p>
+                <p>@{getEmailUsername(currentSessionUser?.username)}</p>
               </div>
             </div>
           </>

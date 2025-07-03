@@ -1,11 +1,10 @@
 'use client';
 import dynamic from "next/dynamic";
-import React, { Suspense, useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef } from "react";
 const PostComponent = dynamic(() => import("../../components/posts/Post"), {
   ssr: false,
 });
-import { getServerSession } from "next-auth";
-import { postApiClient } from "@utils/postApiClient";
+
 import { observer } from "mobx-react-lite";
 import { useStore } from "@stores/index";
 import { ContentContainerWithRef } from "@components/common/Containers";

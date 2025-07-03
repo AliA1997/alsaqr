@@ -1,7 +1,6 @@
 import { makeAutoObservable, reaction, runInAction } from "mobx";
 import { CommunityRecord, CommunityToDisplay, CreateListOrCommunityForm, CreateListOrCommunityFormDto } from "../typings.d";
 import { Pagination, PagingParams } from "models/common";
-import { fetchCommunities } from "@utils/communities/fetchCommunities";
 import agent from "@utils/common";
 import {DEFAULT_CREATED_LIST_OR_COMMUNITY_FORM } from "@utils/constants";
 import ModalStore from "./modalStore";

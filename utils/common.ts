@@ -8,6 +8,7 @@ import { postApiClient } from "./postApiClient";
 import { notificationApiClient } from "./notificationApiClient";
 import { userApiClient } from "./userApiClient";
 import { communityApiClient } from "./communityApiClient";
+import { messageApiClient } from "./messageApiClient";
 
 
 export const extractQryParams = (request: NextRequest, paramsToExtract: string[]): (string | null)[] => {
@@ -145,6 +146,7 @@ const agent = {
   exploreApiClient,
   listApiClient,
   postApiClient,
+  messageApiClient,
   mutatePostApiClient,
   notificationApiClient,
   userApiClient

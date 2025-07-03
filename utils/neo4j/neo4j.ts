@@ -1,4 +1,4 @@
-import types, { Node, Session, auth, driver } from "neo4j-driver";
+import types, { DateTime, Integer, Node, Session, auth, driver } from "neo4j-driver";
 import { PostToDisplay } from "typings";
 
 export function defineDriver() {
@@ -20,9 +20,17 @@ export async function read(session: Session, cypher = "", params = {}, alias?: s
 
         for (const aIdx in alias) {
           const aKey = alias[aIdx];
+          // console.log('aKey', aKey)
           const recordBasedOnAlias = record.get(aKey);
+          // console.log('recordBasedOnAlias', recordBasedOnAlias)
+          // console.log('recordBasedOnAlias.properties', recordBasedOnAlias.properties);
+          // console.log('recordBasedOnAlias instanceof', recordBasedOnAlias instanceof Integer);
 
-          if (typeof recordBasedOnAlias === 'object')
+          if(recordBasedOnAlias instanceof Integer)
+            result[aKey] = recordBasedOnAlias.toNumber() as any;
+          else if(recordBasedOnAlias instanceof DateTime)
+            result[aKey] = convertDateToDisplay(recordBasedOnAlias);
+          else if (typeof recordBasedOnAlias === 'object')
             result[aKey] = recordBasedOnAlias && Array.isArray(recordBasedOnAlias) && recordBasedOnAlias.length ? recordBasedOnAlias.map((r: Node) => r.properties) : recordBasedOnAlias.properties ?? [];
           else
             result[aKey] = recordBasedOnAlias;

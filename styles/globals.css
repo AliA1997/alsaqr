@@ -99,14 +99,14 @@
 
 
 .sidebarLogo {
-  content: url('https://res.cloudinary.com/aa1997/image/upload/v1749507044/favicon-logo_x5haso.png');
+  content: url('https://res.cloudinary.com/aa1997/image/upload/v1751518600/favicon_hiqtp9.svg');
   height: 3em;
   width: 3em;
 }
 
 @media(min-width: 768px) {
   .sidebarLogo {
-    content: url('https://res.cloudinary.com/aa1997/image/upload/v1749507106/full-logo_j9sq3k.png');
+    content: url('https://res.cloudinary.com/aa1997/image/upload/v1751518818/new-desktop-logo_ocwyft.svg');
     height: 5em;
     padding-left: 1em;
   }
@@ -120,4 +120,8 @@
 .scrollbar-hide {
   -ms-overflow-style: none;
   scrollbar-width: none;
+}
+
+#widgets.hidden {
+  display: none !important;
 }

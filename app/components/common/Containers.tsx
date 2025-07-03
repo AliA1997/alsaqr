@@ -1,6 +1,7 @@
 import { motion } from 'framer-motion';
 import React from 'react';
 import Image from 'next/image';
+import { User } from 'typings';
 
 export const ContentContainerWithRef = React.forwardRef(({ children, classNames, ...otherProps }: React.PropsWithChildren<any>, ref) => {
   return (
@@ -42,5 +43,27 @@ export function ProfileImagePreview({ username, bgThumbnail, avatar }:ProfileIma
             width={50}
         />
     </motion.div>
+  );
+}
+
+type MessagesImagePreviewProps = {
+  user: User;
+  index: number;
+};
+
+export function MessagesImagePreview({user, index}: MessagesImagePreviewProps) {
+  return (
+    <img
+      key={user.id}
+      src={user.avatar}
+      alt={user.username}
+      className={`
+        w-10 h-10 rounded-full border-2 border-white dark:border-gray-800
+        relative  /* Enables z-index */
+        ${index === 0 ? 'z-0' : index === 1 ? 'z-10' : 'z-20'}  /* Stacking order */`}
+      style={{
+        marginLeft: `${index > 0 ? '-1rem' : ''}`
+      }}
+    />
   );
 }

@@ -1,11 +1,8 @@
 "use client";
 import { motion } from "framer-motion";
-import { useSession } from "next-auth/react";
 import { ThemeProvider } from "next-themes";
 
 function ThemeProviderWrapper({ children }: React.PropsWithChildren<any>) {
-  const { data: session } = useSession();
-
   return (
     <motion.div
       initial={{ opacity: 0 }}

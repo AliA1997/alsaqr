@@ -4,11 +4,7 @@ import NotificationFeed from "@components/notification/NotificationFeed";
 
 async function NotificationsPage() {
   
-  return (
-    <>
-      <NotificationFeed />
-    </>
-  );
+  return <NotificationFeed />;
 };
 
 export default NotificationsPage;

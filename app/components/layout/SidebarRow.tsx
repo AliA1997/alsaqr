@@ -2,7 +2,7 @@
 import { useRouter } from "next/navigation";
 import React, { SVGProps, useMemo } from "react";
 import { nonRoutableTitles } from "@utils/neo4j/index";
-import { signOut, useSession } from "next-auth/react";
+import { signOut } from "next-auth/react";
 import { CommonLink, CommonLinkProps } from "../common/Links";
 import { ROUTES_USER_CANT_ACCESS } from "@utils/constants";
 import { observer } from "mobx-react-lite";
@@ -29,11 +29,11 @@ function SidebarRow({
   classNames,
   href,
 }: SidebarRowProps) {
-  const { modalStore } = useStore();
+  const { authStore, modalStore } = useStore();
+  const { currentSessionUser, setCurrentSessionUser } = authStore;
   const { showModal } = modalStore;
   const router = useRouter();
-  const { data:session } = useSession();
-  const notLoggedIn = useMemo(() => (!session || !session!.user), [session]);
+  const notLoggedIn = useMemo(() => !currentSessionUser, [currentSessionUser]);
   
   const sidebarOnClick = async (e: React.MouseEvent) => {
     if (!nonRoutableTitles.includes(title)) {
@@ -46,7 +46,10 @@ function SidebarRow({
     }
     else {
       if (title === SIGN_IN_TITLE || title === MORE_TITLE) onClick!(e);
-      if (title === SIGN_OUT_TITLE) await signOut();
+      if (title === SIGN_OUT_TITLE) {
+        await signOut()
+        setCurrentSessionUser(undefined);
+      };
     }
     
   };

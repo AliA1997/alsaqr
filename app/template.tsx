@@ -1,21 +1,27 @@
 // app/template.tsx
 
 "use client";
-import { useSession } from "next-auth/react";
-import { redirect, usePathname } from "next/navigation";
-import { useEffect } from "react";
+import { useStore } from "@stores/index";
+import { observer } from "mobx-react-lite";
+import { getSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
+import { useEffect, useLayoutEffect } from "react";
 
-export default function Template({ children }: { children: React.ReactNode }) {
-  const { data: session } = useSession();
-  const pathname = usePathname();
-  const unprotectedRoutes = ['/', '/explore', '/search'];
-
-  useEffect(() => {
-    // if(!(session && session.user) && !unprotectedRoutes.some(unR => unR === pathname)) {
-    //   dispatch(toggleLoginModal(true));
-    //   redirect('/');
-    // }
-  }, [session])
+function Template({ children }: { children: React.ReactNode }) {
+  const { authStore } = useStore();
+  const router = useRouter();
+  useLayoutEffect(() => {
+    getSession()
+      .then(sessionInfo => {
+        if (sessionInfo && sessionInfo.user) {
+          authStore.setCurrentSessionUser(sessionInfo.user);
+        } else {
+          authStore.setCurrentSessionUser(undefined);
+        }
+      })
+  }, [router]);
  
   return <>{children}</>;
 }
+
+export default observer(Template)

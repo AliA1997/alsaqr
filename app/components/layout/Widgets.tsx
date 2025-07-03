@@ -10,14 +10,14 @@ import {
 import SearchBar from "../common/SearchBar";
 import { useStore } from "@stores/index";
 import useGetCountry from "hooks/useGetCountry";
+import { ROUTES_WIDGETS_HIDDEN } from "@utils/constants";
 
 function Widgets() {
   const pathname = usePathname();
   const { authStore, exploreStore } = useStore();
   const { } = authStore
   const { pagingParams, predicate } = exploreStore;
-
-  const router = useRouter();
+  
   const country = "United States"
   // const { country } = useGetCountry();
 
@@ -26,9 +26,13 @@ function Widgets() {
   //   router.prefetch(`/search${qryString}`);
   // }, [predicate.values()]);
 
-
+  const isHidden = useMemo(() => ROUTES_WIDGETS_HIDDEN.some(r => r === pathname), [pathname]);
   return (
-    <div className="col-span-2 sm:col-span-1 min-w-[100px] max-w-[250px] hidden lg:inline-block">
+    <div className={`
+      col-span-2 sm:col-span-1 min-w-[100px] max-w-[250px] hidden lg:inline-block
+      ${isHidden ? 'hidden' : ''}
+    `}
+    id="widgets">
       <div className="overflow-y-auto fixed h-screen scrollbar-hide">
         {pathname != "/explore" && pathname != "/search" && (
           <SearchBar />

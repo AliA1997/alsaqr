@@ -8,6 +8,10 @@ export const ROUTES_USER_CANT_ACCESS = [
   '/notifications'
 ];
 
+export const ROUTES_WIDGETS_HIDDEN = [
+  "/messages"
+]
+
 export const MAX_BIO_LENGTH_FEED = 40;
 
 export const MARITAL_STATUS_OPTIONS = [

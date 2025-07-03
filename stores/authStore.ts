@@ -4,7 +4,7 @@ import { makeAutoObservable, action, runInAction } from 'mobx';
 import { User, UserRegisterForm, UserRegisterFormDto } from 'typings';
 
 export default class AuthStore {
-  currentUser: User | undefined = undefined;
+  currentSessionUser: User | undefined = undefined;
 
   constructor() {
     makeAutoObservable(this);
@@ -23,8 +23,8 @@ export default class AuthStore {
     this.currentRegistrationForm = val;
   }
 
-  setCurrentUser = (currentUserPayload: User | undefined) => {
-    this.currentUser = currentUserPayload;
+  setCurrentSessionUser = (currentUserPayload: User | undefined) => {
+    this.currentSessionUser = currentUserPayload;
   };
 
   navigateBackToHome = () => {
@@ -32,7 +32,7 @@ export default class AuthStore {
   };
 
   resetAuthState = () => {
-    this.currentUser = undefined;
+    this.currentSessionUser = undefined;
   };
 
   completeRegistration = async (userId: string, registerForm: UserRegisterForm) => {

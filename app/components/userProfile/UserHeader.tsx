@@ -15,6 +15,9 @@ import { MailIcon, UserAddIcon } from "@heroicons/react/outline";
 import { ButtonLoader } from "@components/common/CustomLoader";
 import toast from "react-hot-toast";
 import { Session } from "next-auth";
+import MessageModal from "@components/common/MessageModal";
+import { GoBackButton } from "@components/common/IconButtons";
+import { defineUsersMessagesArray } from "@utils/neo4j";
 
 type UserHeaderProps = {
   currentSession: Session | undefined;
@@ -24,22 +27,6 @@ type UserHeaderProps = {
   followerCount: number;
   followingCount: number;
 };
-const years = [
-  "2011",
-  "2010",
-  "2012",
-  "2013",
-  "2014",
-  "2015",
-  "2016",
-  "2017",
-  "2018",
-  "2019",
-  "2020",
-  "2021",
-  "2022",
-  "2023",
-];
 const UserHeader: React.FC<UserHeaderProps> = ({
   currentSession,
   profileInfo,
@@ -49,9 +36,10 @@ const UserHeader: React.FC<UserHeaderProps> = ({
   followingCount
 }) => {
   const router = useRouter();
-  const { userStore, messageStore } = useStore();
+  const { userStore, messageStore, modalStore } = useStore();
   const { followUser, unFollowUser, loadingFollow } = userStore;
   const { currentProfileToMessage, setCurrentProfileToMessage } = messageStore;
+  const { showModal } = modalStore;
   const [isDropdownOpen, setIsDropdownOpen] = React.useState<boolean>(false);
 
 
@@ -65,8 +53,14 @@ const UserHeader: React.FC<UserHeaderProps> = ({
   const handleOnMessage = useCallback(
     () => {
       setCurrentProfileToMessage(profileInfo);
+      showModal(
+        <MessageModal
+          loggedInUser={currentSession?.user}
+          usersInMessageModal={defineUsersMessagesArray(currentSession?.user!, profileInfo.user)}
+        />
+      );
     },
-    [profileInfo]
+    [currentSession, profileInfo]
   );
 
   const onFollow = useCallback(async () => {
@@ -87,27 +81,7 @@ const UserHeader: React.FC<UserHeaderProps> = ({
     <div>
       <div>
         <div className="flex justify-start">
-          <div className="px-4 py-3 mx-2">
-            <div
-              className="text-2xl font-medium rounded-full text-blue-400  hover:text-blue-300 float-right cursor-pointer items-center"
-              onClick={() => router.back()}
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-                strokeWidth={1.5}
-                stroke="currentColor"
-                className="w-6 h-6"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M19.5 12h-15m0 0l6.75 6.75M4.5 12l6.75-6.75"
-                />
-              </svg>
-            </div>
-          </div>
+          <GoBackButton />
           <div className="mx-2 py-2.5">
             <h2 className="mb-0 text-xl font-bold text-gray-600 dark:text-gray-200">
               {profileInfo.user.username}

@@ -23,31 +23,31 @@ const LoadingSpinner = dynamic(
 
 
 export const metadata: Metadata = {
-  title: "Maydān",
-  description: "Maydān social media for the MENA region.",
-  icons: "https://res.cloudinary.com/aa1997/image/upload/v1749507044/favicon-logo_x5haso.png",
+  title: "AlSaqr",
+  description: "AlSaqr social media for the MENA region.",
+  icons: "https://res.cloudinary.com/aa1997/image/upload/v1751518600/favicon_hiqtp9.svg",
   openGraph: {
-    title: "Maydān",
-    description: "Maydān social media for the MENA region.",
+    title: "AlSaqr",
+    description: "AlSaqr social media for the MENA region.",
     url: "https://myapp.com",
 
     images: [
       {
-        url: "hhttps://res.cloudinary.com/aa1997/image/upload/v1749507044/favicon-logo_x5haso.png",
+        url: "https://res.cloudinary.com/aa1997/image/upload/v1751518600/favicon_hiqtp9.svg",
         width: 560,
         height: 440,
-        alt: "Maydān",
+        alt: "AlSaqr",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    site: "@maydān",
-    creator: "@qamarlabs",
-    title: "مَيْدَان/Maydān",
-    description: "Maydān social media for the MENA region.",
+    site: "@alsaqr",
+    creator: "@alialhaddad",
+    title: "الصقر/AlSaqr",
+    description: "AlSaqr social media for the MENA region.",
     images:
-      "https://res.cloudinary.com/aa1997/image/upload/v1749507044/favicon-logo_x5haso.png",
+      "https://res.cloudinary.com/aa1997/image/upload/v1751518600/favicon_hiqtp9.svg",
   },
 };
 

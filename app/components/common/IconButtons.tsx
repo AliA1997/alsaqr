@@ -2,6 +2,7 @@ import { motion } from "framer-motion";
 import { BookmarkIcon, HeartIcon, UploadIcon } from "@heroicons/react/outline";
 import { BookmarkIcon as BookmarkFillIcon } from "@heroicons/react/solid";
 import { FilterKeys } from "@stores/index";
+import { useRouter } from "next/navigation";
 
 interface CommentIconButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
     numberOfComments: number;
@@ -24,6 +25,8 @@ interface AddOrFollowIconButtonProps extends React.ButtonHTMLAttributes<HTMLButt
     onIsAlreadyAdded: () => Promise<void> ;
     onIsAlreadyFollowing?: () => Promise<void>;
 }
+
+interface GoBackButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement>{}
 
 export function CommentIconButton({ onClick, numberOfComments }: CommentIconButtonProps) {
     return (
@@ -160,5 +163,40 @@ export function AddOrFollowButton({ isAdded, isFollowing, onIsAlreadyAdded, onIs
                 )
             }
         </div>
+    );
+}
+
+
+export function GoBackButton(props: GoBackButtonProps) {
+    const router = useRouter();
+    const handleOnClick = (e: any) => {
+        if(props.onClick)
+            props.onClick(e);
+        else
+            router.back()
+    };
+    
+    return (
+        <div className="px-4 py-3 mx-2">
+            <div
+              className="text-2xl font-medium rounded-full text-blue-400  hover:text-blue-300 float-right cursor-pointer items-center"
+              onClick={handleOnClick}
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                strokeWidth={1.5}
+                stroke="currentColor"
+                className="w-6 h-6"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M19.5 12h-15m0 0l6.75 6.75M4.5 12l6.75-6.75"
+                />
+              </svg>
+            </div>
+          </div>
     );
 }

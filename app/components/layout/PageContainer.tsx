@@ -4,7 +4,6 @@ import SideBar from "./SideBar";
 import Widgets from "./Widgets";
 import { useStore } from "@stores/index";
 import { observer } from "mobx-react-lite";
-import { useSession } from "next-auth/react";
 import { LoginModal, RegisterModal } from "../common/AuthModals";
 import { useRouter } from "next/router";
 import { ROUTES_USER_CANT_ACCESS } from "@utils/constants";
@@ -17,15 +16,15 @@ type PageContainerProps = {
 const PageContainer = ({
   children,
 }: React.PropsWithChildren<PageContainerProps>) => {
-  const { modalStore } = useStore();
+  const { authStore, modalStore } = useStore();
+  const { currentSessionUser } = authStore;
   const { closeModal, modalToShow, showModal } = modalStore;
-  const { data:session } = useSession();
   const retryCount = useRef(0);
 
   useLayoutEffect(() => {
     
-    if(session && session.user && !session.user.isCompleted && retryCount.current > 1)
-      showModal(<RegisterModal userInfo={session?.user!} />);
+    if(currentSessionUser && !currentSessionUser.isCompleted && retryCount.current > 1)
+      showModal(<RegisterModal userInfo={currentSessionUser!} />);
     else
       closeModal();
 
@@ -34,12 +33,12 @@ const PageContainer = ({
     return () => {
       retryCount.current = 0;
     }
-  }, [session])
+  }, [currentSessionUser])
 
   return (
     <>
       <SideBar />
-      <div className="col-span-7 lg:col-span-5">
+      <div className="col-span-7 lg:col-span-7">
         {children ? children : null}
       </div>
       <Widgets />

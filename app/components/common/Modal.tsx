@@ -7,34 +7,40 @@ interface ModalBodyProps {
   // isOpen: boolean;
   onClose: () => void;
   children: React.ReactNode;
+  headerChildren?: React.ReactNode;
   classNames?: string;
 }
 
-const ModalBody = ({ onClose, children, classNames }: ModalBodyProps) => {
+const ModalBody = ({ onClose, headerChildren, children, classNames }: ModalBodyProps) => {
 
   return (
     <div className={`fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 ${classNames ?? ""}`}>
       <div className="bg-white dark:bg-[#000000] rounded-lg shadow-lg w-11/12 max-w-lg mx-auto">
         <div className="relative p-4">
-          <button
-            onClick={onClose}
-            className="absolute right-5 top-100 text-gray-400 hover:text-gray-600 block float-right"
-          >
-            <svg
-              className="w-6 h-6"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M6 18L18 6M6 6l12 12"
-              />
-            </svg>
-          </button>
+          {headerChildren 
+            ? headerChildren
+            : (
+              <button
+                onClick={onClose}
+                className="absolute right-5 top-100 text-gray-400 hover:text-gray-600 block float-right"
+              >
+                <svg
+                  className="w-6 h-6"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+              </button>
+            )}
+          
         </div>
         <div className="flex flex-col align-center justify-center p-4">
           {children}

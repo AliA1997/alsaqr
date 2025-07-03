@@ -29,7 +29,8 @@ export enum NotificationType {
 
 export enum MessageType {
   All = "All",
-  Sent = "Sent"
+  Sent = "Sent",
+  Direct = "Direct"
 }
 
 export enum CommonUpsertBoxTypes {
@@ -266,6 +267,19 @@ export interface ServerError {
   details: string;
 }
 
+// Direct Message Relationships
+// Sender -> SEND_MESSAGE -> Recipient
+// Recipient -> RECEIVED_MESSAGE -> Sender
+export interface MessageFormDto extends CommonRecordBody {
+  messageType: MessageType;
+  senderId: string;
+  senderProfileImg?: string;
+  senderUsername?: string;
+  recipientId?: string;
+  recipientProfileImg?: string;
+  recipientUsername?: string;
+}
+
 export interface MessageRecord extends CommonRecordBody {
   id: string;
   createdAt: string;
@@ -283,6 +297,15 @@ export interface MessageRecord extends CommonRecordBody {
 
 export interface MessageToDisplay {
   message: MessageRecord,
+}
+
+export interface MessageHistoryToDisplay {
+  id: string;
+  receiverId: string;
+  receiverProfileImage: string
+  receiverUsername: string;
+  messageCount: any;
+  lastMessageDate: any;
 }
 
 export interface ExploreToDisplay {
