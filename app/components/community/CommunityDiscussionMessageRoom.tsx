@@ -41,7 +41,6 @@ const CommunityDiscussionMessageRoom = ({
       setCommunityDiscussionInfo(result);
     }
 
-    // alert(`FUCK YOU: ${communityId} FUCK YOU 2: ${communityDiscussionId}`)
     if (communityDiscussionId && communityId)
       getCommunityDiscussionInfo();
   }, [
@@ -161,7 +160,7 @@ const CommunityDiscussionMessageRoom = ({
         <div className="ml-3">
           <h2 className="font-semibold text-gray-800 dark:text-gray-50">{commmityDiscussionInfo?.communityDiscussion.name}</h2>
           <p className="text-xs text-gray-500">
-            {/* {users.filter(user => user.isOnline).length} online */}
+            {/* {users.filter(user => user.isOnline).length} online  - V2 feature possibly */}
           </p>
         </div>
       </div>

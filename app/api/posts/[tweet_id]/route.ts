@@ -1,7 +1,8 @@
 // app/api/tweets/[tweet_id]/route.ts
 import { NextRequest, NextResponse } from "next/server";
-import { defineDriver, read, write } from "@utils/neo4j/neo4j";
-import { PostToDisplay } from "typings";
+import { defineDriver, getUserIdFromSession, read, write } from "@utils/neo4j/neo4j";
+import { PostToDisplay, ProfileUser } from "typings";
+import { getServerSession } from "next-auth";
 
 interface GetTweetResponse {
   tweet?: PostToDisplay,
@@ -9,7 +10,7 @@ interface GetTweetResponse {
   success: boolean;
 }
 
-async function GET(
+async function GET_POST(
   request: NextRequest,
   { params }: { params: { tweet_id: string } }
 ): Promise<NextResponse<GetTweetResponse>> {
@@ -52,7 +53,7 @@ async function GET(
       { tweetId },
       ["post", "username", "profileImg", "comments", "commenters", "reposters", "likers"]
     );
-    
+
     const post = posts ? posts[0] : undefined;
 
     if (post) {
@@ -115,4 +116,48 @@ async function PATCH(
   }
 }
 
-export { GET, PATCH };
+async function DELETE_POST(
+  request: NextRequest,
+  { params }: { params: { tweet_id: string } }
+): Promise<NextResponse<GetTweetResponse>> {
+  const { tweet_id } = params;
+  const tweetId = tweet_id as string;
+
+  if (!tweetId) {
+    return new NextResponse("Post ID is required", { status: 400 });
+  }
+
+  const driver = defineDriver();
+  const session = driver.session();
+
+  try {
+    const userAuthSessionId = await getUserIdFromSession(session);
+    if (!userAuthSessionId) {
+        return new NextResponse("Only logged in user can update communities", { status: 400 });   
+    }
+
+    await write(
+      session,
+      `
+      MATCH (pst: Post { id: $tweetId })
+      WHERE pst.userId = $userId
+      DETACH DELETE pst;
+    `,
+      {
+        tweetId,
+        userId: userAuthSessionId
+      }
+    )
+    return NextResponse.json({ success: true });
+  } catch (err) {
+    return NextResponse.json({ message: "Fetch Post error!", success: false });
+
+  }
+}
+
+
+export {
+  GET_POST as GET,
+  DELETE_POST as DELETE
+};
+

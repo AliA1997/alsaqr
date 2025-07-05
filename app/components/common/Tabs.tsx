@@ -1,7 +1,13 @@
-import { useCallback, useMemo, useState } from "react";
-import { CommonLink } from "./Links";
-import { NoRecordsTitle } from "./Titles";
-import { ContentContainer } from "./Containers";
+import { useCallback, useMemo, useRef, useState } from "react";
+import dynamic from 'next/dynamic';
+import { ModalLoader } from "./CustomLoader";
+const CommonLink = dynamic(() => import("./Links").then(mod => mod.CommonLink), { ssr: false });
+// import { CommonLink } from "./Links";
+const NoRecordsTitle = dynamic(() => import("./Titles").then(mod => mod.NoRecordsTitle), { ssr: false });
+// import { NoRecordsTitle } from "./Titles";
+// import { ContentContainer } from "./Containers";
+const ContentContainerWithRef = dynamic(() => import("../common/Containers").then(mod => mod.ContentContainerWithRef), { ssr: false });
+
 
 type TabsProps = {
   tabs: {
@@ -12,9 +18,11 @@ type TabsProps = {
     renderer: (obj: any) => React.ReactNode;
   }[];
   showNumberOfRecords?: boolean;
+  loading: boolean;
 };
 
-function Tabs({ tabs, showNumberOfRecords }: TabsProps) {
+function Tabs({ tabs, showNumberOfRecords, loading }: TabsProps) {
+  const containerRef = useRef(null);
   const [activeTab, setActiveTab] = useState<string>(tabs[0].tabKey);
   const tabLinks = useMemo(
     () =>
@@ -39,7 +47,14 @@ function Tabs({ tabs, showNumberOfRecords }: TabsProps) {
     setActiveTab(tab);
   }, []);
   return (
-    <ContentContainer>
+    <ContentContainerWithRef
+      classNames={`
+          text-center overflow-y-auto scrollbar-hide
+          min-h-[100vh] max-h-[100vh]
+          lg:max-w-4xl 
+        `}
+      innerRef={containerRef}
+    >
       <div className="flex justify-around">
         {tabLinks.map(
           (
@@ -76,20 +91,22 @@ function Tabs({ tabs, showNumberOfRecords }: TabsProps) {
           <div
             key={tCIdx}
             id={`${tC.tabKey}`}
-            className={`tab-content p-6 ${
-              activeTab === tC.tabKey ? "" : "hidden"
-            }`}
+            className={`tab-content p-6 ${activeTab === tC.tabKey ? "" : "hidden"
+              }`}
           >
-            {/* <h1>Test</h1> */}
-            {tC.content && tC.content.length ? (
-              tC.content.map(tC.renderer)
-            ) : (
-              <NoRecordsTitle>{tC.noRecordsContent}</NoRecordsTitle>
-            )}
+
+            {loading 
+              ? <ModalLoader />
+              : tC.content && tC.content.length ? (
+                  tC.content.map(tC.renderer)
+                ) : (
+                  <NoRecordsTitle>{tC.noRecordsContent}</NoRecordsTitle>
+                )
+              }
           </div>
         )
       )}
-    </ContentContainer>
+    </ContentContainerWithRef>
   );
 }
 

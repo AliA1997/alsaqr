@@ -82,7 +82,7 @@ export const ReviewPostsAdded = ({
 };
 
 
-export const ReviewNewListOrCommunity = ({
+export const ReviewUpsertListOrCommunity = ({
     name,
     avatarOrImage,
     visibility,
@@ -90,7 +90,7 @@ export const ReviewNewListOrCommunity = ({
     type
 }: ReviewNewCommunityProps) => (
     <div className='flex flex-col'>
-        {!(type === CommonUpsertBoxTypes.CommunityDiscussion) && (
+        {!(type === CommonUpsertBoxTypes.CommunityDiscussion || type === CommonUpsertBoxTypes.UpdateCommunity) && (
             <div className='flex flex-col x-space-3 justify-items-between'>
                 <h5 className='font-bold mr-2'>
                     {type === CommonUpsertBoxTypes.Community ? 'Community Avatar' : 'List Banner Image'}:
@@ -114,7 +114,7 @@ export const ReviewNewListOrCommunity = ({
             <p>{name}</p>
         </div>
 
-        {type === CommonUpsertBoxTypes.Community && (
+        {(type === CommonUpsertBoxTypes.Community || type === CommonUpsertBoxTypes.UpdateCommunity) && (
             <div className='flex x-space-3 justify-items-between'>
                 <h5 className='font-bold mr-2'>Visibility:</h5>
                 <p>{visibility === 'private' ? 'Private' : 'Public'}</p>

@@ -80,7 +80,7 @@ export const ListOrCommunityFormInputs = observer(({ type }: Props) => {
     const fileUploadLabel = useMemo(() => type === CommonUpsertBoxTypes.Community ? 'Avatar' : 'Banner Image', [type])
     
     const tagsLabel = useMemo(() => {
-        if(type === CommonUpsertBoxTypes.Community)
+        if(type === CommonUpsertBoxTypes.Community || type === CommonUpsertBoxTypes.UpdateCommunity)
             return "Select Hashtags associated with Community";
         else if(type === CommonUpsertBoxTypes.CommunityDiscussion)
             return "Select Hashtags associated with the Discussion";

@@ -1,23 +1,36 @@
 "use client";
-import React, { useCallback, useEffect, useLayoutEffect, useState } from "react";
-import {
+import React, { useCallback, useLayoutEffect, useState } from "react";
+import dynamic from 'next/dynamic';
+import type {
   DashboardPostToDisplay,
 } from "../../../typings";
-import UserHeader from "./UserHeader";
+
 import { useParams } from "next/navigation";
-import Tabs from "@components/common/Tabs";
-import CustomPageLoader  from "@components/common/CustomLoader";
 import { observer } from "mobx-react-lite";
 import { useStore } from "@stores/index";
-import PostComponent from "../posts/Post";
-import { Session } from "next-auth";
+const UserHeader = dynamic(() => import("./UserHeader"), { ssr: false });
+const CustomPageLoader = dynamic(() => import("@components/common/CustomLoader"), { ssr: false });
+const Tabs = dynamic(() => import( "@components/common/Tabs"), { ssr: false });
+const PostComponent = dynamic(() => import("../posts/Post"), { ssr: false });
+// import UserHeader from "./UserHeader";
+// import Tabs from "@components/common/Tabs";
+// import CustomPageLoader  from "@components/common/CustomLoader";
+
+// import PostComponent from "../posts/Post";
+import type { Session } from "next-auth";
 import { getSession } from "next-auth/react";
 
 
 const MainProfile = () => {
   // const { data: session } = useSession();
   const { userStore } = useStore();
-  const { loadProfile, currentUserProfile, loadProfilePosts, currentUserProfilePosts } = userStore;
+  const { 
+    loadProfile, 
+    currentUserProfile, 
+    loadProfilePosts, 
+    currentUserProfilePosts,
+    loadingPosts
+  } = userStore;
   const params = useParams();
   const { name } = params;
   const username = name as string;
@@ -75,7 +88,7 @@ const MainProfile = () => {
               followerCount={currentUserProfile.followers?.length ?? 0}
               followingCount={currentUserProfile.following?.length ?? 0}
             />
-            <React.Suspense fallback={<h2>Loading...</h2>}>
+            {/* <React.Suspense fallback={<h2>Loading...</h2>}> */}
               <Tabs
                 tabs={[
                   {
@@ -114,8 +127,9 @@ const MainProfile = () => {
                     noRecordsContent: `No liked posts found`
                   },
                 ]}
+                loading={loadingPosts}
               />
-            </React.Suspense>
+            {/* </React.Suspense> */}
           </>
         )}
       </div>

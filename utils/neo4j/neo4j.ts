@@ -1,4 +1,5 @@
 import types, { DateTime, Integer, Node, Session, auth, driver } from "neo4j-driver";
+import { getServerSession } from "next-auth";
 import { PostToDisplay } from "typings";
 
 export function defineDriver() {
@@ -58,6 +59,29 @@ export async function write(session: Session, cypher = "", params = {}) {
   } finally {
     console.log("Successfully Write Data");
   }
+}
+
+
+export async function getUserIdFromSession(session: Session) {
+    const userAuthSession = await getServerSession();
+    // console.log('session.user:', userAuthSession?.user)
+    if(!userAuthSession?.user || !userAuthSession?.user?.email)
+      throw new Error('Can\'t perform this request without being logged in.');
+      
+    const sessionUserResponse = await read(
+      session,
+      `
+        MATCH (user:User {email: $email})
+        WITH user.id as id
+        RETURN id
+      `,
+      { email: userAuthSession?.user?.email },
+      ["id"]
+    );
+
+    const { id }: any = sessionUserResponse && sessionUserResponse.length ? sessionUserResponse[0] : undefined;
+
+    return id;
 }
 
 

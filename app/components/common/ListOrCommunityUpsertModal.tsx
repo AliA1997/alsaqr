@@ -11,7 +11,7 @@ import { observer } from "mobx-react-lite";
 import { ListOrCommunityFormInputs } from "./ListOrCommunityForm";
 import UsersFeed from "@components/users/UsersFeed";
 import { default as PostsFeed } from "@components/shared/Feed";
-import { ReviewForm, ReviewNewListOrCommunity, ReviewPostsAdded, ReviewUsersAdded } from "./ReviewForm";
+import { ReviewForm, ReviewUpsertListOrCommunity, ReviewPostsAdded, ReviewUsersAdded } from "./ReviewForm";
 import Image from 'next/image';
 import { DEFAULT_CREATED_LIST_OR_COMMUNITY_FORM } from "@utils/constants";
 
@@ -297,7 +297,7 @@ function ListOrCommunityUpsertModal({ type, loggedInUserId, communityId }: Props
                                                     {
                                                         title: reviewInfoSectionTitle,
                                                         jsx: (
-                                                            <ReviewNewListOrCommunity
+                                                            <ReviewUpsertListOrCommunity
                                                                 name={values.name}
                                                                 avatarOrImage={values.avatarOrBannerImage}
                                                                 visibility={values.isPrivate}

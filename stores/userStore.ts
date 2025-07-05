@@ -8,6 +8,7 @@ export default class UserStore {
     currentUserProfile: ProfileUser | undefined = undefined;
     currentUserProfilePosts: UserProfileDashboardPosts | undefined = undefined;
     loadingInitial: boolean = false;
+    loadingPosts: boolean = false;
     loadingFollow: boolean = false;
     pagingParams = new PagingParams();
     constructor() {
@@ -22,6 +23,9 @@ export default class UserStore {
     };
     setLoadingInitial = (val: boolean) => {
         this.loadingInitial = val;
+    };
+    setLoadingPosts = (val: boolean) => {
+        this.loadingPosts = val;
     };
     setLoadingFollow = (val: boolean) => {
         this.loadingFollow = val;
@@ -56,7 +60,7 @@ export default class UserStore {
     }
     loadProfilePosts = async (userId: string) => {
 
-        this.setLoadingInitial(true);
+        this.setLoadingPosts(true);
         try {
             const {profilePosts} = await agent.userApiClient.getUserProfilePosts(userId, this.axiosParams);
 
@@ -64,7 +68,7 @@ export default class UserStore {
                 this.setCurrentUserProfilePosts(profilePosts);
             });
         } finally {
-            this.setLoadingInitial(false);
+            this.setLoadingPosts(false);
         }
     }
 

@@ -3,9 +3,11 @@ import React from 'react';
 import Image from 'next/image';
 import { User } from 'typings';
 
-export const ContentContainerWithRef = React.forwardRef(({ children, classNames, ...otherProps }: React.PropsWithChildren<any>, ref) => {
+export const ContentContainerWithRef = React.forwardRef(({ innerRef, children, classNames, ...otherProps }: React.PropsWithChildren<any>, ref) => {
   return (
-    <div className={`max-w-xl mx-auto bg-white dark:bg-[#0e1517] shadow-md rounded-lg mt-10 ${classNames}`} {...otherProps}>
+    <div 
+      ref={innerRef}
+    className={`max-w-xl mx-auto bg-white dark:bg-[#0e1517] shadow-md rounded-lg mt-10 ${classNames}`} {...otherProps}>
       {children}
     </div>    
   );
@@ -65,5 +67,17 @@ export function MessagesImagePreview({user, index}: MessagesImagePreviewProps) {
         marginLeft: `${index > 0 ? '-1rem' : ''}`
       }}
     />
+  );
+}
+
+export function InfoCardContainer({ children, classNames }: React.PropsWithChildren<any>){
+  return (
+    <div className={`
+      relative flex flex-1 flex-col border-y border-gray-100 p-5 
+      hover:shadow-lg dark:border-gray-800 dark:hover:bg-[#000000] 
+      ${classNames && classNames}
+    `}>
+      {children}
+    </div>
   );
 }

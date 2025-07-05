@@ -1,18 +1,20 @@
 "use client";
-import { BookmarkIcon, HeartIcon, UploadIcon, XIcon } from "@heroicons/react/outline";
+import { BookmarkIcon, HeartIcon, PlusCircleIcon, UploadIcon, XIcon } from "@heroicons/react/outline";
 import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
 import React, {
+  useCallback,
   useLayoutEffect,
   useMemo,
   useRef,
   useState,
 } from "react";
+// import dynamic from 'next/dynamic';
 import toast from "react-hot-toast";
 import TimeAgo from "react-timeago";
 
 // import { auth } from "../firebase/firebase";
-import { CommentForm, CommentToDisplay, PostToDisplay, User } from "../../../typings";
+import type { CommentForm, CommentToDisplay, PostToDisplay, User } from "../../../typings";
 import {
   getPercievedNumberOfRecord,
   stopPropagationOnClick,
@@ -23,11 +25,18 @@ import { useSession } from "next-auth/react";
 import { FilterKeys, useStore } from "@stores/index";
 import { LoginModal } from "../common/AuthModals";
 import { convertDateToDisplay } from "@utils/neo4j/neo4j";
-import { AddOrFollowButton, BookmarkedIconButton, CommentIconButton, LikesIconButton, RePostedIconButton } from "../common/IconButtons";
+import { AddOrFollowButton, BookmarkedIconButton, CommentIconButton, LikesIconButton, MoreButton, RePostedIconButton } from "../common/IconButtons";
+
 import { faker } from "@faker-js/faker";
 import UpsertBoxIconButton from "@components/common/UpsertBoxIconButtons";
 import { ModalLoader } from "@components/common/CustomLoader";
 import NextImage from 'next/image';
+import SidebarRow from "@components/layout/SidebarRow";
+import { TrashIcon } from "@heroicons/react/solid";
+import MoreSection from "@components/common/MoreSection";
+import { ConfirmModal } from "@components/common/Modal";
+import { SaveToListModal } from "@components/list/ListModal";
+import { ROUTES_USER_CANT_ACCESS } from "@utils/constants";
 
 interface Props {
   postToDisplay: PostToDisplay;
@@ -35,6 +44,7 @@ interface Props {
   canAdd?: boolean;
   onAdd?: (pst: PostToDisplay) => void;
   postsAlreadyAddedByIds?: string[];
+  onlyDisplay?: boolean;
 }
 
 function PostComponent({
@@ -42,13 +52,26 @@ function PostComponent({
   filterKey,
   canAdd,
   onAdd,
-  postsAlreadyAddedByIds
+  postsAlreadyAddedByIds,
+  onlyDisplay
 }: Props) {
   const router = useRouter();
   const { data: session } = useSession();
-  const { feedStore, modalStore } = useStore();
-  const { showModal } = modalStore;
-  const { rePost, likedPost, bookmarkPost, loadComments, comments, posts, addComment, loadingComments } = feedStore;
+  const { authStore, feedStore, listFeedStore, modalStore } = useStore();
+  const { currentSessionUser } = authStore;
+  const { showModal, closeModal } = modalStore;
+  const { 
+    rePost, 
+    likedPost, 
+    bookmarkPost, 
+    loadComments, 
+    comments, 
+    posts, 
+    addComment, 
+    loadingComments,
+    loadingUpsert,
+    deleteYourPost
+  } = feedStore;
 
   const [currentComments, setCurrentComments] = useState<CommentToDisplay[]>(() => {
     const comments = session && session.user ? (session.user as any).comments : [];
@@ -244,9 +267,66 @@ function PostComponent({
     }
   };
 
+
+  const moreOptions = useMemo(() => {
+    const defaultOpts = [
+      {
+        title: 'Save to List',
+        onClick: async () => {
+          showModal(
+            <SaveToListModal
+              relatedEntityType="post"
+              info={postToDisplay}
+              onClose={() => {
+                const canCloseLoginModal = !(ROUTES_USER_CANT_ACCESS.some(r => window.location.href.includes(r)));
+                
+                if (currentSessionUser && currentSessionUser.id && canCloseLoginModal)
+                    closeModal();
+              }}
+            />
+          )
+        },
+        Icon: PlusCircleIcon,
+      }
+    ];
+
+    if(postInfo.userId === currentSessionUser?.id)
+      defaultOpts.push(      {
+        title: 'Delete Your Post',
+        onClick: async () => {
+          showModal(
+            <ConfirmModal 
+              title="Delete this Post"
+              confirmButtonClassNames="bg-red-700 text-gray-100"
+              onClose={() => closeModal()}
+              declineButtonText="Cancel"
+              confirmFunc={async () => {
+                await deleteYourPost(postInfo.id);
+                closeModal();           
+              }}
+              confirmMessage="Are you sure you want to delete this post forever?"
+              confirmButtonText="Delete Post"
+            >
+              <PostComponent 
+                postToDisplay={postToDisplay}
+                onlyDisplay={true}
+              />
+            </ConfirmModal>
+          )
+
+        },
+        Icon: TrashIcon,
+      });
+
+    return defaultOpts;
+  }, [postInfo.id]);
+
   return (
     <div
-      className="flex flex-col space-x-3 border-y border-gray-100 p-5 hover:shadow-lg dark:border-gray-800 dark:hover:bg-[#000000]"
+      className={`
+        relative flex flex-col space-x-3 border-y border-gray-100 p-5 
+        hover:shadow-lg dark:border-gray-800 dark:hover:bg-[#000000]  
+      `}
     >
       {canAdd && (
         <AddOrFollowButton
@@ -258,7 +338,7 @@ function PostComponent({
 
       <div className="flex space-x-3 cursor-pointer">
         <img
-          className="h-10 w-10 rounded-full object-cover "
+          className="h-10 w-10 rounded-full object-cover"
           src={postToDisplay.profileImg}
           alt={postToDisplay.username}
           onClick={(e) => stopPropagationOnClick(e, navigateToTweetUser)}
@@ -300,52 +380,67 @@ function PostComponent({
           </div>
           <p className="pt-1">{postInfo.text}</p>
           {postInfo.image && (
-            <img
-              src={postInfo.image}
-              alt="img/tweet"
-              className="m-5 ml-0 max-h-60
-          rounded-lg object-cover shadow-sm"
-            />
+            <div className="w-[300px] h-[200px] overflow-hidden flex justify-center items-center">
+              <img
+                src={postInfo.image}
+                alt="img/post"
+                className="m-5 ml-0 w-full h-full object-cover shadow-sm"
+              />
+            </div>
+
           )}
         </div>
       </div>
 
       {!isSearchedPosts && (
-        <div className="mt-5 flex justify-between">
-          <CommentIconButton
-            onClick={(e) =>
-              stopPropagationOnClick(e, () => {
-                if (!session || !session.user)
-                  showModal(<LoginModal />);
-
-                setCommentBoxOpen(!commentBoxOpen);
-              })}
-            numberOfComments={numberOfComments}
-          />
-          <RePostedIconButton
-            onClick={(e) => stopPropagationOnClick(e, onRetweet)}
-            numberOfRePosts={numberOfRetweets}
-            isRePosted={isRePosted}
-          />
-          <LikesIconButton
-            onClick={(e) => stopPropagationOnClick(e, onLikeTweet)}
-            numberOfLikes={numberOfLikes}
-            isLiked={isLiked}
-          />
-          <div className="flex gap-2">
-            <BookmarkedIconButton
-              onClick={(e) => stopPropagationOnClick(e, onBookmarkTweet)}
-              isBookmarked={isBookmarked}
+        <>
+          {!onlyDisplay && (
+            <MoreSection 
+              moreOptions={moreOptions}
+              moreOptionClassNames="bg-red-700"
             />
-            <motion.div
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.9 }}
-              className="flex cursor-pointer item-center space-x-3 text-gray-400"
-            >
-              <UploadIcon className="h-5 w-5" />
-            </motion.div>
+          )}
+          <div className="mt-5 flex justify-between">
+            <CommentIconButton
+              onClick={(e) =>
+                stopPropagationOnClick(e, () => {
+                  if (!session || !session.user)
+                    showModal(<LoginModal />);
+
+                  setCommentBoxOpen(!commentBoxOpen);
+                })}
+              numberOfComments={numberOfComments}
+              disabled={onlyDisplay ?? false}
+            />
+            <RePostedIconButton
+              onClick={(e) => stopPropagationOnClick(e, onRetweet)}
+              numberOfRePosts={numberOfRetweets}
+              isRePosted={isRePosted}
+              disabled={onlyDisplay ?? false}
+            />
+            <LikesIconButton
+              onClick={(e) => stopPropagationOnClick(e, onLikeTweet)}
+              numberOfLikes={numberOfLikes}
+              isLiked={isLiked}
+              disabled={onlyDisplay ?? false}
+            />
+            <div className="flex gap-2">
+              <BookmarkedIconButton
+                onClick={(e) => stopPropagationOnClick(e, onBookmarkTweet)}
+                isBookmarked={isBookmarked}
+                disabled={onlyDisplay ?? false}
+              />
+              <motion.button
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.9 }}
+                className="flex cursor-pointer item-center space-x-3 text-gray-400"
+                disabled={onlyDisplay ?? false}
+              >
+                <UploadIcon className="h-5 w-5" />
+              </motion.button>
+            </div>
           </div>
-        </div>
+        </>
       )}
 
       {!isSearchedPosts && commentBoxOpen && (
@@ -375,13 +470,15 @@ function PostComponent({
                     >
                       <XIcon className="h-5 w-5" /> 
                     </button>
-                    <NextImage
-                      className="mt-10 h-40 w-full rounded-xl object-contain shadow-lg"
-                      src={image}
-                      width={20}
-                      height={20}
-                      alt="image/tweet"
-                    />
+                    <div className='w-[300px] h-[200px] overflow-hidden flex justify-center items-center'>
+                      <NextImage
+                        className="mt-10 w-full h-full object-cover shadow-lg"
+                        src={image}
+                        width={20}
+                        height={20}
+                        alt="image/tweet"
+                      />
+                    </div>
                   </motion.div>
                 )}
                 <input

@@ -37,6 +37,7 @@ export enum CommonUpsertBoxTypes {
   Post = "Post",
   List = "List",
   Community = "Community",
+  UpdateCommunity = "Update-Community",
   CommunityDiscussion = "CommunityDiscussion",
   Register = "Register"
 }
@@ -223,7 +224,16 @@ export interface CommunityRecordToDisplay extends CommunityRecord {
 
 export interface CommunityToDisplay {
   community: CommunityRecordToDisplay,
-  founder: UserInfo
+  founder: UserInfo,
+  relationshipType: 'JOINED' | 'INVITED' | 'FOUNDER'
+}
+
+export interface CommunityAdminInfo {
+  community: CommunityRecordToDisplay;
+  isFounder: boolean;
+  founder: UserInfo;
+  invitedCount: number;
+  joinedCount: number;
 }
 // CALL apoc.trigger.add('create_list_notification', 
 // 'UNWIND $createdNodes AS node

@@ -186,7 +186,7 @@ const UsersFeed = observer(({ title, loggedInUserId, filterKey, usersAlreadyAdde
             text-center overflow-y-auto scrollbar-hide
             ${filterKey === FilterKeys.SearchUsers || filterKey === FilterKeys.Register ? 'min-h-[30vh] max-h-[40vh]' : 'min-h-[100vh] max-h-[100vh]'}  
           `}
-          ref={containerRef} 
+          innerRef={containerRef} 
         >
             {loading ? (
               <ModalLoader />

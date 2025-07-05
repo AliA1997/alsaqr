@@ -1,16 +1,14 @@
 'use client';
 import dynamic from "next/dynamic";
-import React, { Suspense, useEffect, useRef, useState } from "react";
-const PostComponent = dynamic(() => import("../../components/posts/Post"), {
-  ssr: false,
-});
-import { getServerSession } from "next-auth";
-import { postApiClient } from "@utils/postApiClient";
+import React, { useEffect, useState } from "react";
 import { observer } from "mobx-react-lite";
 import { FilterKeys, useStore } from "@stores/index";
-import { ContentContainerWithRef } from "@components/common/Containers";
+import { CommunityAdminInfo, CommunityToDisplay } from "typings";
+import { communityApiClient } from "@utils/communityApiClient";
+import CommunityAdminView from "@components/community/CommunityAdminView";
+import CommunityDiscussionFeedStore from "@stores/communityDiscussionFeedStore";
 import CustomPageLoader from "@components/common/CustomLoader";
-import ListOrCommunityFeed from "@components/shared/ListOrCommunityFeed";
+const ListOrCommunityFeed = dynamic(() =>  import("@components/shared/ListOrCommunityFeed"), { ssr: false });
 
 interface CommunityItemPageProps {
   params: {
@@ -18,16 +16,57 @@ interface CommunityItemPageProps {
   };
 }
 
-const CommunityItemPage = ({ params }: CommunityItemPageProps) => {
+const CommunityItemPage = observer(({ params }: CommunityItemPageProps) => {
+  const [loading, setLoading] = useState<boolean>(true);
+  const { authStore, communityDiscussionFeedStore } = useStore();
+  const { loadingInitial:feedLoading } = communityDiscussionFeedStore;
+    const { currentSessionUser } = authStore;
+    const [communityInfo, setCommunityInfo] = useState<CommunityAdminInfo | undefined>(undefined);
+    
+    async function getCommunityInfo() {
+        const communityInfoResult = await communityApiClient
+                                .getAdminCommunityInfo(undefined, currentSessionUser?.id!, params.community_id);
+        
+        setCommunityInfo(communityInfoResult);
+        setLoading(false);
+    }
 
-  return (
-    <ListOrCommunityFeed 
-        filterKey={FilterKeys.CommunityDiscussion}
-        title="Community Discussions"
-        communityId={params.community_id}
-    />
-  );
-};
+    async function refreshCommunityInfo(communityId: string) {
+        const communityInfoResult = await communityApiClient
+                                      .getAdminCommunityInfo(undefined, currentSessionUser?.id!, communityId);
+        
+        setCommunityInfo(communityInfoResult);
+        setLoading(false);
+    }
+
+    useEffect(
+        () => {
+        
+        if(currentSessionUser?.id)
+            getCommunityInfo();
+        },
+        [currentSessionUser]
+    );
+
+  if(loading)
+    return <CustomPageLoader title="Loading" />
+  else
+    return (
+      <>
+        {communityInfo?.isFounder && (
+          <CommunityAdminView 
+            communityAdminInfo={communityInfo!}
+            refreshCommunityAdminInfo={refreshCommunityInfo}
+          />
+        )}
+        <ListOrCommunityFeed 
+            filterKey={FilterKeys.CommunityDiscussion}
+            title="Community Discussions"
+            communityId={params.community_id}
+        />
+      </>
+    );
+});
 
 
-export default observer(CommunityItemPage);
+export default CommunityItemPage;

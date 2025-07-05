@@ -23,6 +23,7 @@ export default class FeedStore {
 
 
     loadingInitial = false;
+    loadingUpsert = false;
     loadingPost = false;
     loadingComments = false;
     predicate = new Map();
@@ -60,6 +61,9 @@ export default class FeedStore {
     setLoadingInitial = (value: boolean) => {
         this.loadingInitial = value;
     }
+    setLoadingUpsert = (value: boolean) => {
+        this.loadingUpsert = value;
+    }
     setLoadingPost = (value: boolean) => {
         this.loadingPost = value;
     }
@@ -94,15 +98,15 @@ export default class FeedStore {
                 this.postsRegistry.clear();
         
             const { result } = await agent.postApiClient.getPosts(this.axiosParams) ?? [];
-
+            
             runInAction(() => {
                 result.data.forEach((pst: PostToDisplay) => {
                     this.setPost(pst.post.id, pst);
                 });
-                debugger;
+                console.log('result.pagination:', result.pagination)
+                this.setPagination(result.pagination);
             });
 
-            this.setPagination(result.pagination);
         } finally {
             this.setLoadingInitial(false);
             // alert(this.postsRegistry.size)
@@ -162,6 +166,17 @@ export default class FeedStore {
 
         } finally {
             this.setLoadingInitial(false);
+        }
+
+    }
+    deleteYourPost = async (postId: string) => {
+
+        this.setLoadingUpsert(true);
+        try {
+            await agent.mutatePostApiClient.deleteYourPost(postId) ?? {};
+
+        } finally {
+            this.setLoadingUpsert(false);
         }
 
     }

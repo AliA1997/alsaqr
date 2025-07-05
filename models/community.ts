@@ -67,3 +67,13 @@ export interface CommunityDiscussionMessageToDisplay {
   profileImg: string;
   communityDiscussionMessage: CommunityDiscussionMessageRecord;
 }
+
+export interface UpdateCommunityForm {
+  id: string;
+  name: string;
+  avatar: string;
+  isPrivate: any;
+  tags: string[];
+}
+
+export interface UpdateCommunityFormDto extends UpdateCommunityForm {}

@@ -1,200 +1,135 @@
-import { faker } from "@faker-js/faker";
-import { extractQryParams } from "@utils/common";
-import { commonCountCipher } from "@utils/neo4j";
-import { defineDriver, read, write } from "@utils/neo4j/neo4j";
-import { PaginatedResult, Pagination } from "models/common";
-import { CommunityDiscussionToDisplay } from "models/community";
-import { int } from "neo4j-driver";
+import { defineDriver, getUserIdFromSession, read, write } from "@utils/neo4j/neo4j";
+import type { UpdateCommunityFormDto } from "models/community";
 import { NextRequest, NextResponse } from "next/server";
-import { CreateListOrCommunityFormDto } from "typings";
+import type { CommunityAdminInfo } from "typings";
 
 
-async function GET_COMMUNITY_DISCUSSIONS(
+async function GET_COMMUNITY_INFO(
   request: NextRequest,
   { params }: { params: { user_id: string, community_id: string } }
 ) {
-  const { user_id, community_id } = params;
-  const communityId = community_id as string;
+  const { community_id, user_id } = params;
   const userId = user_id as string;
+  const communityId = community_id as string;
 
-  const [currentPage, itemsPerPage, searchTerm] = extractQryParams(request, ['currentPage', 'itemsPerPage', 'searchTerm']);
-  const currentPageParsed = parseInt(currentPage!);
-  const itemsPerPageParsed = parseInt(itemsPerPage!);
+  let adminCommunityInfo: CommunityAdminInfo | undefined;
 
-  let communityDiscussions: CommunityDiscussionToDisplay[] = [];
-  let pagination: Pagination | undefined = undefined;
-  
-  if (!communityId) {
-    return new NextResponse("Community must have an id", { status: 400 });
+  if (!userId) {
+    return new NextResponse("User must be logged in", { status: 400 });
   }
 
   const driver = defineDriver();
   const session = driver.session();
 
   try {
-    let selectResult,  pagingResult, selectQuery;
+    let query = `
+      MATCH (community:Community {id: $communityId})
 
-    let pagingQuery = `SKIP $skip LIMIT $itemsPerPage`;
+      // Get founder information and check if the specified user is the founder
+      OPTIONAL MATCH (community)-[:COMMUNITY_FOUNDER]->(founder:User)
+      WITH community, founder,
+     EXISTS((community)-[:COMMUNITY_FOUNDER]->(:User {id: $userId})) AS isFounder
 
-    if(searchTerm){
-      selectQuery = `
-          MATCH (community:Community { id: $communityId })-[:DISCUSSION_POSTED]->(communityDiscussion: CommunityDiscussion)
-          WHERE communityDiscussion.name CONTAINS $searchTerm
-          WITH communityDiscussion
-          RETURN communityDiscussion
-      `;
+      // Count invited users
+      OPTIONAL MATCH (community)-[:INVITED]->(invitedUser:User)
+      WITH community, founder, isFounder as isFounder, 
+          COUNT(DISTINCT invitedUser) AS invitedCount
 
-      selectResult = await read(
-        session,
-        `${selectQuery} ${pagingQuery}`,
-        {
-          communityId,
-          searchTerm: searchTerm ?? "",
-          skip: int((currentPageParsed - 1) *  itemsPerPageParsed),
-          itemsPerPage: int(itemsPerPageParsed)
-        },
-        ["communityDiscussion"]
+      // Count joined users
+      OPTIONAL MATCH (joinedUser:User)-[:JOINED]->(community)
+      WITH community, founder, isFounder as isFounder, invitedCount,
+          COUNT(DISTINCT joinedUser) AS joinedCount
+
+      RETURN community,
+        isFounder,
+        founder,
+        invitedCount,
+        joinedCount
+    `;
+    let results = await read(
+      session,
+      query,
+      {
+        userId,
+        communityId
+      },
+      ["community", "isFounder", "founder", "invitedCount", "joinedCount"]
     );
-      
-      pagingResult = await read(
-        session,
-        commonCountCipher(selectQuery, 'communityDiscussion'),
-        {
-          communityId,
-          searchTerm: searchTerm ?? "",
-        },
-        'total'
-      );
-    } else {
-      selectQuery = `
-          MATCH (community:Community { id: $communityId })-[:DISCUSSION_POSTED]->(communityDiscussion: CommunityDiscussion)
-          OPTIONAL MATCH (cmtyDisc)-[:INVITED_TO_DISCUSSION]->(iUsers: User)
-          OPTIONAL MATCH (cmtyDisc)-[:JOINED_DISCUSSION]->(jUsers: User)
-          WITH communityDiscussion,
-              collect(DISTINCT iUsers) as invitedUsers,
-              collect(DISTINCT jUsers) as joinedUsers
-          RETURN communityDiscussion, invitedUsers, joinedUsers
-      `;
-      selectResult = await read(
-        session,
-        `${selectQuery} ${pagingQuery}`,
-        {
-          communityId,
-          skip: int((currentPageParsed - 1) *  itemsPerPageParsed),
-          itemsPerPage: int(itemsPerPageParsed)
-        },
-        ["communityDiscussion", 'invitedUsers', 'joinedUsers']
-      );
 
-      pagingResult = await read(
-        session,
-        commonCountCipher(selectQuery, 'communityDiscussion'),
-        {
-          communityId
-        },
-        'total'
-      );
-    }
-    const pagingResultParsed = parseInt((pagingResult ?? ['0'])[0]);
+    adminCommunityInfo = results && results.length ? results[0] : undefined;
 
-    pagination = {
-      itemsPerPage: itemsPerPageParsed,
-      currentPage: currentPageParsed, 
-      totalItems: pagingResultParsed,
-      totalPages: pagingResultParsed / itemsPerPageParsed
-    };
-    
-    communityDiscussions = selectResult ?? []; // Adjust based on your schema
-    
   } catch (err) {
-    return NextResponse.json({ message: "Fetch community discussions error!", success: false });
+    return NextResponse.json({ message: "Fetch communities error!", success: false });
   }
   finally {
     await session.close();
   }
 
-  return NextResponse.json({ 
-      result: new PaginatedResult<any>(communityDiscussions, pagination!) 
-   });
+  return NextResponse.json(adminCommunityInfo ?? {});
 }
 
-async function POST_CREATE_COMMUNITY_DISCUSSION(
+
+async function PUT_UPDATE_COMMUNITY(
   request: NextRequest,
   { params }: { params: { user_id: string, community_id: string } }
 ) {
-  const { values:data }: { values: CreateListOrCommunityFormDto } = await request.json();
-  const driver = defineDriver();
-  const session = driver.session();
-  const { user_id, community_id } = params;
+  const { values: data }: { values: UpdateCommunityFormDto } = await request.json();
+  const { community_id, user_id } = params;
   const userId = user_id as string;
   const communityId = community_id as string;
 
-  console.log('post community data:', data);
-  if (!data.name) {
-    return new NextResponse("Name of Community Discussion is required", { status: 400 });
+  if (!userId) {
+    return new NextResponse("User ID is required for updating your user.", { status: 400 });
   }
-  try {
-    const communityDiscussionId = `communityDiscussion_${faker.datatype.uuid()}`;
 
+  const driver = defineDriver();
+  const session = driver.session();
+
+  try {
+    const userAuthSessionId = await getUserIdFromSession(session);
+    console.log('userId != userAuthSessionId', userId != userAuthSessionId)
+    if (userId != userAuthSessionId) {
+      return new NextResponse("Only logged in user can update communities", { status: 400 });
+    }
+    console.log(`     {
+        communityId,
+        userId,
+        ...data
+      }`,      {
+        communityId,
+        userId,
+        ...data
+      })
     await write(
       session,
       `
-        // Create a new community record 
-        MERGE (u:User {id: $userId})
-        MERGE (cmty:Community {id: $communityId})
-        CREATE (cmtyDisc:CommunityDiscussion {
-          id: $id,
-          userId: $userId,
-          communityId: $communityId,
-          name: $name,
-          createdAt: datetime(),
-          updatedAt: null,
-          _rev: "",
-          _type: "community_discussion",
-          isPrivate: $isPrivate,
-          tags: $tags
-        })
-        CREATE (u)-[:CREATED_DISCUSSION {timestamp: datetime()}]->(cmtyDisc)
-        CREATE (cmty)-[:DISCUSSION_POSTED {timestamp: datetime()}]->(cmtyDisc)
-        CREATE (cmtyDisc)-[:POSTED_DISCUSSION_ON {timestamp: datetime()}]->(cmty)
-        `,
+              MATCH (cmty:Community { id: $communityId })
+              MATCH (u:User {id: $userId })
+              WHERE EXISTS((cmty)-[:COMMUNITY_FOUNDER]->(u))
+              SET cmty.name = $name,
+                  cmty.avatar = $avatar,
+                  cmty.tags = $tags,
+                  cmty.isPrivate = $isPrivate,
+                  cmty.updatedAt = timestamp()
+            `,
       {
-        id: communityDiscussionId,
-        userId,
         communityId,
-        name: data.name,
-        isPrivate: (data.isPrivate === 'private'),
-        tags: data.tags
+        userId,
+        ...data
       }
     );
 
-    await write(
-      session,
-      `
-        UNWIND $usersAdded AS usersAddedId
-        MATCH (cmtyDisc: CommunityDiscussion {id: $communityDiscussionId}), (cmty: Community {id: $communityId}), (user:User {id: usersAddedId})
-        MERGE (cmty)-[cr:INVITED]->(user)
-        MERGE (cmtyDisc)-[r:INVITED_TO_DISCUSSION]->(user)
-        SET r.createdAt = datetime()
-        SET cr.createdAt = datetime()
-        RETURN count(r) AS relationshipsCreated
-      `,
-      {
-        communityDiscussionId,
-        communityId,
-        usersAdded: data.usersAdded
-      }
-    )
-
     return NextResponse.json({ success: true });
   } catch (err) {
-    return NextResponse.json({ message: "Add community error!", success: false });
-  } finally {
-    await session.close();
+    console.log("error:", err);
+    return NextResponse.json({ message: "Update User error!", success: false });
+
   }
 }
 
-export  { 
-  GET_COMMUNITY_DISCUSSIONS as GET,
-  POST_CREATE_COMMUNITY_DISCUSSION as POST
+
+
+export {
+  GET_COMMUNITY_INFO as GET,
+  PUT_UPDATE_COMMUNITY as PUT
 }

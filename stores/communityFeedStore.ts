@@ -5,6 +5,7 @@ import agent from "@utils/common";
 import {DEFAULT_CREATED_LIST_OR_COMMUNITY_FORM } from "@utils/constants";
 import ModalStore from "./modalStore";
 import { store } from ".";
+import { UpdateCommunityForm, UpdateCommunityFormDto } from "models/community";
 
 export default class CommunityFeedStore {
 
@@ -19,8 +20,8 @@ export default class CommunityFeedStore {
         );
     }
 
-
     loadingInitial = false;
+    loadingUpsert = false;
     predicate = new Map();
     setPredicate = (predicate: string, value: string | number | Date | undefined) => {
         if(value) {
@@ -35,6 +36,9 @@ export default class CommunityFeedStore {
     communityRegistry: Map<string, CommunityToDisplay> = new Map<string, CommunityToDisplay>();
     currentStepInCommunityCreation: number | undefined = undefined;
     communityCreationForm: CreateListOrCommunityForm = DEFAULT_CREATED_LIST_OR_COMMUNITY_FORM;
+    currentStepInCommunityUpdate: number | undefined = undefined;
+    updateCommunityForm: UpdateCommunityForm | undefined = undefined;
+
 
     navigatedCommunity: CommunityToDisplay | undefined = undefined;
     setNavigateCommunity = (val: CommunityToDisplay | undefined) => {
@@ -42,6 +46,9 @@ export default class CommunityFeedStore {
     }
     setLoadingInitial = (val: boolean) => {
         this.loadingInitial = val;
+    }
+    setLoadingUpsert = (val: boolean) => {
+        this.loadingUpsert = val;
     }
     setPagingParams = (pagingParams: PagingParams) => {
         this.pagingParams = pagingParams;
@@ -61,6 +68,12 @@ export default class CommunityFeedStore {
     setCommunityCreationForm = (val: CreateListOrCommunityForm) => {
         this.communityCreationForm = val;
     }
+    setCurrentStepInCommunityUpdate = (currentStep: number) => {
+        this.currentStepInCommunityUpdate = currentStep;
+    }
+    setUpdateCommunityForm = (val: UpdateCommunityForm | undefined) => {
+        this.updateCommunityForm = val;
+    }
 
     resetListsState = () => {
         this.predicate.clear();
@@ -74,6 +87,25 @@ export default class CommunityFeedStore {
         this.predicate.forEach((value, key) => params.append(key, value));
 
         return params;
+    }
+
+    updateCommunity = async (values: UpdateCommunityForm, userId: string, communityId: string) => {
+
+        this.setLoadingUpsert(true);
+        try {
+            const updatedCommunityDto: UpdateCommunityFormDto = values;
+
+            await agent.communityApiClient.updateCommunity(updatedCommunityDto, userId, communityId);
+
+            runInAction(() => {
+                store.modalStore.closeModal();
+                this.setCurrentStepInCommunityUpdate(0);
+                this.setUpdateCommunityForm(undefined);
+            });
+        } finally {
+            this.setLoadingUpsert(false);
+        }
+
     }
 
     addCommunity = async (newCommunity: CreateListOrCommunityForm, userId: string) => {

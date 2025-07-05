@@ -1,5 +1,6 @@
 "use client";
 import React, { useCallback, useLayoutEffect, useMemo } from "react";
+import dynamic from 'next/dynamic';
 import {
   BellIcon,
   HashtagIcon,
@@ -14,14 +15,18 @@ import {
   LogoutIcon,
   CogIcon,
 } from "@heroicons/react/outline";
-import SidebarRow from "./SidebarRow";
+const SidebarRow = dynamic(() => import('./SidebarRow'), { ssr: false })
+const DarkSwitch = dynamic(() => import('./DarkSwitch'), { ssr: false })
+// import SidebarRow from "./SidebarRow";
 // import { auth } from "../firebase/firebase";
-import DarkSwitch from "./DarkSwitch";
+// import DarkSwitch from "./DarkSwitch";
 import { useRouter } from "next/navigation";
 import { getEmailUsername, stopPropagationOnClick } from "@utils/neo4j/index";
 import { useStore } from "@stores/index";
 import { observer } from "mobx-react-lite";
-import { LoginModal, RegisterModal } from "../common/AuthModals";
+const LoginModal = dynamic(() => import("../common/AuthModals").then(mod => mod.LoginModal), { ssr: false });
+const RegisterModal = dynamic(() => import("../common/AuthModals").then(mod => mod.RegisterModal), { ssr: false });
+
 import { ROUTES_USER_CANT_ACCESS } from "@utils/constants";
 
 type SideBarProps = {};
@@ -68,7 +73,6 @@ const SideBar = ({}: SideBarProps) => {
           <img
             className={`
               m-0 h-full w-full md:w-[90%] transition-all duration-200 
-              hover:bg-gray-100 dark:hover:bg-gray-600
               sidebarLogo
               cursor-pointer
           `}

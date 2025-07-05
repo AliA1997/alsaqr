@@ -1,31 +1,39 @@
 "use client";
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { RefreshIcon } from "@heroicons/react/outline";
-import {
+// import { RefreshIcon } from "@heroicons/react/outline";
+import type {
   DashboardPostToDisplay,
   PostToDisplay,
 } from "../../../typings";
-import PostComponent from "../posts/Post";
+// import PostComponent from "../posts/Post";
+import dynamic from 'next/dynamic';
 // import { fetchTweets } from "../../utils/tweets/fetchTweets";
-import toast from "react-hot-toast";
+// import toast from "react-hot-toast";
 
 import { useSession } from "next-auth/react";
 import PostBox from "../posts/PostBox";
-import { setFilterState } from "@utils/mobx";
+// import { setFilterState } from "@utils/mobx";
 import { useSearchParams } from "next/navigation";
 import { convertQueryStringToObject, Params } from "@utils/neo4j";
-import CustomPageLoader, { ModalLoader } from "../common/CustomLoader";
+const PostComponent = dynamic(() => import("../posts/Post"), { ssr: false });
+const CustomPageLoader = dynamic(() => import("../common/CustomLoader"), { ssr: false });
+const ModalLoader = dynamic(() => import("../common/CustomLoader").then(mod => mod.ModalLoader), { ssr: false });
+const NoRecordsTitle = dynamic(() => import("../common/Titles").then(mod => mod.NoRecordsTitle), { ssr: false });
+const PageTitle = dynamic(() => import("../common/Titles").then(mod => mod.PageTitle), { ssr: false });
+// const ContentContainer = dynamic(() => import("../common/Containers").then(mod => mod.ContentContainer), { ssr: false });
+const ContentContainerWithRef = dynamic(() => import("../common/Containers").then(mod => mod.ContentContainerWithRef), { ssr: false });
+
+// import CustomPageLoader, { ModalLoader } from "../common/CustomLoader";
 import { observer } from "mobx-react-lite";
 import { FilterKeys, useStore } from "stores";
-import { NoRecordsTitle, PageTitle } from "../common/Titles";
-import { ContentContainer, ContentContainerWithRef } from "../common/Containers";
+// import { NoRecordsTitle, PageTitle } from "../common/Titles";
+// import { ContentContainer, ContentContainerWithRef } from "../common/Containers";
 import { PagingParams } from "models/common";
 
 interface Props {
   title?: string;
   filterKey?: FilterKeys;
   hideTweetBox?: boolean;
-  posts?: PostToDisplay[] | DashboardPostToDisplay[];
   canAdd?: boolean;
   onAdd?: (post: PostToDisplay) => void;
   postsAlreadyAddedByIds?: string[];
@@ -44,7 +52,6 @@ const Feed = observer(({
   title, 
   filterKey, 
   hideTweetBox, 
-  posts, 
   canAdd,
   onAdd,
   postsAlreadyAddedByIds 
@@ -112,12 +119,16 @@ const Feed = observer(({
   const feedPagination = useMemo(() => {
     if (filterKey === FilterKeys.Explore) return exploreStore.pagination;
     else if(filterKey === FilterKeys.MyBookmarks) return bookmarkFeedStore.pagination;
-    // else if (filterKey === FilterKeys.Search) return searchStore.predicate;
+    else if (filterKey === FilterKeys.SearchPosts) return searchStore.searchedPostsPagination;
     else return feedStore.pagination;
   }, [
+    searchStore.searchedPosts,
     searchStore.searchedPostsPagingParams.currentPage, 
+    feedStore.posts,
     feedStore.pagingParams.currentPage, 
+    exploreStore.explorePosts,
     exploreStore.pagingParams.currentPage, 
+    bookmarkFeedStore.bookmarkedPosts,
     bookmarkFeedStore.pagingParams.currentPage
   ]);
 
@@ -206,13 +217,14 @@ const Feed = observer(({
     const observer = new IntersectionObserver(
       (entries) => {
         const firstEntry = entries[0];
-        const currentPage = feedPagination?.currentPage ?? 0;
+        const currentPage = feedPagination?.currentPage ?? 1;
         const itemsPerPage = feedPagination?.itemsPerPage ?? 10;
         const totalItems = feedPagination?.totalItems ?? 0;
 
         const nextPage = currentPage + 1;
         const totalItemsOnNextPage = nextPage * itemsPerPage;
         const hasMoreItems = (totalItems > totalItemsOnNextPage);
+        debugger;
         if (firstEntry?.isIntersecting && !feedLoadingInitial && hasMoreItems) {
           fetchMoreItems(feedPagingParams.currentPage + 1);
         }
@@ -254,7 +266,7 @@ const Feed = observer(({
           text-center overflow-y-auto scrollbar-hide
           ${filterKey === FilterKeys.SearchPosts ? 'min-h-[30vh] max-h-[40vh]' : 'min-h-[100vh] max-h-[100vh]'}  
         `}
-        ref={containerRef}
+        innerRef={containerRef}
       >
         {loading ? (
           <>

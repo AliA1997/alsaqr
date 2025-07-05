@@ -1,34 +1,44 @@
 "use client";
-import React, { useEffect, useMemo, useRef, useState } from "react";
-// import { RefreshIcon } from "@heroicons/react/outline";
-import {
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { 
   CommonUpsertBoxTypes,
+} from 'models/enums';
+import type {
   CommunityToDisplay,
   ListToDisplay,
 } from "@typings";
-// import { fetchTweets } from "../../utils/tweets/fetchTweets";
-import toast from "react-hot-toast";
+import dynamic from 'next/dynamic';
+// import toast from "react-hot-toast";
 
 import { useSession } from "next-auth/react";
 import { useSearchParams } from "next/navigation";
 import { convertQueryStringToObject, Params } from "@utils/neo4j";
-import CustomPageLoader from "../common/CustomLoader";
+// import CustomPageLoader from "../common/CustomLoader";
+const CustomPageLoader = dynamic(() => import("../common/CustomLoader"), { ssr: false });
 import { observer } from "mobx-react-lite";
 import { FilterKeys, useStore } from "stores";
-import { NoRecordsTitle, PageTitle } from "../common/Titles";
-import { ContentContainerWithRef } from "../common/Containers";
+const NoRecordsTitle = dynamic(() => import("../common/Titles").then(mod => mod.NoRecordsTitle), { ssr: false });
+const PageTitle = dynamic(() => import("../common/Titles").then(mod => mod.PageTitle), { ssr: false });
+const ContentContainerWithRef = dynamic(() => import("../common/Containers").then(mod => mod.ContentContainerWithRef), { ssr: false });
+
+// import { NoRecordsTitle, PageTitle } from "../common/Titles";
+// import { ContentContainerWithRef } from "../common/Containers";
 import { PagingParams } from "models/common";
 // import ListOrCommunityBox from "./ListOrCommunityBox";
-import ListItemComponent from "../list/ListItem";
-import CommunityItemComponent from "../community/CommunityItem";
-import ListOrCommunityUpsertModal from "../common/ListOrCommunityUpsertModal";
-import { CommunityDiscussionToDisplay } from "models/community";
-import CommunityDiscussionItemComponent from "@components/community/CommunityDiscussionItem";
+// import ListItemComponent from "../list/ListItem";
+const ListItemComponent = dynamic(() => import("../list/ListItem"), { ssr: false });
+const CommunityItemComponent = dynamic(() => import("../community/CommunityItem"), { ssr: false });
+const ListOrCommunityUpsertModal = dynamic(() => import("../common/ListOrCommunityUpsertModal"), { ssr: false });
+const CommunityDiscussionItemComponent = dynamic(() => import("@components/community/CommunityDiscussionItem"), { ssr: false });
+
+// import CommunityItemComponent from "../community/CommunityItem";
+// import ListOrCommunityUpsertModal from "../common/ListOrCommunityUpsertModal";
+import type { CommunityDiscussionToDisplay } from "models/community";
+// import CommunityDiscussionItemComponent from "@components/community/CommunityDiscussionItem";
 
 interface Props {
   title?: string;
   filterKey?: FilterKeys;
-  hideTweetBox?: boolean;
   communityId?: string;
 }
 
@@ -41,72 +51,64 @@ function FeedContainer({ children }: React.PropsWithChildren<any>) {
 }
 
 
-const ListOrCommunityFeed = observer(({ title, filterKey, hideTweetBox, communityId }: Props) => {
+const ListOrCommunityFeed = observer(({ title, filterKey, communityId }: Props) => {
   const searchParams = useSearchParams();
-  const { data: session } = useSession();
-  const { user } = session ?? {};
-  const userId = useMemo(() => user ? (user as any)["id"] : "", [session]);
-
-  const [loading, setLoading] = useState<boolean>(false);
-  const { modalStore, listFeedStore, communityDiscussionFeedStore, communityFeedStore } = useStore();
-  const [isLoading, setIsLoading] = useState(false);
+  const { authStore, modalStore, listFeedStore, communityDiscussionFeedStore, communityFeedStore } = useStore();
+  const { currentSessionUser } = authStore;
   const containerRef = useRef(null);
   const loaderRef = useRef(null);
 
-  const feedSetLoadingInitial = useMemo(() => {
-    if (filterKey === FilterKeys.Explore) return communityFeedStore.setLoadingInitial;
-    else if(filterKey === FilterKeys.CommunityDiscussion) return communityDiscussionFeedStore.setLoadingInitial;
-    else return listFeedStore.setLoadingInitial;
-  }, [listFeedStore.loadingInitial, communityFeedStore.loadingInitial]);
+
+  const setFeedPagingParams = (pagingParams: PagingParams) => {
+    if (filterKey === FilterKeys.Explore) return communityFeedStore.setPagingParams(pagingParams);
+    else if(filterKey === FilterKeys.CommunityDiscussion) return communityDiscussionFeedStore.setPagingParams(pagingParams);
+    else return listFeedStore.setPagingParams(pagingParams);
+  };
+  const setFeedPredicate = (key: string, value: string | number | Date | undefined) => {
+    if (filterKey === FilterKeys.Explore) return communityFeedStore.setPredicate(key, value);
+    else if(filterKey === FilterKeys.CommunityDiscussion) return communityDiscussionFeedStore.setPredicate(key, value);
+    else return listFeedStore.setPredicate(key, value);
+  };
 
   const feedLoadingInitial = useMemo(() => {
     if (filterKey === FilterKeys.Explore) return communityFeedStore.loadingInitial;
     else if(filterKey === FilterKeys.CommunityDiscussion) return communityDiscussionFeedStore.loadingInitial;
     else return listFeedStore.loadingInitial;
-  }, [listFeedStore.loadingInitial, communityFeedStore.loadingInitial]);
-
-  const setFeedPagingParams = useMemo(() => {
-    if (filterKey === FilterKeys.Explore) return communityFeedStore.setPagingParams;
-    else if(filterKey === FilterKeys.CommunityDiscussion) return communityDiscussionFeedStore.setPagingParams;
-    else return listFeedStore.setPagingParams;
-  }, [listFeedStore.pagingParams.currentPage, communityFeedStore.pagingParams.currentPage]);
-  const setFeedPredicate = useMemo(() => {
-    if (filterKey === FilterKeys.Explore) return communityFeedStore.setPredicate;
-    else if(filterKey === FilterKeys.CommunityDiscussion) return communityDiscussionFeedStore.setPredicate;
-    else return listFeedStore.setPredicate;
-  }, []);
-
+  }, [
+    listFeedStore.loadingInitial, 
+    communityFeedStore.loadingInitial,
+    communityDiscussionFeedStore.loadingInitial
+  ]);
   const feedPagingParams = useMemo(() => {
     if (filterKey === FilterKeys.Explore) return communityFeedStore.pagingParams;
     else if(filterKey === FilterKeys.CommunityDiscussion) return communityDiscussionFeedStore.pagingParams;
     else return listFeedStore.pagingParams;
-  }, [listFeedStore.pagingParams.currentPage, communityFeedStore.pagingParams.currentPage]);
+  }, [
+    listFeedStore.pagingParams.currentPage, 
+    communityFeedStore.pagingParams.currentPage,
+    communityDiscussionFeedStore.pagingParams.currentPage
+  ]);
   const feedPagination = useMemo(() => {
     if (filterKey === FilterKeys.Explore) return communityFeedStore.pagination;
     else if(filterKey === FilterKeys.CommunityDiscussion) return communityDiscussionFeedStore.pagination;
     else return listFeedStore.pagination;
-  }, [listFeedStore.pagingParams.currentPage, communityFeedStore.pagingParams.currentPage]);
-
+  }, [
+    listFeedStore.pagination?.currentPage, 
+    communityFeedStore.pagination?.currentPage,
+    communityDiscussionFeedStore.pagination?.currentPage
+  ]);
   const filterPredicate: Map<string, any> = useMemo(() => {
     if (filterKey === FilterKeys.Explore) return communityFeedStore.predicate;
     else if(filterKey === FilterKeys.CommunityDiscussion) return communityDiscussionFeedStore.predicate;
     // else if (filterKey === FilterKeys.Search) return searchStore.predicate;
     else return listFeedStore.predicate;
-  }, []);
-
-  const loadFeedRecords = async () => {
-    if (filterKey === FilterKeys.Community)
-      await communityFeedStore.loadCommunities(userId);
-    else if (communityId && filterKey === FilterKeys.CommunityDiscussion)
-      await communityDiscussionFeedStore.loadCommunityDiscussions(userId, communityId!)
-    else if (filterKey === FilterKeys.Lists)
-      await listFeedStore.loadLists(userId);
-    else
-      return console.log();
-  }
+  }, [
+    communityFeedStore.predicate,
+    communityDiscussionFeedStore.predicate,
+    listFeedStore.predicate
+  ]);
 
   async function getPosts() {
-    setLoading(true);
     try {
       const paramsFromQryString = convertQueryStringToObject(
         window.location.search
@@ -125,24 +127,30 @@ const ListOrCommunityFeed = observer(({ title, filterKey, hideTweetBox, communit
 
       await loadFeedRecords();
     } finally {
-      setLoading(false);
     }
   }
-
   const fetchMoreItems = async (pageNum: number) => {
-    setIsLoading(true);
     setFeedPagingParams(new PagingParams(pageNum, 10))
     await loadFeedRecords();
   };
-
+  const loadFeedRecords = async () => {
+    if (filterKey === FilterKeys.Community)
+      await communityFeedStore.loadCommunities(currentSessionUser?.id ?? 'undefined');
+    else if (communityId && filterKey === FilterKeys.CommunityDiscussion)
+      await communityDiscussionFeedStore.loadCommunityDiscussions(currentSessionUser?.id ?? 'undefined', communityId!)
+    else if (filterKey === FilterKeys.Lists)
+      await listFeedStore.loadLists(currentSessionUser?.id ?? 'undefined');
+    else
+      return console.log();
+  }
 
   useEffect(() => {
 
     if (!filterKey) return;
 
-    if(userId)
+    if(currentSessionUser?.id)
       getPosts();
-  }, [searchParams, userId]);
+  }, [currentSessionUser?.id]);
 
   const loadedRecords = useMemo(() => {
     // console.log("communityFeedStore.communityRegistry", communityFeedStore.communityRegistry.size)
@@ -212,6 +220,9 @@ const ListOrCommunityFeed = observer(({ title, filterKey, hideTweetBox, communit
     else return 'You don\'t have any lists';
   }, [filterKey]);
 
+
+  console.log('community loadedRecords', JSON.stringify(loadedRecords));
+
   return (
     <div className="col-span-7 scrollbar-hide border-x max-h-screen overflow-scroll lg:col-span-5 dark:border-gray-800">
       {title && <PageTitle>{title}</PageTitle>}
@@ -221,7 +232,7 @@ const ListOrCommunityFeed = observer(({ title, filterKey, hideTweetBox, communit
               className={`rounded-full bg-maydan px-5 py-2 font-bold text-white disabled:opacity-40`}
               onClick={() => modalStore.showModal(
                               <ListOrCommunityUpsertModal 
-                                loggedInUserId={userId} 
+                                loggedInUserId={currentSessionUser?.id!} 
                                 type={commonUpsertBoxType}
                                 communityId={communityId}
                               />
@@ -232,12 +243,15 @@ const ListOrCommunityFeed = observer(({ title, filterKey, hideTweetBox, communit
                 ? 'Create Community Discussion' : 'Create List'}
           </button>
       </div>
-      {loading ? (
+      {feedLoadingInitial ? (
         <CustomPageLoader title="Loading" />
       ) : (
         <ContentContainerWithRef
-          classNames={`${filterKey === FilterKeys.Community || filterKey === FilterKeys.CommunityDiscussion ? 'flex flex-wrap' : ''}`}
-          ref={containerRef}
+          classNames={`
+            ${filterKey === FilterKeys.Community || filterKey === FilterKeys.CommunityDiscussion ? 'flex flex-wrap max-w-4xl min-h-100' : ''}
+          `}
+          innerRef={containerRef}
+          
         >
           <>
             {loadedRecords && loadedRecords.length 
@@ -263,9 +277,9 @@ const ListOrCommunityFeed = observer(({ title, filterKey, hideTweetBox, communit
                       listToDisplay={castedRecord}
                     />
                   }
-                  <LoadMoreTrigger />
                 })
-              : <NoRecordsTitle>{noRecordsTitle}</NoRecordsTitle>}
+                : <NoRecordsTitle>{noRecordsTitle}</NoRecordsTitle>}
+              <LoadMoreTrigger />
           </>
         </ContentContainerWithRef>
       )}

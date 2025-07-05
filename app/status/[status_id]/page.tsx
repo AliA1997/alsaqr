@@ -27,7 +27,7 @@ const StatusPage = ({ params }: StatusPageProps) => {
 
   return (
     <div className="col-span-7 scrollbar-hide border-x max-h-screen overflow-scroll lg:col-span-5 dark:border-gray-800">
-      <ContentContainerWithRef ref={containerRef} style={{ minHeight: '100vh' }}>
+      <ContentContainerWithRef innerRef={containerRef} style={{ minHeight: '100vh' }}>
         {loadingPost && !loadedPost ? (
           <CustomPageLoader title="Loading" />
         ) : (

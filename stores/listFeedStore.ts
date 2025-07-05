@@ -1,5 +1,5 @@
 import { makeAutoObservable, reaction, runInAction } from "mobx";
-import { CreateListOrCommunityForm, CreateListOrCommunityFormDto, ListRecord, ListToDisplay } from "../typings.d";
+import { CreateListOrCommunityForm, CreateListOrCommunityFormDto, ListRecord, ListToDisplay, PostRecord } from "../typings.d";
 import { Pagination, PagingParams } from "models/common";
 // import { fetchLists } from "@utils/lists/fetchLists";
 import agent from "@utils/common";
@@ -122,6 +122,29 @@ export default class ListFeedStore {
                 isPrivate: 'private'
             };
             await agent.listApiClient.addList(newListDto, userId)
+
+        } finally {
+            this.setLoadingUpsert(false);
+        }
+
+    }
+
+    savePostToList = async (postId: string, userId: string, listId: string) => {
+
+        this.setLoadingUpsert(true);
+        try {
+            await agent.listApiClient.saveItemToList(postId, "post", userId, listId)
+
+        } finally {
+            this.setLoadingUpsert(false);
+        }
+
+    }
+    saveUserToList = async (userToSaveId: string, userId: string, listId: string) => {
+
+        this.setLoadingUpsert(true);
+        try {
+            await agent.listApiClient.saveItemToList(userToSaveId, "user", userId, listId)
 
         } finally {
             this.setLoadingUpsert(false);

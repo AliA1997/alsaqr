@@ -6,11 +6,12 @@ import React, {
   useRef,
   useState,
 } from "react";
+import dynamic from 'next/dynamic';
 import TimeAgo from "react-timeago";
 import {  NotificationToDisplay } from "../../../typings";
 import { useSession } from "next-auth/react";
 import { useStore } from "@stores/index";
-import { LoginModal } from "../common/AuthModals";
+const LoginModal = dynamic(() => import("../common/AuthModals").then(mod => mod.LoginModal), { ssr: false })
 import { convertDateToDisplay } from "@utils/neo4j/neo4j";
 
 interface Props {

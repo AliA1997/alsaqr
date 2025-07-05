@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
 import { BookmarkIcon, HeartIcon, UploadIcon } from "@heroicons/react/outline";
-import { BookmarkIcon as BookmarkFillIcon } from "@heroicons/react/solid";
+import { BookmarkIcon as BookmarkFillIcon, HeartIcon as HeartFillIcon } from "@heroicons/react/solid";
 import { FilterKeys } from "@stores/index";
 import { useRouter } from "next/navigation";
 
@@ -28,7 +28,11 @@ interface AddOrFollowIconButtonProps extends React.ButtonHTMLAttributes<HTMLButt
 
 interface GoBackButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement>{}
 
-export function CommentIconButton({ onClick, numberOfComments }: CommentIconButtonProps) {
+interface MoreButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+    containerClassNames?: string;
+}
+
+export function CommentIconButton({ onClick, numberOfComments, disabled }: CommentIconButtonProps) {
     return (
         <motion.button
             type="button"
@@ -36,6 +40,7 @@ export function CommentIconButton({ onClick, numberOfComments }: CommentIconButt
             whileTap={{ scale: 0.9 }}
             onClick={onClick}
             className="flex cursor-pointer item-center space-x-3 text-gray-400 hover:text-maydan"
+            disabled={disabled}
         >
             <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -58,16 +63,18 @@ export function CommentIconButton({ onClick, numberOfComments }: CommentIconButt
 }
 
 
-export function LikesIconButton({ onClick, numberOfLikes, isLiked }: LikesIconButtonProps) {
+export function LikesIconButton({ onClick, numberOfLikes, isLiked, disabled }: LikesIconButtonProps) {
     return (
         <motion.div
             whileHover={{ scale: 1.1 }}
             whileTap={{ scale: 0.9 }}
-            className={`flex cursor-pointer item-center space-x-3 ${isLiked ? "text-liked" : "text-gray-400"
-                } hover:text-liked`}
+            className={`
+                flex cursor-pointer item-center space-x-3 
+                ${isLiked ? "text-liked" : "text-gray-400"} hover:text-liked`}
             onClick={onClick}
         >
-            <HeartIcon className="h-5 w-5" />
+            {isLiked ? <HeartFillIcon className="h-5 w-5" /> : <HeartIcon className="h-5 w-5" />}
+            
             <p className="text-center">{numberOfLikes}</p>
         </motion.div>
     );
@@ -198,5 +205,25 @@ export function GoBackButton(props: GoBackButtonProps) {
               </svg>
             </div>
           </div>
+    );
+}
+
+
+export function MoreButton({onClick, containerClassNames}: MoreButtonProps) {
+    return (
+        <motion.button
+            type="button"
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.9 }}
+            onClick={onClick}
+            className={`
+                flex bg-gray-100 p-0 rounded-full cursor-pointer item-center space-x-3 text-gray-400 hover:text-maydan
+                ${containerClassNames && containerClassNames}
+            `}
+        >
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-6">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 12a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0ZM12.75 12a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0ZM18.75 12a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Z" />
+            </svg>
+        </motion.button>
     );
 }

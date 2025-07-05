@@ -19,5 +19,7 @@ export const mutatePostApiClient = {
                             axiosRequests.patch<void>(
                                 `/api/posts/${values.statusId}/repost`,
                                 values
-                            )               
+                            ),
+     deleteYourPost: (postId: string) =>
+                            axiosRequests.del<void>(`/api/posts/${postId}`)
 }

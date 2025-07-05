@@ -92,34 +92,6 @@ function PostBox({ filterKey }: Props) {
 
   debugger;
 
-  const postList = async () => {
-    const listInfo: ListRecord = {
-      id: faker.datatype.uuid(),
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-      _rev: "",
-      _type: "list",
-      name: input,
-      bannerImage: image,
-      userId: session?.user.id
-      // userId: session!.user.,
-      // : getEmailUsername(session!.user?.email!)!,
-      // profileImg: session!.user?.image!,
-      // bannerIage: image,
-    };
-    const userId = session && session.user ? (session.user as any).id : "";
-
-    await agent.listApiClient.addList(listInfo, userId);
-
-    setSearchQry(defaultSearchParams.search_term);    
-    await loadData(storeToUse);
-
-    toast("List Posted", {
-      icon: "🚀",
-    });
-  };
-
-
   // const postCommunity = async () => {
   //   const communityInfo: CommunityRecord = {
   //     id: faker.datatype.uuid(),
@@ -155,7 +127,8 @@ function PostBox({ filterKey }: Props) {
       blockTweet: true,
       text: input,
       image: image,
-      userId: session?.user.id
+      userId: session?.user.id,
+      tags: []
       // username: getEmailUsername(session!.user?.email!)!,
       // profileImg: session!.user?.image!,
       // image: image,
@@ -176,9 +149,8 @@ function PostBox({ filterKey }: Props) {
     async (e: React.MouseEvent<HTMLButtonElement, globalThis.MouseEvent>) => {
       e.preventDefault();
       setSubmitting(true);
-      const postData = filterKey === FilterKeys.Lists ? postList : postNewPost;
       
-      postData()
+      postNewPost()
         .then(() => {
           setInput("");
           setImage("");

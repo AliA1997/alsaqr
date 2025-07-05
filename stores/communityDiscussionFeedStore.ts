@@ -1,9 +1,8 @@
 import { makeAutoObservable, reaction, runInAction } from "mobx";
-import { CommunityRecord, CommunityToDisplay, CreateListOrCommunityForm, CreateListOrCommunityFormDto } from "../typings.d";
+import type { CreateListOrCommunityForm, CreateListOrCommunityFormDto } from "../typings.d";
 import { Pagination, PagingParams } from "models/common";
-import { fetchCommunities } from "@utils/communities/fetchCommunities";
 import agent from "@utils/common";
-import { CommunityDiscussionRecord, CommunityDiscussionToDisplay } from "models/community";
+import type { CommunityDiscussionToDisplay } from "models/community";
 import { DEFAULT_CREATED_LIST_OR_COMMUNITY_FORM } from "@utils/constants";
 import { store } from ".";
 
@@ -107,7 +106,6 @@ export default class CommunityDiscussionFeedStore {
         this.setLoadingInitial(true);
         try {
             const { result } = await agent.communityApiClient.getCommunityDiscussions(this.axiosParams, userId, communityId) ?? [];
-            debugger;
             runInAction(() => {
                 result.data.forEach((communityDiscussion: CommunityDiscussionToDisplay) => {
                     this.setCommunityDiscussion(communityDiscussion.communityDiscussion.id, communityDiscussion)
