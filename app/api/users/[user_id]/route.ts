@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { defineDriver, write } from "@utils/neo4j/neo4j";
+import { defineDriver, getUserIdFromSession, write } from "@utils/neo4j/neo4j";
 import type { UpdateUserFormDto } from "models/users";
 import { getServerSession } from "next-auth";
 
@@ -10,42 +10,41 @@ async function PUT_UPDATE_USER(
     const { values: data }: { values: UpdateUserFormDto } = await request.json();
     const { user_id } = params;
     const userId = user_id as string;
-    const authUserSession = await getServerSession();
-    console.log('authUserSession:', authUserSession?.user);
 
     if (!userId) {
         return new NextResponse("User ID is required for updating your user.", { status: 400 });
-    }
-
-    if (userId != authUserSession?.user?.id) {
-        return new NextResponse("Only logged in user can delete themselves.", { status: 400 });   
     }
 
     const driver = defineDriver();
     const session = driver.session();
 
     try {
+        const authSessionUserId = await getUserIdFromSession(session);
+        if (userId != authSessionUserId) {
+            return new NextResponse("Only logged in user can delete themselves.", { status: 400 });   
+        }
+
         await write(
             session,
             `
-        MATCH (user:User, { id: $userId })
+        MATCH (u:User { id: $userId })
           SET u.username = $username,
-          u.avatar = $avatar,
-          u.bgThumbnail = $bgThumbnail,
-          u.bio = $bio,
-          u.firstName = $firstName,
-          u.lastName = $lastName,
-          u.dateOfBirth = $dateOfBirth,
-          u.maritalStatus = $maritalStatus,
-          u.hobbies = $hobbies,
-          u.religion = $religion,
-          u.countryOfOrigin = $countryOfOrigin,
-          u.preferredMadhab = $preferredMadhab,
-          u.frequentMasjid = $frequentMasjid,
-          u.favoriteQuranReciters = $favoriteQuranReciters,
-          u.favoriteIslamicScholars = $favoriteIslamicScholars,
-          u.islamicStudyTopics = $islamicStudyTopics,
-          u.updatedAt = timestamp()
+            u.avatar = $avatar,
+            u.bgThumbnail = $bgThumbnail,
+            u.bio = $bio,
+            u.firstName = $firstName,
+            u.lastName = $lastName,
+            u.dateOfBirth = $dateOfBirth,
+            u.maritalStatus = $maritalStatus,
+            u.hobbies = $hobbies,
+            u.religion = $religion,
+            u.countryOfOrigin = $countryOfOrigin,
+            u.preferredMadhab = $preferredMadhab,
+            u.frequentMasjid = $frequentMasjid,
+            u.favoriteQuranReciters = $favoriteQuranReciters,
+            u.favoriteIslamicScholars = $favoriteIslamicScholars,
+            u.islamicStudyTopics = $islamicStudyTopics,
+            u.updatedAt = timestamp()
       `,
             {
                 userId,
@@ -78,17 +77,17 @@ async function DELETE_USER(
         await write(
             session,
             `
-        MATCH (user:User, { id: $userId })
-        DELETE DETACH user
-      `,
+                MATCH (user: User { id: $userId })
+                DETACH DELETE user
+            `,
             { userId }
         );
 
         await write(
             session,
             `
-        MATCH (pst: Post, { userId: $userId })
-        DELETE DETACH pst
+                MATCH (pst: Post { userId: $userId })
+                DETACH DELETE pst
       `,
             { userId }
         );

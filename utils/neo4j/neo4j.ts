@@ -51,6 +51,70 @@ export async function read(session: Session, cypher = "", params = {}, alias?: s
   }
 }
 
+/////////////////////////////////////////////////////////////////////////////
+/////////////// Only For Getting Saved List Items ///////////////////////////
+/////////////////////////////////////////////////////////////////////////////
+export async function readNested(
+  session: Session, 
+  cypher = "", 
+  params = {}, 
+  alias: string | string[] | undefined,
+  nestedAliasKey: string, // Nested alias key, when to check for nested entities. For example relatedEntity for saved list items
+  nestedAlias: string | string[] | undefined
+) {
+  try {
+    // Execute cypher statement
+    const { records } = await session.run(cypher, params);
+  
+    return records.map((record) => {
+      if (Array.isArray(alias)) {
+        var result: { [key: string]: any[] } = {};
+        for (const aIdx in alias) {
+          const aKey = alias[aIdx];
+
+          const recordBasedOnAlias = record.get(aKey);
+          if (aKey === nestedAliasKey){
+            
+            if (Array.isArray(nestedAlias)) {
+              
+              for (const nAIdx in nestedAlias) {
+                const nAKey = nestedAlias[nAIdx];
+                if(recordBasedOnAlias[nAKey]) 
+                  recordBasedOnAlias[nAKey] = recordBasedOnAlias[nAKey].properties;
+              }
+            } else {
+              if(recordBasedOnAlias[nestedAlias as string])
+                recordBasedOnAlias[nestedAlias as string] = recordBasedOnAlias[nestedAlias as string].properties;
+            }
+            result[aKey] = recordBasedOnAlias;
+          }
+          else if (typeof recordBasedOnAlias === 'object') {
+            result[aKey] = recordBasedOnAlias && Array.isArray(recordBasedOnAlias) && recordBasedOnAlias.length ? recordBasedOnAlias.map((r: Node) => r.properties) : recordBasedOnAlias.properties ?? [];
+          }
+          else {
+            result[aKey] = recordBasedOnAlias;
+          }
+
+        }
+        
+        return result;
+      }
+      
+      return record.get(alias ?? "u").properties;
+    });
+  } catch (error) {
+    console.log('alias', alias)
+
+    console.log("ERror:", error);
+  } finally {
+    console.log("Successfully Read Data");
+    // await session.close();
+  }
+}
+/////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////
+
 export async function write(session: Session, cypher = "", params = {}) {
   try {
     await session.run(cypher, params);

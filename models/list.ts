@@ -1,4 +1,4 @@
-import { CommunityToDisplay, ListToDisplay, PostToDisplay, UserItemToDisplay } from "typings";
+import { CommunityRecordToDisplay, CommunityToDisplay, ListToDisplay, PostRecord, PostToDisplay, SavedPostItem, UserItemToDisplay } from "typings";
 import { CommunityDiscussionMessageToDisplay, CommunityDiscussionToDisplay } from "./community";
 
 export enum ListItemType {
@@ -28,5 +28,6 @@ export interface ListItemRecord extends ListItem {}
 
 export interface ListItemToDisplay {
   listItem: ListItem;
-  relatedEntity: PostToDisplay | CommunityToDisplay | CommunityDiscussionToDisplay | CommunityDiscussionMessageToDisplay | ListToDisplay | UserItemToDisplay;
+  relatedEntity: any;
+  label: "Post" | "Community" | "Community Discussion" | "Community Discussion Message" | "List" | "User";
 }

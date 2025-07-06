@@ -119,7 +119,7 @@ function ListItemComponent({
   };
 
   const navigateToList = () => {
-    router.push(`status/${listInfo.id}`);
+    router.push(`lists/${listInfo.id}`);
   };
 
   const onIsAlreadySaved = async () => {

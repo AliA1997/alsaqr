@@ -177,6 +177,7 @@ export function AddOrFollowButton({ isAdded, isFollowing, onIsAlreadyAdded, onIs
 export function GoBackButton(props: GoBackButtonProps) {
     const router = useRouter();
     const handleOnClick = (e: any) => {
+        e.stopPropagation();
         if(props.onClick)
             props.onClick(e);
         else

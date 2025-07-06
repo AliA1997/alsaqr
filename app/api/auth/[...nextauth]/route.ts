@@ -118,7 +118,7 @@ export const authOptions: NextAuthOptions = {
               id: faker.datatype.uuid(),
               createdAt: new Date().toUTCString(),
               updatedAt: null,
-              username: getEmailUsername(profile.email),
+              username: getEmailUsername(profile?.email),
               email: profile.email,
               firstName: profile?.name ?? '',
               lastName: '',

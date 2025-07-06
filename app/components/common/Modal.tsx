@@ -2,7 +2,7 @@
 import { useStore } from '@stores/index';
 import { observer } from 'mobx-react-lite';
 // components/Modal.tsx
-import React from 'react';
+import React, { useState } from 'react';
 import { createPortal } from 'react-dom';
 
 interface ModalBodyProps {
@@ -89,10 +89,11 @@ const ConfirmModal = observer(({
   confirmFunc,
   declineButtonText,
   confirmButtonClassNames,
-  confirmButtonText,
+  confirmButtonText
 }: React.PropsWithChildren<ConfirmModalProps>) => {
   const { feedStore } = useStore();
   const { loadingUpsert } = feedStore;
+  const [submitting, setSubmitting] = useState<boolean>(false)
   return (
   <ModalPortal>
     <ModalBody
@@ -116,15 +117,22 @@ const ConfirmModal = observer(({
             {declineButtonText}
           </button>
           <button
-            onClick={confirmFunc}
-            disabled={loadingUpsert}
+            onClick={async () => {
+              setSubmitting(true);
+              try {
+                await confirmFunc();
+              } finally {
+                setSubmitting(false);
+              }
+            }}
+            disabled={(submitting ?? false) || loadingUpsert}
             className={`
                   rounded-full bg-maydan px-5 py-2 font-bold text-white ${confirmButtonClassNames && confirmButtonClassNames} 
                   disabled:opacity-40
                 `}
             type="button"
           >
-            {loadingUpsert ? (
+            {loadingUpsert || (submitting ?? false) ? (
               <svg
                 aria-hidden="true"
                 className="inline w-6 h-6 text-gray-200 animate-spin dark:text-gray-600 fill-maydan"

@@ -61,7 +61,7 @@ export const  RegisterModal = observer(({ userInfo }: RegisterModalProps) => {
     loadingRegistration, 
     currentStepInUserRegistration, 
     setCurrentRegistrationForm, 
-    currentRegistrationForm ,
+    currentRegistrationForm,
     completeRegistration
   } = authStore;
   const { closeModal } = modalStore;

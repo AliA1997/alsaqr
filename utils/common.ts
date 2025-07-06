@@ -151,5 +151,24 @@ const agent = {
   notificationApiClient,
   userApiClient
 };
+export function leadingDebounce<F extends (...args: any[]) => any>(
+  func: F,
+  delay: number
+) {
+  let timeoutId: ReturnType<typeof setTimeout> | null = null;
+
+  // alert(timeoutId)
+  if (!timeoutId) {
+    func();
+  }
+  
+  if (timeoutId) {
+    clearTimeout(timeoutId);
+  }
+  
+  timeoutId = setTimeout(() => {
+    timeoutId = null;
+  }, delay);
+}
 
 export default agent;

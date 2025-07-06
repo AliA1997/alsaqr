@@ -3,8 +3,6 @@ import { observer } from "mobx-react-lite";
 import { useSession } from "next-auth/react";
 import { useCallback, useMemo } from "react";
 import { FileUploadInput, MyDatePicker, MyInput } from "./Inputs";
-import Image from 'next/image';
-import { motion } from "framer-motion";
 import { MultiSelect } from "./MultiSelect";
 import { RadioCard } from "./RadioBoxes";
 import { HOBBIES_OPTIONS, MARITAL_STATUS_OPTIONS, RELIGION_OPTIONS } from "@utils/constants";

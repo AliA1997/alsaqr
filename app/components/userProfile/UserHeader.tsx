@@ -18,6 +18,8 @@ import { Session } from "next-auth";
 import MessageModal from "@components/common/MessageModal";
 import { GoBackButton } from "@components/common/IconButtons";
 import { defineUsersMessagesArray } from "@utils/neo4j";
+import { SaveToListModal } from "@components/list/ListModal";
+import { ROUTES_USER_CANT_ACCESS } from "@utils/constants";
 
 type UserHeaderProps = {
   currentSession: Session | undefined;
@@ -36,15 +38,16 @@ const UserHeader: React.FC<UserHeaderProps> = ({
   followingCount
 }) => {
   const router = useRouter();
-  const { userStore, messageStore, modalStore } = useStore();
+  const { authStore, userStore, messageStore, modalStore } = useStore();
   const { followUser, unFollowUser, loadingFollow } = userStore;
   const { currentProfileToMessage, setCurrentProfileToMessage } = messageStore;
-  const { showModal } = modalStore;
+  const { currentSessionUser } = authStore;
+  const { showModal, closeModal } = modalStore;
   const [isDropdownOpen, setIsDropdownOpen] = React.useState<boolean>(false);
 
 
   const profileIsLoggedInUser = useMemo(() => profileInfo.user.username === (currentSession?.user?.username ?? ""), [currentSession, profileInfo]);
-  const isFollowingUser = useMemo(() => currentSession?.user?.followingUsers.some((fU: any) => fU.id === profileInfo.user.id) ?? false, [profileInfo, currentSession]);
+  const isFollowingUser = useMemo(() => currentSession?.user?.followingUsers?.some((fU: any) => fU.id === profileInfo.user.id) ?? false, [profileInfo, currentSession]);
   const handleDropdownEnter = useCallback(
       () => setIsDropdownOpen(!isDropdownOpen),
       [isDropdownOpen]
@@ -76,6 +79,7 @@ const UserHeader: React.FC<UserHeaderProps> = ({
       icon: "🚀",
     });
   }, [profileInfo, isFollowingUser]);
+  
 
   return (
     <div>
@@ -132,7 +136,9 @@ const UserHeader: React.FC<UserHeaderProps> = ({
                 profileIsLoggedInUser
                   ? (
                     <CommonLink 
-                      onClick={() => {}}
+                      onClick={() => {
+                        router.push('/settings');
+                      }}
                       animatedLink={false}
                       classNames='border border-[0.1rem] hover:text-maydan'
                     >
@@ -187,7 +193,29 @@ const UserHeader: React.FC<UserHeaderProps> = ({
                 aria-orientation="vertical"
                 aria-labelledby="options-menu"
               >
-                <SidebarRow Icon={UserAddIcon} title="Add to List" />
+                <SidebarRow 
+                  Icon={UserAddIcon} 
+                  title="Add to List"
+                  onClick={() => {
+                    showModal(
+                      <SaveToListModal
+                        relatedEntityType="user"
+                        info={{
+                          user: profileInfo.user,
+                          followers: profileInfo.followers,
+                          following: profileInfo.following
+                        }}
+                        onClose={() => {
+                          const canCloseLoginModal = !(ROUTES_USER_CANT_ACCESS.some(r => window.location.href.includes(r)));
+                          
+                          if (currentSessionUser && currentSessionUser.id && canCloseLoginModal)
+                              closeModal();
+                        }}
+                      />
+                    )
+                  }}
+                  overrideOnClick={true}
+                />
               </div>
             </div>
           )}

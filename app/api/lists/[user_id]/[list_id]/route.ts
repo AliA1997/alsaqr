@@ -1,11 +1,29 @@
 import { extractQryParams } from "@utils/common";
 import { commonCountCipher } from "@utils/neo4j";
-import { defineDriver, read, write } from "@utils/neo4j/neo4j";
+import { defineDriver, read, readNested, write } from "@utils/neo4j/neo4j";
 import { PaginatedResult, Pagination } from "models/common";
 import { ListItemToDisplay } from "models/list";
-import { int } from "neo4j-driver";
+import { int, Session } from "neo4j-driver";
 import { NextRequest, NextResponse } from "next/server";
 
+
+
+async function getListInfo(session: Session, listId: string) {
+  const listInfoResponse = await read(
+      session,
+      `
+        MATCH (list:List {id: $listId})
+        WITH list
+        RETURN list
+      `,
+      { listId },
+      ["list"]
+  );
+
+  const { list }: any = listInfoResponse && listInfoResponse.length ? listInfoResponse[0] : undefined;
+
+  return list;
+}
 
 async function GET_SAVED_LIST_ITEMS(
   request: NextRequest,
@@ -27,18 +45,60 @@ async function GET_SAVED_LIST_ITEMS(
 
   const driver = defineDriver();
   const session = driver.session();
+  let listInfo: any | undefined;
 
   try {
+    listInfo = await getListInfo(session, listId);
+
     let selectResult,  pagingResult, selectQuery;
 
     let pagingQuery = `SKIP $skip LIMIT $itemsPerPage`;
 
     selectQuery = `
         MATCH (list { id: $listId })-[r:SAVED_LIST_ITEM]->(listItem:ListItem)
-        WITH listItem
-        RETURN listItem
+        OPTIONAL MATCH (post: Post { id: listItem.postId })<-[:POSTED]-(postUser: User)
+        OPTIONAL MATCH (cmty: Community { id: listItem.communityId })<-[:COMMUNITY_FOUNDER]-(cmtyFounder: User)
+        OPTIONAL MATCH (cmtyDisc: CommunityDiscussion { id: listItem.communityDiscussionId })<-[:CREATED_DISCUSSION]-(cmtyDiscUser: User)
+        OPTIONAL MATCH (cmtyDiscMsg: CommunityDiscussionMessage { id: listItem.communityDiscussionMessageId })<-[:POST_DISCUSSION_MESSAGE]-(cmtyDiscMsgUser: User)
+        OPTIONAL MATCH (user: User { id: listItem.savedUserId })
+
+        WITH 
+          listItem, post, postUser, cmty, cmtyFounder, cmtyDisc, cmtyDiscUser, cmtyDiscMsg, cmtyDiscMsgUser, user
+          
+        RETURN 
+          listItem,
+          CASE 
+            WHEN cmty IS NOT NULL THEN {
+              community: cmty,
+              founder: cmtyFounder.username,
+              founderProfileImg: cmtyFounder.avatar
+            }
+            WHEN cmtyDisc IS NOT NULL THEN cmtyDisc
+            WHEN cmtyDiscMsg IS NOT NULL THEN {
+              username: cmtyDiscMsgUser.username,
+              profileImg: cmtyDiscMsgUser.avatar,
+              communityDiscussionMessage: cmtyDiscMsg
+            }
+            WHEN user IS NOT NULL THEN {
+              user: user
+            }
+            WHEN post IS NOT NULL THEN {
+              post: post,
+              username: postUser.username,
+              profileImg: postUser.avatar
+            }
+            ELSE NULL
+          END AS relatedEntity,
+          CASE 
+            WHEN cmty IS NOT NULL THEN "Community"
+            WHEN cmtyDisc IS NOT NULL THEN "Community Discussion"
+            WHEN cmtyDiscMsg IS NOT NULL THEN "Community Discussion Message"
+            WHEN user IS NOT NULL THEN "User"
+            WHEN post IS NOT NULL THEN "Post"
+            ELSE NULL
+          END AS label
     `;
-    selectResult = await read(
+    selectResult = await readNested(
         session,
         `${selectQuery} ${pagingQuery}`,
         {
@@ -46,7 +106,9 @@ async function GET_SAVED_LIST_ITEMS(
             skip: int((currentPageParsed - 1) *  itemsPerPageParsed),
             itemsPerPage: int(itemsPerPageParsed)
         },
-        ["listItem"]
+        ["listItem", "relatedEntity", "label"],
+        "relatedEntity",
+        ["post", "community", "user", "communityDiscussion", "communityDiscussionMessage"]
     );
 
     pagingResult = await read(
@@ -69,6 +131,7 @@ async function GET_SAVED_LIST_ITEMS(
     
     savedListItems = selectResult ?? []; // Adjust based on your schema
     
+    console.log('savedListItems:', savedListItems)
   } catch (err) {
     return NextResponse.json({ message: "Fetch saved list items error!", success: false });
   }
@@ -77,6 +140,7 @@ async function GET_SAVED_LIST_ITEMS(
   }
 
   return NextResponse.json({ 
+      listInfo,
       result: new PaginatedResult<any>(savedListItems, pagination!) 
    });
 }
@@ -140,7 +204,7 @@ async function PATCH_SAVE_ITEM_TO_LIST(
           WHERE NOT EXISTS {
             MATCH (list)-[:SAVED_LIST_ITEM]->(existingItem:ListItem {listId: $listId, savedUserId: $savedUserId})
           }
-          WITR list
+          WITH list
           CREATE (list)-[r:SAVED_LIST_ITEM]->(listItem:ListItem {
             id: apoc.text.format("listItem_%s", [randomUUID()]),
             savedUserId: $savedUserId,

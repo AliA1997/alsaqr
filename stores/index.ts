@@ -13,6 +13,7 @@ import BookmarkFeedStore from './bookmarkFeedStore';
 import SearchStore from './searchStore';
 import CommunityDiscussionFeedStore from './communityDiscussionFeedStore';
 import MessageStore from './messageStore';
+import SettingsStore from './settingsStore';
 
 interface Store {
     authStore: AuthStore;
@@ -27,6 +28,7 @@ interface Store {
     messageStore: MessageStore;
     notificationStore: NotificationStore;
     searchStore: SearchStore;
+    settingsStore: SettingsStore;
     userStore: UserStore;
 }
 
@@ -58,6 +60,7 @@ export const store: Store = {
     messageStore: new MessageStore(),
     notificationStore: new NotificationStore(),
     searchStore: new SearchStore(),
+    settingsStore: new SettingsStore(),
     userStore: new UserStore()
 };
 

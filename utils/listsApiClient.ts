@@ -14,5 +14,7 @@ export const listApiClient = {
     getLists: (params: URLSearchParams | undefined, userId: string) =>
         axios.get(`/api/lists/${userId}`, { params }).then(axiosResponseBody),
     getSavedListItems: (params: URLSearchParams | undefined, userId: string, listId: string) =>
-        axios.get(`/api/lists/${userId}/${listId}`, { params }).then(axiosResponseBody)
+        axios.get(`/api/lists/${userId}/${listId}`, { params }).then(axiosResponseBody),
+    deleteSavedListItem: (userId: string, listId: string, listItemId: string) =>
+        axiosRequests.del(`/api/lists/${userId}/${listId}/${listItemId}`).then(axiosResponseBody),
 }

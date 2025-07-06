@@ -133,7 +133,7 @@ function PostBox({ filterKey }: Props) {
       // profileImg: session!.user?.image!,
       // image: image,
     };
-    alert(JSON.stringify(postInfo));
+    // alert(JSON.stringify(postInfo));
 
     await agent.postApiClient.addPost(postInfo);
 

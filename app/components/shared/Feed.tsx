@@ -29,6 +29,7 @@ import { FilterKeys, useStore } from "stores";
 // import { NoRecordsTitle, PageTitle } from "../common/Titles";
 // import { ContentContainer, ContentContainerWithRef } from "../common/Containers";
 import { PagingParams } from "models/common";
+import { leadingDebounce } from "@utils/common";
 
 interface Props {
   title?: string;
@@ -141,7 +142,7 @@ const Feed = observer(({
 
   const loadPosts = async () => {
     if (filterKey === FilterKeys.Explore)
-      await exploreStore.loadExplorePosts();
+      return console.log("need to work on this");
     else if(filterKey === FilterKeys.SearchPosts && userId) 
       await searchStore.loadSearchedPosts(userId);
     else if(filterKey === FilterKeys.MyBookmarks && userId) 
@@ -153,26 +154,29 @@ const Feed = observer(({
   }
 
   async function getPosts() {
-    setLoading(true);
-    try {
-      const paramsFromQryString = convertQueryStringToObject(
-        window.location.search
-      );
-      debugger;
-      if (
-        (paramsFromQryString.currentPage && paramsFromQryString.itemsPerPage)
-        && (paramsFromQryString.currentPage !== filterPredicate.get('currentPage')
-          || paramsFromQryString.itemsPerPage !== filterPredicate.get('itemsPerPage')
-          || paramsFromQryString.searchTerm != filterPredicate.get('searchTerm'))) {
+    leadingDebounce(async () => {
+
+      setLoading(true);
+      try {
+        const paramsFromQryString = convertQueryStringToObject(
+          window.location.search
+        );
   
-        setFeedPagingParams(new PagingParams(paramsFromQryString.currentPage, paramsFromQryString.itemsPerPage));
-        setFeedPredicate('searchTerm', paramsFromQryString.searchTerm);
+        if (
+          (paramsFromQryString.currentPage && paramsFromQryString.itemsPerPage)
+          && (paramsFromQryString.currentPage !== filterPredicate.get('currentPage')
+            || paramsFromQryString.itemsPerPage !== filterPredicate.get('itemsPerPage')
+            || paramsFromQryString.searchTerm != filterPredicate.get('searchTerm'))) {
+    
+          setFeedPagingParams(new PagingParams(paramsFromQryString.currentPage, paramsFromQryString.itemsPerPage));
+          setFeedPredicate('searchTerm', paramsFromQryString.searchTerm);
+        }
+          
+        await loadPosts();
+      } finally {
+        setLoading(false);
       }
-        
-      await loadPosts();
-    } finally {
-      setLoading(false);
-    }
+    }, 10000);
   }
 
   const fetchMoreItems = async (pageNum: number) => {
@@ -186,7 +190,7 @@ const Feed = observer(({
 
     if (!filterKey) return;
 
-    getPosts();
+    getPosts(); 
   }, [searchParams]);
 
   const loadedPosts = useMemo(() => {

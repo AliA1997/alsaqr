@@ -5,3 +5,9 @@ export enum CommonUpsertBoxTypes {
   CommunityDiscussion = "CommunityDiscussion",
   Register = "Register"
 }
+
+export enum SettingsTabs {
+  PersonalInfo = 0,
+  PersonalizeAccount = 1,
+  DeleteYourAccount = 2
+}

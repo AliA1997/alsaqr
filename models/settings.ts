@@ -1,30 +1,22 @@
 
-export interface FollowUserFormDto {
-    userToFollowId: string;
-}
-
-export interface UnFollowUserFormDto {
-    userToUnFollowId: string;
-}
-
-export interface UpdateUserForm {
-    id: string;
-    firstName: string;
-    lastName: string;
+export interface PersonalInfoForm {
+    username: string;
     avatar: string;
     bgThumbnail: string;
-    dateOfBirth?: Date;
-    username: string;
     bio: string;
-    religion: string;
+    firstName: string;
+    lastName: string;
+    dateOfBirth: Date;
+    countryOfOrigin: string;
+}
+
+export interface PersonalizeAccountForm {
     maritalStatus?: 'single' | 'married' | 'divorced' | 'widowed';
+    religion: string;
     hobbies?: string[];
-    countryOfOrigin?: string;
     preferredMadhab?: 'Hanafi' | "Shafi'i" | 'Maliki' | 'Hanbali' | "Salafi" | "Prefer Not To Disclose";
     frequentMasjid?: string;
     favoriteQuranReciters?: string[];
     favoriteIslamicScholars?: string[];
     islamicStudyTopics?: string[];
 }
-
-export interface UpdateUserFormDto extends UpdateUserForm {}

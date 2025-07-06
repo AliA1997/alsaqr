@@ -1,48 +1,60 @@
 import { makeAutoObservable, reaction, runInAction } from "mobx";
 // import Auth from "../utils/auth"
-import { PostToDisplay } from "../typings.d";
+import { ExploreToDisplay, PostToDisplay } from "../typings.d";
 // import { fetchTweets } from "@utils/tweets/fetchTweets";
 import { Pagination, PagingParams } from "models/common";
 import agent from "@utils/common";
+import { faker } from "@faker-js/faker";
 
 export default class ExploreStore {
-    
+
     constructor() {
         makeAutoObservable(this);
-        
+
         reaction(
             () => this.predicate.keys(),
             () => {
             }
         );
     }
-    
+
     loadingInitial = false;
     pagination: Pagination | undefined;
+    newsPagination: Pagination | undefined;
     setLoadingInitial = (value: boolean) => {
         this.loadingInitial = value;
     }
     setPagination = (value: Pagination | undefined) => {
         this.pagination = value;
     }
+    setNewsPagination = (value: Pagination | undefined) => {
+        this.newsPagination = value;
+    }
     predicate = new Map();
     setPredicate = (predicate: string, value: string | number | Date | undefined) => {
-        if(predicate)
+        if (predicate)
             this.predicate.set(predicate, value);
         else
             this.predicate.delete(predicate);
     }
     topicToExplore: string = '';
     pagingParams: PagingParams = new PagingParams(1, 10);
+    newsPagingParams: PagingParams = new PagingParams(1, 10);
 
+    exploreNewsRegistry: Map<string, ExploreToDisplay> = new Map<string, ExploreToDisplay>();
     explorePostsRegistry: Map<string, PostToDisplay> = new Map<string, PostToDisplay>();
 
     setPagingParams = (pagingParams: PagingParams) => {
         this.pagingParams = pagingParams;
     }
+    setNewsPagingParams = (pagingParams: PagingParams) => {
+        this.newsPagingParams = pagingParams;
+    }
     setSearchQry = (val: string) => this.predicate.set('searchQry', val);
 
-    
+    setExploreNewsItem = (newsItem: ExploreToDisplay) => {
+        this.exploreNewsRegistry.set(faker.datatype.uuid(), newsItem);
+    }
     setExplorePost = (postId: string, post: PostToDisplay) => {
         this.explorePostsRegistry.set(postId, post);
     }
@@ -54,34 +66,62 @@ export default class ExploreStore {
 
     get axiosParams() {
         const params = new URLSearchParams();
-        params.append("page", this.pagingParams.currentPage.toString());
-        params.append("limit", this.pagingParams.itemsPerPage.toString());
+        params.append("currentPage", this.pagingParams.currentPage.toString());
+        params.append("itemsPerPage", this.pagingParams.itemsPerPage.toString());
         this.predicate.forEach((value, key) => params.append(key, value));
 
         return params;
     }
 
-    loadExplorePosts = async () => {
-
+    loadExploreNews = async () => {
         this.setLoadingInitial(true);
+        
         try {
-            if(this.pagingParams.currentPage === 1)
-                this.explorePostsRegistry.clear();
+            if (this.newsPagingParams.currentPage === 1)
+                this.exploreNewsRegistry.clear();
 
-            const explorePostResults = await agent.exploreApiClient.getExplore(this.axiosParams);
+            const {result} = await agent.exploreApiClient.getExplore(this.axiosParams);
+
             runInAction(() => {
-                explorePostResults.forEach((pst:PostToDisplay) => {
-                    console.log("JSON.stringify(posts):", JSON.stringify(pst.post.id))
-                    this.setExplorePost(pst.post.id, pst);
+                result.data.forEach((exploreNewsItem: ExploreToDisplay) => {
+                    this.setExploreNewsItem(exploreNewsItem);
                 });
             });
+
+            this.setNewsPagination(result.pagination);
         } finally {
             this.setLoadingInitial(false);
         }
 
     }
 
+    // loadExplorePosts = async () => {
+
+    //     this.setLoadingInitial(true);
+    //     try {
+    //         if(this.pagingParams.currentPage === 1)
+    //             this.explorePostsRegistry.clear();
+
+    //         const { explore:explorePostResults } = await agent.exploreApiClient.getExplore(this.axiosParams);
+
+    //         runInAction(() => {
+    //             console.log(JSON.stringify(explorePostResults))
+    //             explorePostResults.forEach(() => {
+    //                 console.log("JSON.stringify(posts):", JSON.stringify(pst.post.id))
+    //                 this.setExplorePost(pst.post.id, pst);
+    //             });
+    //         });
+    //     } finally {
+    //         this.setLoadingInitial(false);
+    //     }
+
+    // }
+
     get explorePosts() {
         return Array.from(this.explorePostsRegistry.values());
+    }
+
+    get exploreNews() {
+        return Array.from(this.exploreNewsRegistry.values());
     }
 }

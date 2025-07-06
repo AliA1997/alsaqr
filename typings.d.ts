@@ -138,6 +138,12 @@ export interface PostToDisplay {
   likers: User[]
 }
 
+export interface SavedPostItem {
+  post: PostRecord,
+  username: string;
+  profileImg: string;
+}
+
 export interface PostRecord extends CommonRecordBody {
   id: string;
   createdAt: string;

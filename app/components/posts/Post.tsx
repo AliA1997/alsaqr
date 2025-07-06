@@ -1,9 +1,8 @@
 "use client";
-import { BookmarkIcon, HeartIcon, PlusCircleIcon, UploadIcon, XIcon } from "@heroicons/react/outline";
+import { PlusCircleIcon, UploadIcon, XIcon } from "@heroicons/react/outline";
 import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
 import React, {
-  useCallback,
   useLayoutEffect,
   useMemo,
   useRef,
@@ -31,7 +30,6 @@ import { faker } from "@faker-js/faker";
 import UpsertBoxIconButton from "@components/common/UpsertBoxIconButtons";
 import { ModalLoader } from "@components/common/CustomLoader";
 import NextImage from 'next/image';
-import SidebarRow from "@components/layout/SidebarRow";
 import { TrashIcon } from "@heroicons/react/solid";
 import MoreSection from "@components/common/MoreSection";
 import { ConfirmModal } from "@components/common/Modal";
@@ -325,7 +323,7 @@ function PostComponent({
     <div
       className={`
         relative flex flex-col space-x-3 border-y border-gray-100 p-5 
-        hover:shadow-lg dark:border-gray-800 dark:hover:bg-[#000000]  
+        dark:border-gray-800 ${!onlyDisplay && 'hover:shadow-lg dark:hover:bg-[#000000]'}  
       `}
     >
       {canAdd && (
@@ -336,18 +334,36 @@ function PostComponent({
         />
       )}
 
-      <div className="flex space-x-3 cursor-pointer">
+      <div className="relative flex space-x-3 cursor-pointer">
+        <div className='absolute top-0 bg-transparent w-full h-full z-10' 
+          onClick={(e) => {
+            if(onlyDisplay)
+              return;
+            else
+              return stopPropagationOnClick(e, navigateToTweet)
+          }}
+        />
         <img
           className="h-10 w-10 rounded-full object-cover"
           src={postToDisplay.profileImg}
           alt={postToDisplay.username}
-          onClick={(e) => stopPropagationOnClick(e, navigateToTweetUser)}
+          onClick={(e) => {
+            if(onlyDisplay)
+              return;
+            else
+              return stopPropagationOnClick(e, navigateToTweetUser)
+          }}
         />
         <div>
           <div className="flex item-center space-x-1">
             <p
               className={`font-bold mr-1 hover:underline`}
-              onClick={(e) => stopPropagationOnClick(e, navigateToTweetUser)}
+              onClick={(e) => {
+                if(onlyDisplay)
+                  return;
+                else
+                  return stopPropagationOnClick(e, navigateToTweetUser);
+              }}
             >
               {postToDisplay.username}
             </p>
@@ -367,7 +383,12 @@ function PostComponent({
             )}
             <p
               className="hidden text-sm text-gray-500 sm:inline dark:text-gray-400 hover:underline"
-              onClick={(e) => stopPropagationOnClick(e, navigateToTweetUser)}
+              onClick={(e) => {
+                if(onlyDisplay)
+                  return;
+                else
+                  return stopPropagationOnClick(e, navigateToTweetUser);
+              }}
             >
               @
               {postToDisplay.username ? postToDisplay.username.replace(/\s+/g, "") : ""}
@@ -395,51 +416,53 @@ function PostComponent({
       {!isSearchedPosts && (
         <>
           {!onlyDisplay && (
-            <MoreSection 
-              moreOptions={moreOptions}
-              moreOptionClassNames="bg-red-700"
-            />
-          )}
-          <div className="mt-5 flex justify-between">
-            <CommentIconButton
-              onClick={(e) =>
-                stopPropagationOnClick(e, () => {
-                  if (!session || !session.user)
-                    showModal(<LoginModal />);
-
-                  setCommentBoxOpen(!commentBoxOpen);
-                })}
-              numberOfComments={numberOfComments}
-              disabled={onlyDisplay ?? false}
-            />
-            <RePostedIconButton
-              onClick={(e) => stopPropagationOnClick(e, onRetweet)}
-              numberOfRePosts={numberOfRetweets}
-              isRePosted={isRePosted}
-              disabled={onlyDisplay ?? false}
-            />
-            <LikesIconButton
-              onClick={(e) => stopPropagationOnClick(e, onLikeTweet)}
-              numberOfLikes={numberOfLikes}
-              isLiked={isLiked}
-              disabled={onlyDisplay ?? false}
-            />
-            <div className="flex gap-2">
-              <BookmarkedIconButton
-                onClick={(e) => stopPropagationOnClick(e, onBookmarkTweet)}
-                isBookmarked={isBookmarked}
-                disabled={onlyDisplay ?? false}
+            <>
+              <MoreSection 
+                moreOptions={moreOptions}
+                moreOptionClassNames="bg-red-700"
               />
-              <motion.button
-                whileHover={{ scale: 1.1 }}
-                whileTap={{ scale: 0.9 }}
-                className="flex cursor-pointer item-center space-x-3 text-gray-400"
-                disabled={onlyDisplay ?? false}
-              >
-                <UploadIcon className="h-5 w-5" />
-              </motion.button>
-            </div>
-          </div>
+              <div className="mt-5 flex justify-between">
+                <CommentIconButton
+                  onClick={(e) =>
+                    stopPropagationOnClick(e, () => {
+                      if (!session || !session.user)
+                        showModal(<LoginModal />);
+
+                      setCommentBoxOpen(!commentBoxOpen);
+                    })}
+                  numberOfComments={numberOfComments}
+                  disabled={onlyDisplay ?? false}
+                />
+                <RePostedIconButton
+                  onClick={(e) => stopPropagationOnClick(e, onRetweet)}
+                  numberOfRePosts={numberOfRetweets}
+                  isRePosted={isRePosted}
+                  disabled={onlyDisplay ?? false}
+                />
+                <LikesIconButton
+                  onClick={(e) => stopPropagationOnClick(e, onLikeTweet)}
+                  numberOfLikes={numberOfLikes}
+                  isLiked={isLiked}
+                  disabled={onlyDisplay ?? false}
+                />
+                <div className="flex gap-2">
+                  <BookmarkedIconButton
+                    onClick={(e) => stopPropagationOnClick(e, onBookmarkTweet)}
+                    isBookmarked={isBookmarked}
+                    disabled={onlyDisplay ?? false}
+                  />
+                  <motion.button
+                    whileHover={{ scale: 1.1 }}
+                    whileTap={{ scale: 0.9 }}
+                    className="flex cursor-pointer item-center space-x-3 text-gray-400"
+                    disabled={onlyDisplay ?? false}
+                  >
+                    <UploadIcon className="h-5 w-5" />
+                  </motion.button>
+                </div>
+              </div>
+            </>
+          )}
         </>
       )}
 

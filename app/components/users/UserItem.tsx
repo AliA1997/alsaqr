@@ -21,23 +21,25 @@ import { observer } from "mobx-react-lite";
 import { AddOrFollowButton } from "../common/IconButtons";
 
 interface Props {
-    filterKey: FilterKeys;
+    filterKey?: FilterKeys;
     userItemToDisplay: UserItemToDisplay;
     usersAlreadyFollowedOrAddedIds: string[];
     canAddOrFollow: boolean;
     onModal: boolean;
     onAddOrFollow?: Function;
     loggedInUserId?: string;
+    justDisplay?: boolean;
 }
 
 function UserItemComponent({
     userItemToDisplay,
-    usersAlreadyFollowedOrAddedIds,
-    filterKey,
+    usersAlreadyFollowedOrAddedIds = [],
+    filterKey = FilterKeys.Normal,
     onModal,
     onAddOrFollow,
     canAddOrFollow,
-    loggedInUserId
+    loggedInUserId,
+    justDisplay
 }: Props) {
     const router = useRouter();
     const { modalStore } = useStore();
@@ -121,8 +123,9 @@ function UserItemComponent({
         <>
             <div
                 className={
-                    `flex relative space-x-3 border-y border-gray-100 p-5 dark:border-gray-800 rounded-sm w-full h-[7em]
-        `}
+                    `flex relative space-x-3 border-y border-gray-100 p-5 dark:border-gray-800 
+                    rounded-sm w-full h-[7em]
+                `}
             >
                 {canAddOrFollow && (
                     <AddOrFollowButton
@@ -135,7 +138,7 @@ function UserItemComponent({
                 )}
  
                 {/* <div className="absolute m-0 inset-0"></div> */}
-                <div className="flex flex-col justify-self-stretch grow justify-start h-full space-x-3 cursor-pointer bg-red-900">
+                <div className="flex flex-col justify-self-stretch grow justify-start h-full space-x-3 cursor-pointer">
                     <div className="flex justify-items-start items-end align-items-end space-x-2">
                         <img
                             className="h-10 w-10 rounded-full object-cover"

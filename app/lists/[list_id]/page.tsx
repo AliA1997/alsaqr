@@ -17,24 +17,11 @@ interface ListPageProps {
   };
 }
 
-const StatusPage = ({ params }: ListPageProps) => {
-  const { data: session } = useSession();    
-  const {listFeedStore} = useStore();
-  const containerRef = useRef(null);
-
-  const userId = useMemo(() => session?.user ? (session.user as any)["id"] : "", [session]);
-
-  const { loadSavedListItems, loadingListItems } = listFeedStore;
-  useEffect(() => {
-    loadSavedListItems(userId, params.list_id);
-    alert("Params List Id " + params.list_id)
-  },[params.list_id])
-
+const ListPage = ({ params }: ListPageProps) => {
   return (
-    <div />
-    // <SavedListItemsFeed listName={} listId={params.list_id} />
+    <SavedListItemsFeed listId={params.list_id} />
   );
 };
 
 
-export default observer(StatusPage);
+export default observer(ListPage);

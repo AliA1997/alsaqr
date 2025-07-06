@@ -38,11 +38,16 @@ export default class ListFeedStore {
     savedListItemsPagination: Pagination | undefined = undefined;
 
     listsRegistry: Map<string, ListToDisplay> = new Map<string, ListToDisplay>();
+
+    listInfoForSavedListItems: any | undefined = undefined;
     savedListItemsRegistry: Map<string, ListItemToDisplay> = new Map<string, ListItemToDisplay>();
     loadingUpsert = false;
     listCreationForm: CreateListOrCommunityForm = DEFAULT_CREATED_LIST_OR_COMMUNITY_FORM;
     currentStepInListCreation: number | undefined = undefined;
 
+    setListInfoForSavedListItems = (val: any | undefined) => {
+        this.listInfoForSavedListItems = val;
+    }
     setLoadingUpsert = (value: boolean) => {
         this.loadingUpsert = value;
     }
@@ -171,21 +176,36 @@ export default class ListFeedStore {
     }
 
     loadSavedListItems = async (userId: string, listId: string) => {
-        debugger;
         this.setLoadingListItems(true);
+        runInAction(() => {
+            this.savedListItemsRegistry.clear();
+        });
         try {
-            const { result } = await agent.listApiClient.getSavedListItems(this.savedListItemsAxiosParams, userId, listId);
+
+            const { result, listInfo } = await agent.listApiClient.getSavedListItems(this.savedListItemsAxiosParams, userId, listId);
+        
             runInAction(() => {
                 result.data.forEach((listItem: ListItemToDisplay) => {
                     this.setSavedListItem(listItem.listItem.id, listItem)
                 });
+                this.setSavedListItemsPagination(result.pagination);
+                
+                this.setListInfoForSavedListItems(listInfo);
             });
-
-            this.setSavedListItemsPagination(result.pagination);
         } finally {
             this.setLoadingListItems(false);
         }
 
+    }
+
+    deleteSavedListItem = async (userId: string, listId: string, listItemId: string) => {
+        this.setLoadingUpsert(true);
+        try {
+            await agent.listApiClient.deleteSavedListItem(userId, listId, listItemId);
+        
+        } finally {
+            this.setLoadingUpsert(false);
+        }
     }
 
     get lists() {
