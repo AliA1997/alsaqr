@@ -1,13 +1,12 @@
 import { makeAutoObservable, reaction, runInAction } from "mobx";
 import Auth from "../utils/auth"
-import { Comment, CommentToDisplay, PostRecord, PostToDisplay } from "../typings.d";
+import { Comment, CommentForm, CommentToDisplay, PostRecord, PostToDisplay } from "../typings.d";
 import { Pagination, PagingParams } from "models/common";
 // import { fetchTweets } from "@utils/tweets/fetchTweets";
 import agent from "@utils/common";
-import { BookmarkParams, LikedPostParams, RePostParams } from "models/posts";
-import { faker } from "@faker-js/faker";
+import {  LikedCommentParams, LikedPostParams, RePostCommentParams, RePostParams } from "models/posts";
 
-export default class FeedStore {
+export default class CommentFeedStore {
 
     constructor() {
         makeAutoObservable(this);
@@ -24,8 +23,6 @@ export default class FeedStore {
 
     loadingInitial = false;
     loadingUpsert = false;
-    loadingPost = false;
-    loadingComments = false;
     predicate = new Map();
     setPredicate = (predicate: string, value: string | number | Date | undefined) => {
         if(value) {
@@ -36,23 +33,15 @@ export default class FeedStore {
     }
     pagingParams: PagingParams = new PagingParams(1, 10);
     pagination: Pagination | undefined = undefined;
-
-    postsRegistry: Map<string, PostToDisplay> = new Map<string, PostToDisplay>();
-    commentsRegistry: Map<string, Comment> = new Map<string, Comment>();
-
-    loadedPost: PostToDisplay | undefined = undefined;
+  
+    commentsRegistry: Map<string, CommentToDisplay> = new Map<string, CommentToDisplay>();
+    loadedComment: CommentToDisplay | undefined;
 
     setPagingParams = (pagingParams: PagingParams) => {
         this.pagingParams = pagingParams;
     }
     setPagination = (value: Pagination | undefined) => {
         this.pagination = value;
-    }
-    setSearchQry = (val: string) => this.predicate.set('searchQry', val);
-
-
-    setPost = (postId: string, post: PostToDisplay) => {
-        this.postsRegistry.set(postId, post);
     }
     setComment = (commentId: string, comment: CommentToDisplay) => {
         this.commentsRegistry.set(commentId, comment);
@@ -61,23 +50,16 @@ export default class FeedStore {
     setLoadingInitial = (value: boolean) => {
         this.loadingInitial = value;
     }
+    setLoadedComment = (val: CommentToDisplay) => {
+        this.loadedComment = val;
+    }
     setLoadingUpsert = (value: boolean) => {
         this.loadingUpsert = value;
     }
-    setLoadingPost = (value: boolean) => {
-        this.loadingPost = value;
-    }
-    setLoadingComments = (value: boolean) => {
-        this.loadingComments = value;
-    }
-    setLoadedPost = (value: PostToDisplay) => {
-        this.loadedPost = value;
-    }
-
 
     resetFeedState = () => {
         this.predicate.clear();
-        this.postsRegistry.clear();
+        this.commentsRegistry.clear();
     }
 
     get axiosParams() {
@@ -88,20 +70,21 @@ export default class FeedStore {
 
         return params;
     }
-
-    loadPosts = async () => {
+    
+    
+    loadComments = async (postId: string) => {
 
         this.setLoadingInitial(true);
 
         try {
             if(this.pagingParams.currentPage === 1)
-                this.postsRegistry.clear();
+                this.commentsRegistry.clear();
         
-            const { result } = await agent.postApiClient.getPosts(this.axiosParams) ?? [];
+            const { result } = await agent.commentApiClient.getCommentsForPost(this.axiosParams, postId) ?? [];
             
             runInAction(() => {
-                result.data.forEach((pst: PostToDisplay) => {
-                    this.setPost(pst.post.id, pst);
+                result.data.forEach((cmt: CommentToDisplay) => {
+                    this.setComment(cmt.id, cmt);
                 });
                 
                 this.setPagination(result.pagination);
@@ -109,16 +92,24 @@ export default class FeedStore {
 
         } finally {
             this.setLoadingInitial(false);
-            // alert(this.postsRegistry.size)
         }
 
     }
 
-    addPost = async (newPost: PostRecord) => {
+    loadComment = async (commentId: string) => {
 
         this.setLoadingInitial(true);
+
         try {
-            await agent.postApiClient.addPost(newPost) ?? {};
+            if(this.pagingParams.currentPage === 1)
+                this.commentsRegistry.clear();
+        
+            const { comment } = await agent.commentApiClient.getCommentsById(commentId) ?? [];
+            
+            alert(JSON.stringify(comment))
+            runInAction(() => {
+                this.setLoadedComment(comment)
+            });
 
         } finally {
             this.setLoadingInitial(false);
@@ -126,62 +117,48 @@ export default class FeedStore {
 
     }
 
-    rePost = async (rePostParams: RePostParams) => {
+    addComment = async (newComment: CommentForm) => {
 
         this.setLoadingInitial(true);
         try {
-            await agent.mutatePostApiClient.rePost(rePostParams) ?? {};
+            await agent.commentApiClient.addComment(newComment) ?? {};
 
         } finally {
             this.setLoadingInitial(false);
         }
 
     }
-    likedPost = async (likedPostParams: LikedPostParams) => {
+    rePostComment = async (rePostCommentParams: RePostCommentParams) => {
 
         this.setLoadingInitial(true);
         try {
-            await agent.mutatePostApiClient.likePost(likedPostParams) ?? {};
+            await agent.commentApiClient.rePostComment(rePostCommentParams.statusId, rePostCommentParams) ?? {};
 
         } finally {
             this.setLoadingInitial(false);
         }
 
     }
-    bookmarkPost = async (bookmarkParams: BookmarkParams) => {
+    likedComment = async (likedPostParams: LikedCommentParams) => {
 
         this.setLoadingInitial(true);
         try {
-            await agent.mutatePostApiClient.bookmarkPost(bookmarkParams) ?? {};
+            await agent.commentApiClient.likedComment(likedPostParams.statusId, likedPostParams) ?? {};
 
         } finally {
             this.setLoadingInitial(false);
         }
 
     }
-    deleteYourPost = async (postId: string) => {
+
+    deleteYourComment = async (commentId: string) => {
 
         this.setLoadingUpsert(true);
         try {
-            await agent.mutatePostApiClient.deleteYourPost(postId) ?? {};
+            await agent.commentApiClient.deleteComment(commentId) ?? {};
 
         } finally {
             this.setLoadingUpsert(false);
-        }
-
-    }
-
-    loadPost = async (postId: string) => {
-
-        this.setLoadingPost(true);
-        try {
-            const {post} = await agent.postApiClient.getPost(postId) ?? {};
-            console.log('loaded Post:', JSON.stringify(post));
-            runInAction(() => {
-                this.setLoadedPost(post);
-            });
-        } finally {
-            this.setLoadingPost(false);
         }
 
     }
@@ -190,8 +167,4 @@ export default class FeedStore {
         return Array.from(this.commentsRegistry.values());
     }
 
-
-    get posts() {
-        return Array.from(this.postsRegistry.values());
-    }
 }

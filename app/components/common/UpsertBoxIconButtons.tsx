@@ -52,7 +52,7 @@ function UpsertBoxIconButton({ input, setInput, setImage }: Props) {
     );
 
     return (
-        <div className="flex flex-1 space-x-2 text-maydan">
+        <div className="flex flex-1 space-x-2 text-maydan z-3">
             <PhotographIcon
                 onClick={handleUploadImage}
                 className="h-5 w-5 cursor-pointer
@@ -71,15 +71,16 @@ function UpsertBoxIconButton({ input, setInput, setImage }: Props) {
               transition-transform duration-150 ease-out
               hover:scale-150"
             />
-            {showEmojiPicker && (
-                <div style={{ position: "absolute", zIndex: 1000 }}>
+            <div style={{  position: "absolute", zIndex: 1000 }}>
+                {showEmojiPicker && (
                     <Picker
                         data={emojiData}
                         onEmojiSelect={handleEmojiSelect(input)}
                         onClickOutside={handleEmojiSelectClickOutside}
+                        
                     />
-                </div>
-            )}
+                )}
+            </div>
         </div>
     );
 }

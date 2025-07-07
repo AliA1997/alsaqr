@@ -1,11 +1,11 @@
 "use client";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import CustomPageLoader from "../common/CustomLoader";
 import { observer } from "mobx-react-lite";
 import { useStore } from "stores";
 import { NoRecordsTitle, PageTitle } from "../common/Titles";
 import { ContentContainerWithRef } from "../common/Containers";
-import { PagingParams } from "models/common";
+import { Pagination, PagingParams } from "models/common";
 import ExploreItemComponent from "./ExploreItem";
 import { leadingDebounce } from "@utils/common";
 
@@ -27,7 +27,13 @@ const ExploreFeed = observer(({  }: Props) => {
     } = exploreStore;
     const containerRef = useRef(null);
     const loaderRef = useRef(null);
-
+    // const [currentPagination, setCurrentPagination] = useState<Pagination | undefined>(newsPagination);
+    const feedPagination = useMemo(() => {
+        return exploreStore.newsPagination
+    }, [
+        exploreNews,
+        newsPagingParams.currentPage
+    ]);
     async function getExploreNews() {
         leadingDebounce(async () => {
 
@@ -42,7 +48,7 @@ const ExploreFeed = observer(({  }: Props) => {
     }
 
     const fetchMoreItems = async (pageNum: number) => {
-        setNewsPagingParams(new PagingParams(pageNum, 10))
+        setNewsPagingParams(new PagingParams(pageNum, 25))
         await loadExploreNews();
     };
 
@@ -64,22 +70,22 @@ const ExploreFeed = observer(({  }: Props) => {
         const observer = new IntersectionObserver(
             (entries) => {
                 const firstEntry = entries[0];
-                const currentPage = newsPagination?.currentPage ?? 1;
-                const itemsPerPage = newsPagination?.itemsPerPage ?? 10;
-                const totalItems = newsPagination?.totalItems ?? 10;
+                const currentPage = feedPagination?.currentPage ?? 1;
+                const itemsPerPage = feedPagination?.itemsPerPage ?? 10;
+                const totalItems = feedPagination?.totalItems ?? 0;
 
                 const nextPage = currentPage + 1;
                 const totalItemsOnNextPage = nextPage * itemsPerPage;
-                debugger;
                 const hasMoreItems = (totalItems > totalItemsOnNextPage);
+
                 if (firstEntry?.isIntersecting && !loadingInitial && hasMoreItems) {
-                    fetchMoreItems(newsPagingParams.currentPage + 1);
+                fetchMoreItems(newsPagingParams.currentPage + 1);
                 }
             },
             {
                 root: containerRef.current,
                 rootMargin: '100px',
-                threshold: 0.2
+                threshold: 0.3
             }
         );
 
@@ -93,21 +99,26 @@ const ExploreFeed = observer(({  }: Props) => {
                 observer.unobserve(currentLoader);
             }
         };
-    }, [fetchMoreItems]);
+    }, [newsPagingParams, fetchMoreItems]);
 
     return (
         <div className="col-span-7 scrollbar-hide border-x max-h-screen overflow-scroll lg:col-span-7 dark:border-gray-800">
-            <ContentContainerWithRef innerRef={containerRef} style={{ minHeight: '100vh' }}>
+            <PageTitle classNames='mb-2'>Explore Popular News</PageTitle>
+            <ContentContainerWithRef 
+                className='text-center overflow-y-auto scrollbar-hide min-h-[100vh] max-h-[100vh]'
+                innerRef={containerRef}>
                 {loadingInitial ? (
                     <CustomPageLoader title="Loading" />
                 ) : (
                     <>
-                        {exploreNews && exploreNews.length
-                            ?
-                            exploreNews.map((exploreNews, exploreNewsKey: number) => (
-                                <ExploreItemComponent key={exploreNewsKey} exploreItem={exploreNews} />
-                            ))
-                            : <NoRecordsTitle>No explore news to show.</NoRecordsTitle>}
+                        <div className=' flex flex-wrap'>
+                            {exploreNews && exploreNews.length
+                                ?
+                                exploreNews.map((exploreNews, exploreNewsKey: number) => (
+                                    <ExploreItemComponent key={exploreNewsKey} exploreItem={exploreNews} />
+                                ))
+                                : <NoRecordsTitle>No explore news to show.</NoRecordsTitle>}
+                        </div>
                         <LoadMoreTrigger />
                     </>
                 )}

@@ -76,12 +76,18 @@ export const isPostSearchAMatch = (
 export function getPercievedNumberOfRecord<T>(
   stateBool: boolean,
   origBool: boolean,
-  loadedNumberOfRecords: T[]
+  loadedNumberOfRecords: T[],
+  mounted?: boolean,
+  userId?: string
 ) {
-  if(stateBool && !origBool)
+  debugger;
+   if(mounted && userId && (stateBool && !origBool))  {
+    return loadedNumberOfRecords.some((l: any) => l.id === userId) ? loadedNumberOfRecords.length : loadedNumberOfRecords.length + 1
+  }
+  else if(stateBool && !origBool)
     return loadedNumberOfRecords.length + 1
   else if(!stateBool && origBool)
-    return loadedNumberOfRecords.length - 1
+    return (loadedNumberOfRecords.length - 1 < 0 ? 0 : loadedNumberOfRecords.length - 1);
   else
     return loadedNumberOfRecords.length;
 }

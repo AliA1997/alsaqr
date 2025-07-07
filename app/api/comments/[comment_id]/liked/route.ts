@@ -1,20 +1,21 @@
 // app/api/tweets/[tweet_id]/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import { defineDriver, getUserIdFromSession, read, write } from "@utils/neo4j/neo4j";
-import { LikedPostParams } from "models/posts";
+import { PostToDisplay } from "typings";
+import { LikedCommentParams } from "models/posts";
 
 
-async function PATCH_LIKED_POST(
+async function PATCH_LIKED_COMMENT(
     request: NextRequest,
-    { params }: { params: { tweet_id: string } }
+    { params }: { params: { comment_id: string } }
   ) {
-    const { values:data }: { values:LikedPostParams } = await request.json();
+  const { values:data }: { values:LikedCommentParams } = await request.json();
+    
+    const { comment_id } = params;
+    const commentId = comment_id as string;
   
-    const { tweet_id } = params;
-    const tweetId = tweet_id as string;
-  
-    if (!tweetId) {
-      return new NextResponse("Post ID is required", { status: 400 });
+    if (!commentId) {
+      return new NextResponse("Comment ID is required", { status: 400 });
     }
   
     const driver = defineDriver();
@@ -27,7 +28,6 @@ async function PATCH_LIKED_POST(
       if(authUserSessionId != data.userId) 
         throw Error("Must be logged in to like comments");
 
-
       if (!data.liked) {
         await write(
           session,
@@ -35,14 +35,14 @@ async function PATCH_LIKED_POST(
           // Match the user node
           MERGE (u:User {id: $userId})
           // Match the tweet node
-          MERGE (post:Post {id: $tweetId})
-          // Create the 'LIKES' relationship with a timestamp
-          MERGE (u)-[ur:LIKES]->(post)
-          MERGE (post)-[postRel:LIKED]->(u)
+          MERGE (cmtToLike:Comment {id: $commentId})
+          // Create the 'LIKES_COMMENT' relationship with a timestamp
+          MERGE (u)-[ur:LIKES_COMMENT]->(cmtToLike)
+          MERGE (cmtToLike)-[cr:COMMENT_LIKED]->(u)
           ON CREATE SET ur.timestamp = timestamp()
-          ON CREATE SET postRel.timestamp = timestamp()
+          ON CREATE SET cr .timestamp = timestamp()
           `,
-          { userId: data.userId, tweetId: tweet_id }
+          { userId: data.userId, commentId }
         );
 
         await write(
@@ -50,37 +50,37 @@ async function PATCH_LIKED_POST(
           `
             // Match liking user
             MATCH (likingUser:User {id: $userId})
-            // Match the post node (fixed variable name from pst to post for consistency)
-            MATCH (post:Post {id: $tweetId})
-            // Match the post author (fixed relationship direction)
-            MATCH (author:User)-[:POSTED]->(post)
+            // Match the comment node 
+            MATCH (comment:Comment {id: $commentId})
+            // Match the comment author (fixed relationship direction)
+            MATCH (author:User)-[:COMMENTED]->(comment)
             // Create notification connected to author
             CREATE (author)-[:NOTIFIED_BY]->(n:Notification {
               id: "notification_" + randomUUID(),
-              message: "Post liked by " + likingUser.username,
+              message: "Your comment liked by " + likingUser.username,
               read: false,
-              relatedEntityId: post.id,
-              link: "/status/" + post.id,
+              relatedEntityId: comment.id,
+              link: "/status/" + comment.id,
               createdAt: datetime(),
               updatedAt: null,
               _rev: null,
               _type: "notification",
-              notificationType: "liked_post"
+              notificationType: "liked_comment"
             })
             `,
-          { userId: data.userId, tweetId: tweet_id }
+          { userId: data.userId, commentId }
         );
       
       } else if (data.liked) {
+        console.log('delete relationship thing', data.liked)
         await write(
           session,
           `
-          // Match the user, tweet, and the 'LIKES' relationship
-          MATCH (u:User {id: $userId})-[r:LIKES]->(post:Post {id: $tweetId})
-          MATCH (post:Post {id: $tweetId})-[tr:LIKED]->(u:User {id: $userId})
-          DELETE r, tr
+          MATCH (u:User {id: $userId})-[lr:LIKES_COMMENT]->(cmt:Comment {id: $commentId})
+          MATCH (cmt:Comment {id: $commentId})-[cl:COMMENT_LIKED]->(u:User {id: $userId})
+          DELETE lr, cl
           `,
-          { userId: data.userId, tweetId: tweet_id }
+          { userId: data.userId, commentId }
         );
 
         await write(
@@ -88,29 +88,31 @@ async function PATCH_LIKED_POST(
           `
             // Match the liking user and post
             MATCH (likingUser:User {id: $userId})
-            MATCH (post:Post {id: $tweetId})
+            MATCH (cmt:Comment {id: $commentId})
             // Match the author who created the post
-            MATCH (author:User)-[:POSTED]->(post)
+            MATCH (author:User)-[:COMMENTED]->(cmt)
             // Find and delete the specific notification
             MATCH (author)-[r:NOTIFIED_BY]->(n:Notification {
-              relatedEntityId: post.id,
-              notificationType: "liked_post"
+              relatedEntityId: cmt.id,
+              notificationType: "liked_comment"
             })
             DELETE r, n
             `,
-          { userId: data.userId, tweetId: tweet_id }
+          { userId: data.userId, commentId }
         );
       }
+      
       success = true;
+  
     } catch (err) {
-      console.log('error', err);
       return NextResponse.json({ message: "Patch Post error!", success: false });
+  
     } finally {
       session.close();
     }
 
-    
-      return NextResponse.json({ success });
+    return NextResponse.json({ success });
+
   }
 
-export { PATCH_LIKED_POST as PATCH };
+export { PATCH_LIKED_COMMENT as PATCH };

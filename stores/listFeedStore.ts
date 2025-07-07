@@ -174,6 +174,17 @@ export default class ListFeedStore {
         }
 
     }
+    
+    deleteList = async (userId: string, listId: string) => {
+        this.setLoadingUpsert(true);
+        try {
+            await agent.listApiClient.deleteList(userId, listId);
+            
+            await agent.listApiClient.getLists(this.axiosParams, userId);
+        } finally {
+            this.setLoadingUpsert(false);
+        }
+    }
 
     loadSavedListItems = async (userId: string, listId: string) => {
         this.setLoadingListItems(true);

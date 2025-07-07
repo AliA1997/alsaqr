@@ -2,6 +2,7 @@ import { SVGProps, useCallback, useState } from "react";
 import { MoreButton } from "./IconButtons";
 import { observer } from "mobx-react-lite";
 import { CommonLink } from "./Links";
+import { stopPropagationOnClick } from "@utils/neo4j";
 
 type MoreSectionProps = {
     moreOptions: {
@@ -57,7 +58,7 @@ function MoreSection({
             <div className="absolute top-0 right-0 pr-[1.1rem] mt-2 w-full flex justify-between">
                 <div />
                 <MoreButton
-                    onClick={handleDropdownEnter}
+                    onClick={e => stopPropagationOnClick(e, handleDropdownEnter)}
                     containerClassNames=""
                 />
             </div>

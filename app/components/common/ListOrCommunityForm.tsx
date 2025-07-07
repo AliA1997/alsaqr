@@ -11,6 +11,7 @@ import { PagingParams } from "models/common";
 import { faker } from "@faker-js/faker";
 import toast from "react-hot-toast";
 import { observer } from "mobx-react-lite";
+import { TAG_OPTIONS } from "@utils/tagOptions";
 
 
 interface Props {
@@ -27,26 +28,6 @@ const options = [
         value: 'private',
         label: 'Private',
         description: 'Anyone can join, but whenever someone join\'s you will get notified',
-    },
-];
-
-
-const tagOptions = [
-    {
-        value: 'tech',
-        label: 'Tech',
-    },
-    {
-        value: 'business',
-        label: 'Business',
-    },
-    {
-        value: 'politics',
-        label: 'Politics',
-    },
-    {
-        value: 'religion',
-        label: 'Religion',
     },
 ];
 
@@ -128,7 +109,7 @@ export const ListOrCommunityFormInputs = observer(({ type }: Props) => {
                 name="tags"
                 label={tagsLabel}
                 placeholder="Select Hashtags"
-                options={tagOptions}
+                options={TAG_OPTIONS}
             />
         </>
     );

@@ -117,7 +117,8 @@ const ConfirmModal = observer(({
             {declineButtonText}
           </button>
           <button
-            onClick={async () => {
+            onClick={async (e) => {
+              e.stopPropagation();
               setSubmitting(true);
               try {
                 await confirmFunc();

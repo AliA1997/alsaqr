@@ -2,12 +2,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { defineDriver, read, write } from "@utils/neo4j/neo4j";
 import { PostToDisplay } from "typings";
+import { BookmarkParams } from "models/posts";
 
 async function PATCH_BOOKMARKED_POST(
   request: NextRequest,
   { params }: { params: { tweet_id: string } }
 ) {
-  const body = await request.json();
+  const { values:data }: { values:BookmarkParams } = await request.json();
   const { tweet_id } = params;
   const tweetId = tweet_id as string;
 
@@ -17,9 +18,10 @@ async function PATCH_BOOKMARKED_POST(
 
   const driver = defineDriver();
   const session = driver.session();
+  let success = false;
 
   try {
-    if (!body["bookmarked"]) {
+    if (!data.bookmarked) {
       await write(
         session,
         `
@@ -31,7 +33,7 @@ async function PATCH_BOOKMARKED_POST(
             MERGE (u)-[r:BOOKMARKED]->(t)
             ON CREATE SET r.timestamp = timestamp()
         `,
-        { userId: body["userId"], tweetId: tweet_id }
+        { userId: data.userId, tweetId: tweet_id }
       );
 
       
@@ -58,17 +60,17 @@ async function PATCH_BOOKMARKED_POST(
             notificationType: "bookmarked_post"
           })
           `,
-        { userId: body["userId"], tweetId: tweet_id }
+        { userId: data.userId, tweetId: tweet_id }
       );
 
-    } else if (body["bookmarked"]) {
+    } else if (data.bookmarked) {
       await write(
         session,
         `
         MATCH (u:User {id: $userId})-[r:BOOKMARKED]->(t:Post {id: $tweetId})
         DELETE r
         `,
-        { userId: body["userId"], tweetId: tweet_id }
+        { userId: data.userId, tweetId: tweet_id }
       );
 
       await write(
@@ -86,15 +88,17 @@ async function PATCH_BOOKMARKED_POST(
           })
           DELETE r, n
           `,
-        { userId: body["userId"], tweetId: tweet_id }
+        { userId: data.userId, tweetId: tweet_id }
       );
     }
 
-    return NextResponse.json({ success: true });
+    success = true;
   } catch (err) {
     return NextResponse.json({ message: "Patch Post error!", success: false });
-
+  } finally {
+    session.close();
   }
+  return NextResponse.json({ success });
 }
 
 export { PATCH_BOOKMARKED_POST as PATCH };

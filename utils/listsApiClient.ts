@@ -9,6 +9,8 @@ import { values } from "lodash";
 export const listApiClient = {
     addList: (values: CreateListOrCommunityFormDto, userId: string) =>
         axiosRequests.post(`/api/lists/${userId}`, { values }).then(axiosResponseBody),
+    deleteList: (userId: string, listId: string) =>
+        axiosRequests.del(`/api/lists/${userId}/${listId}`).then(axiosResponseBody),
     saveItemToList: (relatedEntityId: string, type: string, userId: string, listId: string) => 
         axiosRequests.patch(`/api/lists/${userId}/${listId}`, { values: { relatedEntityId, type } }).then(axiosResponseBody),
     getLists: (params: URLSearchParams | undefined, userId: string) =>

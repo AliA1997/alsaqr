@@ -31,9 +31,9 @@ async function GET_POST(
       session,
       `
         MATCH (post:Post { id: $tweetId }), (user: User { id: post.userId })
-        OPTIONAL MATCH (post)-[:HAS_COMMENT]->(c:Comment)<-[:COMMENTED]-(u:User)
+        OPTIONAL MATCH (post)<-[:COMMENT_ON]-(c:Comment)<-[:COMMENTED]-(u:User)
         OPTIONAL MATCH (post)<-[:REPOSTED]-(reposter:User)
-        OPTIONAL MATCH (post)<-[:LIKED]-(liker:User)
+        OPTIONAL MATCH (post)<-[:LIKES]-(liker:User)
         WITH post,
             user.username as username,
             user.avatar as profileImg,
@@ -67,54 +67,6 @@ async function GET_POST(
   }
 }
 
-async function PATCH(
-  request: NextRequest,
-  { params }: { params: { tweet_id: string } }
-) {
-  const body = await request.json();
-  const { tweet_id } = params;
-  const tweetId = tweet_id as string;
-
-  if (!tweetId) {
-    return new NextResponse("Post ID is required", { status: 400 });
-  }
-
-  const driver = defineDriver();
-  const session = driver.session();
-  try {
-    if (!body["liked"]) {
-      await write(
-        session,
-        `
-        // Match the user node
-        MERGE (u:User {id: $userId})
-        // Match the tweet node
-        MERGE (t:Post {id: $tweetId})
-        // Create the 'LIKES' relationship with a timestamp
-        MERGE (u)-[r:LIKES]->(t)
-        ON CREATE SET r.timestamp = timestamp()
-        `,
-        { userId: body["userId"], tweetId: tweet_id }
-      );
-    } else if (body["liked"]) {
-      await write(
-        session,
-        `
-        // Match the user, tweet, and the 'LIKES' relationship
-        MATCH (u:User {id: $userId})-[r:LIKES]->(t:Post {id: $tweetId})
-        // Delete the 'LIKES' relationship
-        DELETE r
-        `,
-        { userId: body["userId"], tweetId: tweet_id }
-      );
-    }
-
-    return NextResponse.json({ success: true });
-  } catch (err) {
-    return NextResponse.json({ message: "Patch Post error!", success: false });
-
-  }
-}
 
 async function DELETE_POST(
   request: NextRequest,
@@ -133,7 +85,7 @@ async function DELETE_POST(
   try {
     const userAuthSessionId = await getUserIdFromSession(session);
     if (!userAuthSessionId) {
-        return new NextResponse("Only logged in user can update communities", { status: 400 });   
+        return new NextResponse("Only logged in user can delete posts", { status: 400 });   
     }
 
     await write(
@@ -150,7 +102,7 @@ async function DELETE_POST(
     )
     return NextResponse.json({ success: true });
   } catch (err) {
-    return NextResponse.json({ message: "Fetch Post error!", success: false });
+    return NextResponse.json({ message: "Delete Post error!", success: false });
 
   }
 }

@@ -262,7 +262,7 @@ export const ReviewForm = observer(({ sections, hideTitle, previewInfo, type }: 
                     <div key={index} className="group">
                         <button
                             type="button"
-                            className="w-full p-4 flex justify-between items-center hover:bg-gray-50 transition-colors"
+                            className="w-full p-4 flex justify-between items-center hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors"
                             onClick={(e) => {
                                 e.stopPropagation();
                                 toggleSection(index);
@@ -270,7 +270,7 @@ export const ReviewForm = observer(({ sections, hideTitle, previewInfo, type }: 
                             aria-expanded={isExpanded(index)}
                             aria-controls={`section-${index}`}
                         >
-                            <h4 className="font-medium text-gray-700">{section.title}</h4>
+                            <h4 className="font-medium text-gray-700 dark:text-gray-100">{section.title}</h4>
                             <motion.div
                                 animate={{ rotate: isExpanded(index) ? 180 : 0 }}
                                 transition={{ duration: 0.2 }}

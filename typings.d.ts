@@ -156,7 +156,9 @@ export interface PostRecord extends CommonRecordBody {
   userId?: string;
 }
 
-export interface CommentForm extends Comment {};
+export interface CommentForm extends Comment {
+  commentToCommentOnId?: string;
+};
 
 export interface Comment extends CommonRecordBody {
   id: string;
@@ -171,6 +173,10 @@ export interface Comment extends CommonRecordBody {
 export interface CommentToDisplay extends Comment {
   username: string;
   profileImg: string;
+  comments: Comment[],
+  commenters: User[],
+  reposters: User[],
+  likers: User[]
 }
 
 export interface CreateListOrCommunityFormDto extends CreateListOrCommunityForm {

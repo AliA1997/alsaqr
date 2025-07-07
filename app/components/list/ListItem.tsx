@@ -17,32 +17,31 @@ import {
   getPercievedNumberOfRecord,
   stopPropagationOnClick,
 } from "@utils/neo4j/index";
-import { SaveIcon as SaveIconFillIcon } from "@heroicons/react/solid";
+import { SaveIcon as SaveIconFillIcon, TrashIcon } from "@heroicons/react/solid";
 import { useSession } from "next-auth/react";
 import agent from "@utils/common";
 import { useStore } from "@stores/index";
 import { LoginModal } from "../common/AuthModals";
 import { convertDateToDisplay } from "@utils/neo4j/neo4j";
+import MoreSection from "@components/common/MoreSection";
+import { ConfirmModal } from "@components/common/Modal";
 
 interface Props {
   listToDisplay: ListToDisplay;
+  onlyDisplay?: boolean;
 }
 
 function ListItemComponent({
   listToDisplay,
+  onlyDisplay
 }: Props) {
   const router = useRouter();
   const { data: session } = useSession();
-  const { modalStore } = useStore();
-  const { showModal } = modalStore;
+  const { authStore, modalStore, listFeedStore } = useStore();
+  const { currentSessionUser } = authStore;
+  const { closeModal, showModal } = modalStore;
+  const { deleteList, loadingInitial } = listFeedStore;
 
-  const [currentComments, setCurrentComments] = useState<CommentToDisplay[]>(() => {
-    const comments = session && session.user ? (session.user as any).comments : [];
-    return comments ?? []
-  });
-
-  const [input, setInput] = useState<string>("");
-  const [commentBoxOpen, setCommentBoxOpen] = useState<boolean>(false);
   const [isAlreadySaved, setIsAlraedySaved] = useState<boolean>(false);
 
   const initiallyBooleanValues = useRef<{
@@ -53,28 +52,10 @@ function ListItemComponent({
     commented: false,
   });
 
-  // const numberOfSavedBy = useMemo(
-  //   () =>
-  //     getPercievedNumberOfRecord<User>(
-  //       isAlreadySaved,
-  //       initiallyBooleanValues.current?.alreadySaved,
-  //       list.savedBy ?? []
-  //     ),
-  //   []
-  // );
-  const numberOfComments = useMemo(() => {
-    const userId = session && session.user && (session.user as any).id
-    return currentComments.some((comm: CommentToDisplay) => comm.userId === userId)
-      ? currentComments.length + 1
-      : currentComments.length;
-  }, [currentComments, session]);
 
   const listInfo = listToDisplay.list;
   const founder = listToDisplay.savedBy;
-  const refreshComments = async () => {
-    const comments: CommentToDisplay[] = await agent.postApiClient.getComments(listInfo.id);
-    setCurrentComments(comments);
-  };
+
   const checkUserIsLoggedInBeforeUpdatingTweet = async (
     callback: () => Promise<void>
   ) => {
@@ -97,22 +78,6 @@ function ListItemComponent({
       };
     }
   }, [session]);
-
-  const handleSubmit = async (
-    e: React.MouseEvent<HTMLButtonElement, globalThis.MouseEvent>
-  ) => {
-    e.preventDefault();
-
-    const commentToast = toast.loading("Posting Comment...");
-
-    toast.success("Comment Posted!", {
-      id: commentToast,
-    });
-
-    setInput("");
-    setCommentBoxOpen(false);
-    // refreshComments();
-  };
 
   const navigateToTweetUser = (username: string) => {
     router.push(`users/${username}`);
@@ -138,11 +103,40 @@ function ListItemComponent({
     }
   };
 
-
-  const commentOnTweet = () => { };
-
-
   const userId = useMemo(() => session && session.user ? (session.user as any)['id'] : "", [session]);
+
+  const moreOptions = useMemo(() => {
+    const defaultOpts = [];
+
+    if (listInfo.userId === currentSessionUser?.id)
+      defaultOpts.push({
+        title: 'Delete Your List',
+        onClick: async () => {
+          showModal(
+            <ConfirmModal
+              title="Delete this List"
+              confirmButtonClassNames="bg-red-700 text-gray-100"
+              onClose={() => closeModal()}
+              declineButtonText="Cancel"
+              confirmFunc={async () => {
+                await deleteList(listInfo.userId, listInfo.id);
+                closeModal();
+              }}
+              confirmMessage="Are you sure you want to delete this list forever?"
+              confirmButtonText="Delete List"
+            >
+              <ListItemComponent
+                listToDisplay={listToDisplay}
+              />
+            </ConfirmModal>
+          )
+
+        },
+        Icon: TrashIcon,
+      });
+
+    return defaultOpts;
+  }, [listInfo.id]);
 
   return (
     <>
@@ -162,6 +156,7 @@ function ListItemComponent({
               src={founder.avatar}
               alt={founder.username}
               onClick={(e) => stopPropagationOnClick(e, navigateToTweetUser)}
+
             />
             {userId === listInfo.listCreator && (
               <svg
@@ -195,122 +190,37 @@ function ListItemComponent({
               className="text-sm text-gray-500 dark:text-gray-400"
               date={convertDateToDisplay(listInfo.createdAt)}
             />
+            {moreOptions.length ?
+              (
+                <MoreSection
+                  moreOptions={moreOptions}
+                  moreOptionClassNames="bg-red-700"
+                />
+              )
+              : null
+            }
           </div>
           <p className="pt-1 text-white text-3xl">{listInfo.name}</p>
         </div>
-        <div className="flex justify-between w-full p-5">
-          <motion.div
-            whileHover={{ scale: 1.1 }}
-            whileTap={{ scale: 0.9 }}
-            onClick={(e) =>
-              stopPropagationOnClick(e, () => {
-                showModal(<LoginModal />);
-                setCommentBoxOpen(!commentBoxOpen);
-              })
-            }
-            className="flex bg-gray-100 p-2 rounded-full cursor-pointer item-center space-x-3 text-gray-400 hover:text-maydan"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-              strokeWidth={1.5}
-              stroke="currentColor"
-              className="w-5 h-5"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M12 20.25c4.97 0 9-3.694 9-8.25s-4.03-8.25-9-8.25S3 7.444 3 12c0 2.104.859 4.023 2.273 5.48.432.447.74 1.04.586 1.641a4.483 4.483 0 01-.923 1.785A5.969 5.969 0 006 21c1.282 0 2.47-.402 3.445-1.087.81.22 1.668.337 2.555.337z"
-              />
-            </svg>
+        {!onlyDisplay && (
+          <div className="flex justify-end w-full px-1">
+            <div className="flex gap-2 bg-gray-100 p-2 rounded-full z-10">
+              <motion.button
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.9 }}
+                className={`
+                  flex float-right cursor-pointer item-center ${isAlreadySaved ? "text-maydan" : "text-gray-900"
+                  } hover:text-maydan
+                `}
+                onClick={(e) => stopPropagationOnClick(e, onIsAlreadySaved)}
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-3">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3" />
+                </svg>
+              </motion.button>
 
-            <p className="text-center">{numberOfComments}</p>
-          </motion.div>
-
-          <div className="flex gap-2 bg-gray-100 p-2 rounded-full">
-            <motion.div
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.9 }}
-              className={`
-                flex cursor-pointer item-center space-x-3 ${isAlreadySaved ? "text-maydan" : "text-gray-400"
-                } hover:text-maydan 
-              `}
-              onClick={(e) => stopPropagationOnClick(e, onIsAlreadySaved)}
-            >
-              {isAlreadySaved ? (
-                <SaveIconFillIcon className="h-5 w-5" />
-              ) : (
-                <SaveIcon className="h-5 w-5" />
-              )}
-            </motion.div>
-
+            </div>
           </div>
-        </div>
-        {commentBoxOpen && (
-          <>
-            {userId && (
-              <motion.div
-                initial={{ opacity: 0 }}
-                whileInView={{ opacity: 1 }}
-                viewport={{ once: true }}
-              >
-                <form className="mt-3 flex space-x-3">
-                  <input
-                    value={input}
-                    onChange={(e) => setInput(e.target.value)}
-                    className="flex-1 rounded-lg bg-gray-100 p-2 outline-none dark:bg-gray-700"
-                    type="text"
-                    placeholder="Write a comment..."
-                  />
-                  <button
-                    onClick={handleSubmit}
-                    disabled={!input}
-                    type="submit"
-                    className="text-maydan  disabled:text-gray-200 cursor-pointer"
-                  >
-                    Post
-                  </button>
-                </form>
-              </motion.div>
-            )}
-          </>
-        )}
-        {commentBoxOpen && (
-          <>
-            {currentComments?.length > 0 && (
-              <motion.div
-                initial={{ opacity: 0 }}
-                whileInView={{ opacity: 1 }}
-                viewport={{ once: true }}
-                className="my-2 mt-5 max-h-44 space-y-5 overflow-y-scroll border-t border-gray-100 p-5 scrollbar-thin scrollbar-thumb-blue-100"
-              >
-                {currentComments.map((comment) => (
-                  <div key={comment.id} className="flex space-x-2">
-                    <hr className="top-10 h-8 border-x border-maydan/30" />
-                    <img
-                      src={comment.profileImg}
-                      className="mt-2 h-7 w-7 rounded-full object-cover"
-                      alt=""
-                    />
-                    <div>
-                      <div className="flex items-center space-x-l">
-                        <p className="mr-1 font-bold">{comment.username}</p>
-                        <p className="hidden text-sm text-gray-500 lg:inline">
-                          @{comment.username.replace(/\s+/g, "")}.
-                        </p>
-                        <TimeAgo
-                          className="text-sm text-gray-500"
-                          date={convertDateToDisplay(comment.createdAt)}
-                        />
-                      </div>
-                      <p>{comment.text}</p>
-                    </div>
-                  </div>
-                ))}
-              </motion.div>
-            )}
-          </>
         )}
       </div>
 

@@ -1,7 +1,7 @@
 
-export function PageTitle({ children }: React.PropsWithChildren<any>) {
+export function PageTitle({ children, classNames }: React.PropsWithChildren<any>) {
     return (
-        <h1 className="p-5 pb-0 text-xl font-bold">{children}</h1>
+        <h1 className={`p-5 pb-0 text-xl font-bold ${classNames && classNames}`}>{children}</h1>
     );
 }
 
@@ -14,7 +14,7 @@ export function NoRecordsTitle({ children }: React.PropsWithChildren<any>) {
 
 interface TagOrLabelProps extends React.ButtonHTMLAttributes<HTMLSpanElement> {
     color?: 'primary' | 'gold' | 'secondary' | 'success' | 'danger' | 'warning' | 'info' | 'neutral'
-    | "postGradient" | "userGradient" | "communityGradient"
+    | "postGradient" | "userGradient" | "communityGradient" | "commentGradient"
     | "communityDiscussionGradient" | "communityDiscussionGradient" | "communityDiscussionMessageGradient" | "defaultSavedItemGradient";
     size?: 'sm' | 'md' | 'lg';
     rounded?: boolean;
@@ -91,6 +91,11 @@ export function TagOrLabel({
             bg: 'bg-gradient-to-br from-cyan-100 via-blue-50 to-purple-100',
             text: 'text-blue-800',
             border: 'border-blue-300',
+        },
+        commentGradient: {
+            bg: 'bg-gradient-to-r from-red-100 via-purple-100 to-pink-100',
+            text: 'text-purple-800',
+            border: 'border-rose-300',
         },
         communityGradient: {
             bg: 'bg-gradient-to-tl from-emerald-100 via-teal-100 to-cyan-200',

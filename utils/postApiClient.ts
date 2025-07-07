@@ -7,9 +7,7 @@ import { CommentForm, PostRecord } from "typings";
 
 export const postApiClient = {
     addPost: (values: PostRecord) =>
-        axiosRequests.post(`/api/posts`, { values }).then(axiosResponseBody),  
-    addComment: (values: CommentForm) =>
-        axiosRequests.post(`/api/comments`, { values }).then(axiosResponseBody),     
+        axiosRequests.post(`/api/posts`, { values }).then(axiosResponseBody),       
     getPosts: (params: URLSearchParams | undefined) =>
         axios.get(`/api/posts`, { params }).then(axiosResponseBody),
     getPostsToAdd: (userId: string, params: URLSearchParams) =>
@@ -18,6 +16,6 @@ export const postApiClient = {
         axios.get(`/api/bookmarks/${userId}`, { params }).then(axiosResponseBody),
     getPost: (statusId: string) =>
         axios.get(`/api/posts/${statusId}`, {}).then(axiosResponseBody),
-    getComments: (postId: string) =>
-        axios.get(`/api/comments?postId=${postId}`, {}).then(axiosResponseBody),
+    // getComments: (postId: string) =>
+    //     axios.get(`/api/comments?postId=${postId}`, {}).then(axiosResponseBody),
 }

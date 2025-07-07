@@ -149,11 +149,15 @@ function ListOrCommunityUpsertModal({ type, loggedInUserId, communityId }: Props
 
         resetPagingParams();
 
-        await loadListsOrCommunities();
+        setCurrentStep(0, DEFAULT_CREATED_LIST_OR_COMMUNITY_FORM);
 
+        closeModal();
+        
         toast(toastMessage, {
             icon: "🚀",
         });
+
+        await loadListsOrCommunities();
     };
 
     
@@ -211,8 +215,6 @@ function ListOrCommunityUpsertModal({ type, loggedInUserId, communityId }: Props
                         onSubmit={async (values, { setSubmitting }) => {
                             await postRecord(values);
                             setSubmitting(false);
-                            setCurrentStep(0, DEFAULT_CREATED_LIST_OR_COMMUNITY_FORM);
-                            closeModal();
                         }}
                     >
                         {({

@@ -8,17 +8,17 @@ export const mutatePostApiClient = {
     bookmarkPost: (values: BookmarkParams) => 
                             axiosRequests.patch<void>(
                                 `/api/posts/${values.statusId}/bookmark`, 
-                                values
+                                {values}
                             ),
     likePost: (values: LikedPostParams) =>
                             axiosRequests.patch<void>(
                                 `/api/posts/${values.statusId}/liked`,
-                                values
+                                {values}
                             ),
     rePost: (values: RePostParams) =>
                             axiosRequests.patch<void>(
                                 `/api/posts/${values.statusId}/repost`,
-                                values
+                                {values}
                             ),
      deleteYourPost: (postId: string) =>
                             axiosRequests.del<void>(`/api/posts/${postId}`)

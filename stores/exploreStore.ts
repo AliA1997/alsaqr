@@ -39,7 +39,7 @@ export default class ExploreStore {
     }
     topicToExplore: string = '';
     pagingParams: PagingParams = new PagingParams(1, 10);
-    newsPagingParams: PagingParams = new PagingParams(1, 10);
+    newsPagingParams: PagingParams = new PagingParams(1, 25);
 
     exploreNewsRegistry: Map<string, ExploreToDisplay> = new Map<string, ExploreToDisplay>();
     explorePostsRegistry: Map<string, PostToDisplay> = new Map<string, PostToDisplay>();
@@ -53,7 +53,7 @@ export default class ExploreStore {
     setSearchQry = (val: string) => this.predicate.set('searchQry', val);
 
     setExploreNewsItem = (newsItem: ExploreToDisplay) => {
-        this.exploreNewsRegistry.set(faker.datatype.uuid(), newsItem);
+        this.exploreNewsRegistry.set(newsItem.title, newsItem);
     }
     setExplorePost = (postId: string, post: PostToDisplay) => {
         this.explorePostsRegistry.set(postId, post);
@@ -73,24 +73,36 @@ export default class ExploreStore {
         return params;
     }
 
+    get newsAxiosParams() {
+        const params = new URLSearchParams();
+        params.append("currentPage", this.newsPagingParams.currentPage.toString());
+        params.append("itemsPerPage", this.newsPagingParams.itemsPerPage.toString());
+        this.predicate.forEach((value, key) => params.append(key, value));
+
+        return params;
+    }
+
     loadExploreNews = async () => {
+
         this.setLoadingInitial(true);
-        
+
         try {
-            if (this.newsPagingParams.currentPage === 1)
+            if(this.newsPagingParams.currentPage === 1)
                 this.exploreNewsRegistry.clear();
-
-            const {result} = await agent.exploreApiClient.getExplore(this.axiosParams);
-
+        
+            const {result} = await agent.exploreApiClient.getExplore(this.newsAxiosParams);
+            
             runInAction(() => {
-                result.data.forEach((exploreNewsItem: ExploreToDisplay) => {
-                    this.setExploreNewsItem(exploreNewsItem);
+                result.data.forEach((exploreNewItem: ExploreToDisplay) => {
+                    this.setExploreNewsItem(exploreNewItem);
                 });
+                
+                this.setPagination(result.pagination);
             });
 
-            this.setNewsPagination(result.pagination);
         } finally {
             this.setLoadingInitial(false);
+            // alert(this.postsRegistry.size)
         }
 
     }

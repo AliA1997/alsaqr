@@ -23,6 +23,8 @@ import FeedStore from "@stores/feedStore";
 import ListFeedStore from "@stores/listFeedStore";
 import CommunityFeedStore from "@stores/communityFeedStore";
 import agent from "@utils/common";
+import { MultiSelect } from "@components/common/MultiSelect";
+import { TAG_OPTIONS } from "@utils/tagOptions";
 
 interface Props {
   filterKey: FilterKeys;
@@ -33,6 +35,7 @@ function PostBox({ filterKey }: Props) {
 
   const [input, setInput] = useState<string>("");
   const [image, setImage] = useState<string>("");
+  const [hashtags, setHashtags] = useState<string[]>([]);
   const [showEmojiPicker, setShowEmojiPicker] = useState<boolean>(false);
 
   const { exploreStore,  feedStore, listFeedStore, communityFeedStore } = useStore();
@@ -90,33 +93,6 @@ function PostBox({ filterKey }: Props) {
     []
   );
 
-  debugger;
-
-  // const postCommunity = async () => {
-  //   const communityInfo: CommunityRecord = {
-  //     id: faker.datatype.uuid(),
-  //     createdAt: new Date().toISOString(),
-  //     updatedAt: new Date().toISOString(),
-  //     _rev: "",
-  //     _type: "community",
-  //     text: input,
-  //     username: getEmailUsername(session!.user?.email!)!,
-  //     profileImg: session!.user?.image!,
-  //     image: image,
-  //     tags: []
-  //   };
-  //   const userId = session && session.user ? (session.user as any).id : "";
-
-  //   await addCommunity(communityInfo, userId);
-
-  //   setSearchQry(defaultSearchParams.search_term);    
-  //   await loadData(storeToUse);
-
-  //   toast("Community Posted", {
-  //     icon: "🚀",
-  //   });
-  // };
-
   const postNewPost = async () => {
     const postInfo: PostRecord = {
       id: faker.datatype.uuid(),
@@ -128,7 +104,7 @@ function PostBox({ filterKey }: Props) {
       text: input,
       image: image,
       userId: session?.user.id,
-      tags: []
+      tags: hashtags ?? []
       // username: getEmailUsername(session!.user?.email!)!,
       // profileImg: session!.user?.image!,
       // image: image,
@@ -154,17 +130,21 @@ function PostBox({ filterKey }: Props) {
         .then(() => {
           setInput("");
           setImage("");
+          setHashtags([]);
         })
         .catch((err: any) => console.log("Error posting data:", err))
         .finally(() => setSubmitting(false));
 
     },
-    [input, image]
+    [input, image, hashtags]
   );
 
   const handleInputChange = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
+    (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+      const hashtagMatches = e.target.value.match(/#[\w\-_]+/g) || [];
       setInput(e.target.value);
+      console.log('hashTag matches:', hashtagMatches);
+      setHashtags(Array.from(new Set(hashtagMatches)));
     },
     []
   );
@@ -186,12 +166,17 @@ function PostBox({ filterKey }: Props) {
       />
       <div className="flex flex-1 item-center pl-2">
         <form className="flex flex-1 flex-col">
-          <input
+          <textarea
             value={input}
             onChange={handleInputChange}
-            type="text"
+            onKeyDown={ (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+            if (e.key === 'Enter') {
+              e.preventDefault();
+              setInput(prev => prev + '\n'); // Add newline character
+            }
+           }}
             placeholder={inputPlaceholder}
-            className="h-24 w-full text-xl outline-none placeholder:text-xl dark:bg-[#000000]"
+            className="h-24 w-full text-xl outline-none placeholder:text-xl dark:bg-[#000000] resize-none p-5"
           />
           {image && (
             <motion.div
@@ -216,6 +201,21 @@ function PostBox({ filterKey }: Props) {
               />
             </motion.div>
           )}
+          <div style={{ display: 'flex', gap: '4px' }}>
+            {hashtags.map((tag, index) => (
+              <span 
+                key={index}
+                style={{
+                  backgroundColor: '#e0f2fe',
+                  color: '#0369a1',
+                  padding: '2px 6px',
+                  borderRadius: '4px'
+                }}
+              >
+                {tag}
+              </span>
+            ))}
+          </div>
           <div className="flex items-center mt-2">
             <div className="flex flex-1 space-x-2 text-maydan">
               <PhotographIcon

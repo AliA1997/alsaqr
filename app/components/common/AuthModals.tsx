@@ -23,8 +23,8 @@ export const LoginModal = observer(() => {
   return (
     <ModalPortal>
       <ModalBody onClose={() => {
-        const canCloseLoginModal = !(ROUTES_USER_CANT_ACCESS.some(r => window.location.href.includes(r)));
-        if ((!session || !session!.user) && canCloseLoginModal)
+        // const canCloseLoginModal = !(ROUTES_USER_CANT_ACCESS.some(r => window.location.href.includes(r)));
+        // if ((!session || !session!.user) && canCloseLoginModal)
           closeModal();
 
       }}>

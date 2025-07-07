@@ -9,6 +9,7 @@ import { notificationApiClient } from "./notificationApiClient";
 import { userApiClient } from "./userApiClient";
 import { communityApiClient } from "./communityApiClient";
 import { messageApiClient } from "./messageApiClient";
+import { commentApiClient } from "./commentApiClient";
 
 
 export const extractQryParams = (request: NextRequest, paramsToExtract: string[]): (string | null)[] => {
@@ -142,6 +143,7 @@ axios.interceptors.response.use(
 
 
 const agent = {
+  commentApiClient,
   communityApiClient,
   exploreApiClient,
   listApiClient,

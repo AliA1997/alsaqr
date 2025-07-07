@@ -1,6 +1,6 @@
 import { extractQryParams } from "@utils/common";
 import { commonCountCipher } from "@utils/neo4j";
-import { defineDriver, read, readNested, write } from "@utils/neo4j/neo4j";
+import { defineDriver, getUserIdFromSession, read, readNested, write } from "@utils/neo4j/neo4j";
 import { PaginatedResult, Pagination } from "models/common";
 import { ListItemToDisplay } from "models/list";
 import { int, Session } from "neo4j-driver";
@@ -239,11 +239,11 @@ async function PATCH_SAVE_ITEM_TO_LIST(
 
 async function DELETE_LIST(
   request: NextRequest,
-  { params }: { params: { list_id: string } }
+  { params }: { params: { user_id: string, list_id: string } }
 ) {
-  const { list_id } = params;
+  const { user_id, list_id } = params;
   const listId = list_id as string;
-
+  const userId = user_id as string;
   
   if (!listId) {
     return new NextResponse("List must have an id", { status: 400 });
@@ -251,22 +251,54 @@ async function DELETE_LIST(
 
   const driver = defineDriver();
   const session = driver.session();
-
+  let success = false;
   try {
-    
-    
+    const userAuthSessionId = await getUserIdFromSession(session);
+    if (!userAuthSessionId) {
+        return new NextResponse("Only logged in user can delete lists", { status: 400 });   
+    }
+
+
+    await write(
+      session,
+      `
+      MATCH (listItem: ListItem { listItem: $listId })
+      DETACH DELETE listItem;
+    `,
+      {
+        listId,
+        userId: userAuthSessionId
+      }
+    );
+
+    await write(
+      session,
+      `
+      MATCH (list: List { id: $listId })
+      WHERE list.userId = $userId
+      DETACH DELETE list;
+    `,
+      {
+        listId,
+        userId: userAuthSessionId
+      }
+    );
+
+    success = true;
   } catch (err) {
+    console.log("Error:", err);
     return NextResponse.json({ message: "Fetch saved list items error!", success: false });
   }
   finally {
     await session.close();
-    return NextResponse.json({ 
-      success: true
-    });
   }
+  return NextResponse.json({  success });
 }
 
+
+
 export {
+  DELETE_LIST as DELETE,
   PATCH_SAVE_ITEM_TO_LIST as PATCH,
   GET_SAVED_LIST_ITEMS as GET
 }

@@ -125,31 +125,6 @@ export default class BookmarkFeedStore {
 
     }
 
-    loadComments = async (postId: string) => {
-
-        this.setLoadingInitial(true);
-        let results: CommentToDisplay[] = [];
-        try {
-            const comments = await agent.postApiClient.getComments(postId) ?? {};
-
-            runInAction(() => {
-                comments.forEach((cmt: CommentToDisplay) => {
-                    this.setComment(cmt.id, cmt);
-                });
-            });
-
-            results = comments;
-        } finally {
-            this.setLoadingInitial(false);
-        }
-        return results;
-    }
-
-    get comments() {
-        return Array.from(this.commentsRegistry.values());
-    }
-
-
     get bookmarkedPosts() {
         return Array.from(this.bookmarkedPostsRegistry.values());
     }

@@ -14,10 +14,12 @@ import SearchStore from './searchStore';
 import CommunityDiscussionFeedStore from './communityDiscussionFeedStore';
 import MessageStore from './messageStore';
 import SettingsStore from './settingsStore';
+import CommentFeedStore from './commentFeedStore';
 
 interface Store {
     authStore: AuthStore;
     bookmarkFeedStore: BookmarkFeedStore;
+    commentFeedStore: CommentFeedStore;
     commonStore: CommonStore;
     modalStore: ModalStore;
     exploreStore: ExploreStore;
@@ -51,6 +53,7 @@ export const store: Store = {
     authStore: new AuthStore(),
     bookmarkFeedStore: new BookmarkFeedStore(),
     commonStore: new CommonStore(),
+    commentFeedStore: new CommentFeedStore(),
     modalStore: new ModalStore(),
     exploreStore: new ExploreStore(),
     feedStore: new FeedStore(),

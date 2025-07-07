@@ -3,6 +3,7 @@ import { PlusCircleIcon, UploadIcon, XIcon } from "@heroicons/react/outline";
 import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
 import React, {
+  useEffect,
   useLayoutEffect,
   useMemo,
   useRef,
@@ -35,6 +36,8 @@ import MoreSection from "@components/common/MoreSection";
 import { ConfirmModal } from "@components/common/Modal";
 import { SaveToListModal } from "@components/list/ListModal";
 import { ROUTES_USER_CANT_ACCESS } from "@utils/constants";
+import CommentFeed from "@components/shared/CommentFeed";
+import { TagOrLabel } from "@components/common/Titles";
 
 interface Props {
   postToDisplay: PostToDisplay;
@@ -42,6 +45,7 @@ interface Props {
   canAdd?: boolean;
   onAdd?: (pst: PostToDisplay) => void;
   postsAlreadyAddedByIds?: string[];
+  showLabel?: boolean;
   onlyDisplay?: boolean;
 }
 
@@ -51,31 +55,22 @@ function PostComponent({
   canAdd,
   onAdd,
   postsAlreadyAddedByIds,
+  showLabel,
   onlyDisplay
 }: Props) {
+  const [mounted, setMounted] = useState<boolean>(false);
   const router = useRouter();
   const { data: session } = useSession();
-  const { authStore, feedStore, listFeedStore, modalStore } = useStore();
+  const { authStore, commentFeedStore, feedStore, modalStore } = useStore();
   const { currentSessionUser } = authStore;
   const { showModal, closeModal } = modalStore;
-  const { 
-    rePost, 
-    likedPost, 
-    bookmarkPost, 
-    loadComments, 
-    comments, 
-    posts, 
-    addComment, 
-    loadingComments,
-    loadingUpsert,
+  const {
+    rePost,
+    likedPost,
+    bookmarkPost,
     deleteYourPost
   } = feedStore;
-
-  const [currentComments, setCurrentComments] = useState<CommentToDisplay[]>(() => {
-    const comments = session && session.user ? (session.user as any).comments : [];
-    return comments ?? []
-  });
-
+  const { addComment } = commentFeedStore;
   const [input, setInput] = useState<string>("");
   const [image, setImage] = useState<string>("");
 
@@ -95,12 +90,22 @@ function PostComponent({
     commented: false,
   });
 
+  useEffect(() => {
+    setMounted(true);
+
+    return () => {
+      setMounted(false);
+    }
+  }, [])
+
   const numberOfRetweets = useMemo(
     () =>
       getPercievedNumberOfRecord<User>(
         isRePosted,
         initiallyBooleanValues.current?.retweeted,
-        postToDisplay.reposters ?? []
+        postToDisplay.reposters ?? [],
+        mounted,
+        currentSessionUser?.id
       ),
     [isRePosted]
   );
@@ -109,32 +114,31 @@ function PostComponent({
       getPercievedNumberOfRecord<User>(
         isLiked,
         initiallyBooleanValues.current?.liked,
-        postToDisplay.likers ?? []
+        postToDisplay.likers ?? [],
+        mounted,
+        currentSessionUser?.id
       ),
     [isLiked]
   );
   const numberOfComments = useMemo(() => {
-    const username = session && session.user && (session.user as any).username
-    return currentComments.some((comm: CommentToDisplay) => comm.username === username)
-      ? currentComments.length + 1
-      : currentComments.length;
-  }, [currentComments, session]);
+    return postToDisplay.comments.length;
+  }, [postToDisplay, addComment, commentBoxOpen]);
   // const isBookmarkedRef = useRef<boolean>(bookmarks?.some(bk => bk === tweet.tweet.id) ?? false);
 
   const postInfo = postToDisplay.post;
-  const refreshComments = async () => {
-    loadComments(postInfo.id)
-      .then((lCmts: CommentToDisplay[]) => {
-        setCurrentComments(lCmts);
-      })
-      .catch((err: any) => {
-        console.log("Error fetching comments:", JSON.stringify(err));
-      });
-  };
+  // const refreshComments = async () => {
+  //   loadComments(postInfo.id)
+  //     .then((lCmts: CommentToDisplay[]) => {
+  //       setCurrentComments(lCmts);
+  //     })
+  //     .catch((err: any) => {
+  //       console.log("Error fetching comments:", JSON.stringify(err));
+  //     });
+  // };
   const checkUserIsLoggedInBeforeUpdatingTweet = async (
     callback: () => Promise<void>
   ) => {
-    if (session && session.user && !(session.user as any)['id']) return showModal(<LoginModal />);
+    if (!session || !session?.user) return showModal(<LoginModal />);
 
     await callback();
   };
@@ -143,13 +147,17 @@ function PostComponent({
     //If any of the bookmarks are not undefined, that means
     if (session && session.user && (session.user as any)['id']) {
       const likedPosts = session?.user ? (session.user as any)["likedPosts"] : [];
+      const postAlreadyLiked = postToDisplay.likers.some(l => l.id === currentSessionUser?.id);
       const reposts = session?.user ? (session.user as any)["reposts"] : [];
+      const postAlreadyReposted = postToDisplay.reposters.some(l => l.id === currentSessionUser?.id);
+
       const twtAlreadyLiked =
-        likedPosts?.some((likedPost: string) => likedPost === postInfo.id) ??
-        false;
+        postAlreadyLiked ||
+        (likedPosts?.some((likedPost: string) => likedPost === postInfo.id) ?? false);
 
       const twtAlreadyRetweeted =
-        reposts?.some((repost: string) => repost === postInfo.id) ?? false;
+        postAlreadyReposted ||
+        (reposts?.some((repost: string) => repost === postInfo.id) ?? false);
 
       const twtAlreadyBookmarked =
         (session.user as any).bookmarks?.some((bk: string) => bk === postInfo.id) ?? false;
@@ -168,7 +176,14 @@ function PostComponent({
     }
   }, [session]);
 
-  const handleSubmit = async () => {
+  useEffect(() => {
+
+    setIsLiked(initiallyBooleanValues.current?.liked ?? false);
+    setIsRePosted(initiallyBooleanValues.current?.retweeted ?? false);
+  }, [initiallyBooleanValues.current])
+
+  const handleSubmit = async (e: any) => {
+    e.preventDefault();
 
     const commentToast = toast.loading("Posting Comment...");
 
@@ -177,7 +192,7 @@ function PostComponent({
       postId: postInfo.id,
       userId: postInfo.userId!,
       text: input,
-      image: image,
+      image: image
     }
 
     toast.success("Comment Posted!", {
@@ -188,7 +203,7 @@ function PostComponent({
     setInput("");
     setImage("");
     setCommentBoxOpen(false);
-    refreshComments();
+
   };
 
   const navigateToTweetUser = () => {
@@ -277,9 +292,9 @@ function PostComponent({
               info={postToDisplay}
               onClose={() => {
                 const canCloseLoginModal = !(ROUTES_USER_CANT_ACCESS.some(r => window.location.href.includes(r)));
-                
+
                 if (currentSessionUser && currentSessionUser.id && canCloseLoginModal)
-                    closeModal();
+                  closeModal();
               }}
             />
           )
@@ -288,24 +303,24 @@ function PostComponent({
       }
     ];
 
-    if(postInfo.userId === currentSessionUser?.id)
-      defaultOpts.push(      {
+    if (postInfo.userId === currentSessionUser?.id)
+      defaultOpts.push({
         title: 'Delete Your Post',
         onClick: async () => {
           showModal(
-            <ConfirmModal 
+            <ConfirmModal
               title="Delete this Post"
               confirmButtonClassNames="bg-red-700 text-gray-100"
               onClose={() => closeModal()}
               declineButtonText="Cancel"
               confirmFunc={async () => {
                 await deleteYourPost(postInfo.id);
-                closeModal();           
+                closeModal();
               }}
               confirmMessage="Are you sure you want to delete this post forever?"
               confirmButtonText="Delete Post"
             >
-              <PostComponent 
+              <PostComponent
                 postToDisplay={postToDisplay}
                 onlyDisplay={true}
               />
@@ -326,6 +341,15 @@ function PostComponent({
         dark:border-gray-800 ${!onlyDisplay && 'hover:shadow-lg dark:hover:bg-[#000000]'}  
       `}
     >
+      {showLabel && (
+        <TagOrLabel
+          color="postGradient"
+          size="md"
+          className="absolute top-0 right-0"
+        >
+          Post
+        </TagOrLabel>
+      )}
       {canAdd && (
         <AddOrFollowButton
           isAdded={isAdded ?? false}
@@ -335,9 +359,9 @@ function PostComponent({
       )}
 
       <div className="relative flex space-x-3 cursor-pointer">
-        <div className='absolute top-0 bg-transparent w-full h-full z-10' 
+        <div className='absolute top-0 bg-transparent w-full h-full z-10'
           onClick={(e) => {
-            if(onlyDisplay)
+            if (onlyDisplay)
               return;
             else
               return stopPropagationOnClick(e, navigateToTweet)
@@ -348,7 +372,7 @@ function PostComponent({
           src={postToDisplay.profileImg}
           alt={postToDisplay.username}
           onClick={(e) => {
-            if(onlyDisplay)
+            if (onlyDisplay)
               return;
             else
               return stopPropagationOnClick(e, navigateToTweetUser)
@@ -359,7 +383,7 @@ function PostComponent({
             <p
               className={`font-bold mr-1 hover:underline`}
               onClick={(e) => {
-                if(onlyDisplay)
+                if (onlyDisplay)
                   return;
                 else
                   return stopPropagationOnClick(e, navigateToTweetUser);
@@ -384,7 +408,7 @@ function PostComponent({
             <p
               className="hidden text-sm text-gray-500 sm:inline dark:text-gray-400 hover:underline"
               onClick={(e) => {
-                if(onlyDisplay)
+                if (onlyDisplay)
                   return;
                 else
                   return stopPropagationOnClick(e, navigateToTweetUser);
@@ -400,6 +424,21 @@ function PostComponent({
             />
           </div>
           <p className="pt-1">{postInfo.text}</p>
+          <div style={{ display: 'flex', gap: '4px',  }} className="my-5">
+            {postInfo.tags.map((tag, index) => (
+              <span 
+                key={index}
+                style={{
+                  backgroundColor: '#e0f2fe',
+                  color: '#0369a1',
+                  padding: '2px 6px',
+                  borderRadius: '4px'
+                }}
+              >
+                {tag}
+              </span>
+            ))}
+          </div>
           {postInfo.image && (
             <div className="w-[300px] h-[200px] overflow-hidden flex justify-center items-center">
               <img
@@ -417,7 +456,7 @@ function PostComponent({
         <>
           {!onlyDisplay && (
             <>
-              <MoreSection 
+              <MoreSection
                 moreOptions={moreOptions}
                 moreOptionClassNames="bg-red-700"
               />
@@ -491,7 +530,7 @@ function PostComponent({
                       className="absolute left-2 top-2 z-10 rounded-full bg-red-800 p-2 text-white hover:bg-red-700 focus:outline-none"
                       aria-label="Close"
                     >
-                      <XIcon className="h-5 w-5" /> 
+                      <XIcon className="h-5 w-5" />
                     </button>
                     <div className='w-[300px] h-[200px] overflow-hidden flex justify-center items-center'>
                       <NextImage
@@ -526,44 +565,7 @@ function PostComponent({
       )}
       {!isSearchedPosts && commentBoxOpen && (
         <>
-          {loadingComments
-            ? (<ModalLoader />)
-            : (
-              <>
-                {currentComments?.length > 0 && (
-                  <motion.div
-                    initial={{ opacity: 0 }}
-                    whileInView={{ opacity: 1 }}
-                    viewport={{ once: true }}
-                    className="my-2 mt-5 max-h-44 space-y-5 overflow-y-scroll border-t border-gray-100 p-5 scrollbar-thin scrollbar-thumb-blue-100"
-                  >
-                    {currentComments.map((comment: CommentToDisplay) => (
-                      <div key={comment.id} className="flex space-x-2">
-                        <hr className="top-10 h-8 border-x border-maydan/30" />
-                        <img
-                          src={comment.profileImg}
-                          className="mt-2 h-7 w-7 rounded-full object-cover"
-                          alt=""
-                        />
-                        <div>
-                          <div className="flex items-center space-x-l">
-                            <p className="mr-1 font-bold">{comment.username}</p>
-                            <p className="hidden text-sm text-gray-500 lg:inline">
-                              @{comment.username.replace(/\s+/g, "")}.
-                            </p>
-                            <TimeAgo
-                              className="text-sm text-gray-500"
-                              date={convertDateToDisplay(comment.createdAt)}
-                            />
-                          </div>
-                          <p>{comment.text}</p>
-                        </div>
-                      </div>
-                    ))}
-                  </motion.div>
-                )}
-              </>
-            )}
+          <CommentFeed postId={postInfo.id} />
         </>
       )}
     </div>

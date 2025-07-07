@@ -25,7 +25,7 @@ async function GET(request: NextRequest) {
       selectQuery = `
                 MATCH (post:Post), (user: User { id: post.userId })
                 WHERE post.text CONTAINS $searchTerm
-                OPTIONAL MATCH (post)-[:HAS_COMMENT]->(c:Comment)<-[:COMMENTED]-(u:User)
+                OPTIONAL MATCH (post)<-[:COMMENT_ON]-(c:Comment)<-[:COMMENTED]-(u:User)
                 OPTIONAL MATCH (post)-[:RETWEETS]->(reposter:User)
                 OPTIONAL MATCH (post)-[:LIKED]->(liker:User)
                 WITH post,
@@ -65,7 +65,7 @@ async function GET(request: NextRequest) {
     } else {
       selectQuery = `
         MATCH (post:Post), (user: User { id: post.userId })
-        OPTIONAL MATCH (post)-[:HAS_COMMENT]->(c:Comment)<-[:COMMENTED]-(u:User)
+        OPTIONAL MATCH (post)<-[:COMMENT_ON]-(c:Comment)<-[:COMMENTED]-(u:User)
         OPTIONAL MATCH (post)-[:RETWEETS]->(reposter:User)
         OPTIONAL MATCH (post)-[:LIKED]->(liker:User)
         WITH post,
@@ -149,7 +149,7 @@ async function POST(request: NextRequest) {
         tags: $tags
       })
       `,
-      { ...data , tags: []}
+      { ...data}
     );
 
     return NextResponse.json({ success: true });

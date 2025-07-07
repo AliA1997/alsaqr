@@ -1,13 +1,14 @@
 // app/api/tweets/[tweet_id]/route.ts
 import { NextRequest, NextResponse } from "next/server";
-import { defineDriver, read, write } from "@utils/neo4j/neo4j";
-import { PostToDisplay } from "typings";
+import { defineDriver, getUserIdFromSession, read, write } from "@utils/neo4j/neo4j";
+import { RePostParams } from "models/posts";
 
 async function PATCH_REPOST_POST(
   request: NextRequest,
   { params }: { params: { tweet_id: string } }
 ) {
-  const body = await request.json();
+  const { values:data }: { values:RePostParams } = await request.json();
+  
   const { tweet_id } = params;
   const tweetId = tweet_id as string;
 
@@ -17,9 +18,17 @@ async function PATCH_REPOST_POST(
 
   const driver = defineDriver();
   const session = driver.session();
-
+  
+  let success = false;
+ 
   try {
-    if (!body["reposted"]) {
+     const authUserSessionId = await getUserIdFromSession(session);
+
+      if(authUserSessionId != data.userId) 
+        throw Error("Must be logged in to like comments");
+
+
+    if (!data.reposted) {
       await write(
         session,
         `
@@ -33,7 +42,7 @@ async function PATCH_REPOST_POST(
           ON CREATE SET ur.timestamp = timestamp()
           ON CREATE SET tr.timestamp = timestamp()
         `,
-        { userId: body["userId"], tweetId: tweet_id }
+        { userId: data.userId, tweetId: tweet_id }
       );
 
       await write(
@@ -59,19 +68,18 @@ async function PATCH_REPOST_POST(
             notificationType: "reposted_post"
           })
           `,
-        { userId: body["userId"], tweetId: tweet_id }
+        { userId: data.userId, tweetId: tweet_id }
       );
 
-    } else if (body["reposted"]) {
+    } else if (data.reposted) {
       await write(
         session,
         `
-          MATCH (u:User {id: $userId})-[:REPOSTED]->(t:Post {id: $tweetId})
-          DELETE (u)-[:REPOSTED]->(t)
-          MATCH (u:Post {id: $tweetId})-[:RETWEETS]->(u:User {id: $userId})
-          DELETE (t)-[:RETWEETS]->(u)
+          MATCH (u:User {id: $userId})-[repostedRel:REPOSTED]->(t:Post {id: $tweetId})
+          MATCH (u:Post {id: $tweetId})-[retweetsRel:RETWEETS]->(u:User {id: $userId})
+          DELETE repostedRel, retweetsRel
         `,
-        { userId: body["userId"], tweetId: tweet_id }
+        { userId: data.userId, tweetId: tweet_id }
       );
 
       
@@ -90,15 +98,18 @@ async function PATCH_REPOST_POST(
           })
           DELETE r, n
           `,
-        { userId: body["userId"], tweetId: tweet_id }
+        { userId: data.userId, tweetId: tweet_id }
       );
     }
 
-    return NextResponse.json({ success: true });
+    success = true;
   } catch (err) {
+    console.log("ERROR:", err)
     return NextResponse.json({ message: "Patch Post error!", success: false });
-
+  } finally {
+    session.close();
   }
+  return NextResponse.json({ success });
 }
 
 export {  PATCH_REPOST_POST as PATCH };
