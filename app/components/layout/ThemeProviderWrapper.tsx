@@ -1,6 +1,5 @@
 "use client";
 import { motion } from "framer-motion";
-import { useCheckSession } from "hooks/useCheckSession";
 import { ThemeProvider } from "next-themes";
 
 function ThemeProviderWrapper({ children }: React.PropsWithChildren<any>) {

@@ -3,22 +3,23 @@ import { getSession, useSession } from "next-auth/react";
 import { usePathname } from "next/navigation";
 import { useLayoutEffect } from "react";
 
-export function useCheckSession(setter: Function, sessionUser: User | undefined) {
+export function useCheckSession( setState: Function, sessionUser: User | undefined) {
  const { data:session} = useSession();
  const pathname = usePathname();
 
  async function getSetSession() {
     const sessionInfo = await getSession();
-    if (sessionInfo && sessionInfo.user && sessionUser?.email !== sessionInfo.user?.email) {
-        setter(sessionInfo.user);
+
+    if (sessionInfo && sessionInfo.user) {
+        setState(sessionInfo.user);
     } else {
-        setter(undefined);
+        setState(undefined);
     }
  }
 
   useLayoutEffect(() => {
       getSetSession();
-  }, [session, pathname]);
+  }, [session?.user?.email]);
 
     return {};
 }

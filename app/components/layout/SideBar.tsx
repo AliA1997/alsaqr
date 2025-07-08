@@ -1,5 +1,5 @@
 "use client";
-import React, { useCallback, useLayoutEffect, useMemo } from "react";
+import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import dynamic from 'next/dynamic';
 import {
   BellIcon,
@@ -30,32 +30,46 @@ const RegisterModal = dynamic(() => import("../common/AuthModals").then(mod => m
 import { ROUTE_TO_SHOW_SETTINGS_SIDEBAR, ROUTES_USER_CANT_ACCESS } from "@utils/constants";
 import { SettingsTabs } from "models/enums";
 import { useCheckSession } from "hooks/useCheckSession";
+import { User } from "typings";
+import { useSession } from "next-auth/react";
 
 type SideBarProps = {};
 
 const SideBar = ({}: SideBarProps) => {
   const router = useRouter();
   const pathname = usePathname();
+  const { data:session } = useSession();
+  
+  const [mounted, setMounted] = useState<boolean>(false);
+
   const [isDropdownOpen, setIsDropdownOpen] = React.useState<boolean>(false);
   const { authStore, modalStore, settingsStore } = useStore();
   const { currentSessionUser } = authStore;
+
   useCheckSession(authStore.setCurrentSessionUser, currentSessionUser);
   const { closeModal, showModal } = modalStore;
   const { setCurrentTabIdx } = settingsStore;
-
+  
   const openModal = () => showModal(<LoginModal />)
-  const notLoggedIn = useMemo(() => (!currentSessionUser), [currentSessionUser]);
-  console.log('session?.user.isCompleted', currentSessionUser?.isCompleted);
-  const registrationNotCompleted = useMemo(() => !(currentSessionUser?.isCompleted ?? false), [])
+
+  const registrationNotCompleted = useMemo(() => !(currentSessionUser?.isCompleted ?? false), [mounted, currentSessionUser])
 
   const handleDropdownEnter = useCallback(
     () => setIsDropdownOpen(!isDropdownOpen),
     [isDropdownOpen]
   );
 
-  
+  useEffect(() => {
+    setMounted(true);
+
+    return () => {
+      setMounted(false);
+    }
+  }, []);
+  const notLoggedIn = useMemo(() => mounted && !currentSessionUser, [currentSessionUser, mounted]);
+
   useLayoutEffect(() => {
-    const showLoginModal = ROUTES_USER_CANT_ACCESS.some(r => window.location.href.includes(r));
+    const showLoginModal = ROUTES_USER_CANT_ACCESS.some(r =>pathname.includes(r));
 
     if(notLoggedIn && showLoginModal) {
       showModal(<LoginModal />);
@@ -64,10 +78,8 @@ const SideBar = ({}: SideBarProps) => {
     if(!registrationNotCompleted && currentSessionUser)
       closeModal();
 
-  }, [currentSessionUser, router]);
+  }, [currentSessionUser?.id, mounted]);
   
-  // console.log("session.user:", session!.user);
-  const username = currentSessionUser?.username ?? "";
   const hideSidebar = useMemo(() => ROUTE_TO_SHOW_SETTINGS_SIDEBAR === pathname, [pathname]);
 
   return (
@@ -142,12 +154,12 @@ const SideBar = ({}: SideBarProps) => {
                     )}
                   </div>
                   <DarkSwitch />
-                  {currentSessionUser && (
+                  {currentSessionUser && currentSessionUser.id && (
                     <>
                       <hr />
                       {/* <div className="flex align-center p-2 cursor-pointer hover:opacity-75"> */}
                       <div
-                        onClick={() => router.push(`/users/${username}`)}
+                        onClick={() => router.push(`/users/${currentSessionUser?.username}`)}
                         className={`
                           group flex max-w-fit
                           cursor-pointer items-center space-x-2 rounded-full px-1 md:px-4 py-1 py-3

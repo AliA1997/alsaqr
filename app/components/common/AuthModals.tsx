@@ -11,10 +11,14 @@ import { HobbiesAndOptionalInfoFormInputs, PersonalInfoFormInputs } from "./Regi
 import UsersFeed from "@components/users/UsersFeed";
 import { ReviewForm, ReviewUserHobbiesAndOtherInfo, ReviewUserPersonalInfo, ReviewUsersAdded } from "./ReviewForm";
 import { ProfileImagePreview } from "./Containers";
+import { usePathname } from "next/navigation";
+import { ROUTES_USER_CANT_ACCESS } from "@utils/constants";
 
 
 export const LoginModal = observer(() => {
-  const { modalStore } = useStore();
+  const pathname = usePathname();
+  const { authStore, modalStore } = useStore();
+  const { currentSessionUser } = authStore;
   const { closeModal } = modalStore;
   const handleDiscordSignIn = () => signIn('discord')
   const handleGoogleSignIn = () => signIn("google");
@@ -23,8 +27,9 @@ export const LoginModal = observer(() => {
   return (
     <ModalPortal>
       <ModalBody onClose={() => {
-        // const canCloseLoginModal = !(ROUTES_USER_CANT_ACCESS.some(r => window.location.href.includes(r)));
-        // if ((!session || !session!.user) && canCloseLoginModal)
+        const canCloseLoginModal = !(ROUTES_USER_CANT_ACCESS.some(r => pathname.includes(r)));
+
+        if (currentSessionUser)
           closeModal();
 
       }}>

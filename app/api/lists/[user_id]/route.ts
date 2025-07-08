@@ -106,9 +106,12 @@ async function GET_RETURN_LISTS(
       totalItems: pagingResultParsed,
       totalPages: pagingResultParsed / itemsPerPageParsed
     };
-    lists = selectResult ?? []; // Adjust based on your schema
+    lists = selectResult ?? []; 
     // console.log('lists:', JSON.stringify(lists))
-  } finally {
+  } catch(err) {
+    console.log("FETCH LIST ERROR:", err)
+  }
+  finally {
     await session.close();
   }
 

@@ -27,7 +27,6 @@ const PageContainer = ({
     showModal, 
   } = modalStore;
   const retryCount = useRef(0);
-  // useCheckSession(authStore.setCurrentSessionUser, currentSessionUser);
 
   useLayoutEffect(() => {
     

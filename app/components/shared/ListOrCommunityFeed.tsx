@@ -200,9 +200,6 @@ const ListOrCommunityFeed = observer(({ title, filterKey, communityId }: Props) 
     else return 'You don\'t have any lists';
   }, [filterKey]);
 
-
-  console.log('community loadedRecords', JSON.stringify(loadedRecords));
-
   return (
     <div className="col-span-7 scrollbar-hide border-x max-h-screen overflow-scroll lg:col-span-5 dark:border-gray-800">
       {title && <PageTitle>{title}</PageTitle>}

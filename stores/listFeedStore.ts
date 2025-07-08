@@ -170,7 +170,7 @@ export default class ListFeedStore {
 
             this.setPagination(result.pagination);
         } finally {
-            this.loadingInitial = false;
+            this.setLoadingInitial(false);
         }
 
     }

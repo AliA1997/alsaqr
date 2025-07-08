@@ -20,8 +20,5 @@ export default observer(function ListsPage() {
     };
   }, []);
 
-  if(!loadingInitial && mounted)
-    return <ListOrCommunityFeed filterKey={FilterKeys.Lists} title="Lists" />;
-  
-  return <CustomPageLoader title="Loading..." />
+  return <ListOrCommunityFeed filterKey={FilterKeys.Lists} title="Lists" />;
 });

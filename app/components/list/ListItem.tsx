@@ -189,7 +189,6 @@ function ListItemComponent({
               (
                 <MoreSection
                   moreOptions={moreOptions}
-                  moreOptionClassNames="bg-red-700"
                 />
               )
               : null
@@ -197,7 +196,7 @@ function ListItemComponent({
           </div>
           <p className="pt-1 text-white text-3xl">{listInfo.name}</p>
         </div>
-        {!onlyDisplay && (
+        {/* {!onlyDisplay && (
           <div className="flex justify-end w-full px-1">
             <div className="flex gap-2 bg-gray-100 p-2 rounded-full z-10">
               <motion.button
@@ -216,7 +215,7 @@ function ListItemComponent({
 
             </div>
           </div>
-        )}
+        )} */}
       </div>
 
     </>
