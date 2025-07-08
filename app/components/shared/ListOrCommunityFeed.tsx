@@ -11,7 +11,7 @@ import dynamic from 'next/dynamic';
 import { convertQueryStringToObject } from "@utils/neo4j";
 
 import { observer } from "mobx-react-lite";
-import { FilterKeys, useStore } from "stores";
+import { FilterKeys, useStore } from "@stores/index";
 import { PagingParams } from "models/common";
 
 const CustomPageLoader = dynamic(() => import("../common/CustomLoader"), { ssr: false });

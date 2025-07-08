@@ -5,7 +5,7 @@ import dynamic from 'next/dynamic';
 import { useSearchParams } from "next/navigation";
 import { convertQueryStringToObject } from "@utils/neo4j";
 import { observer } from "mobx-react-lite";
-import { useStore } from "stores";
+import { useStore } from "@stores/index";
 import { PagingParams } from "models/common";
 
 const CustomPageLoader = dynamic(() => import("../common/CustomLoader"), { ssr: false });

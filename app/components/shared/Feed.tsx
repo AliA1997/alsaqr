@@ -10,7 +10,7 @@ import PostBox from "../posts/PostBox";
 import { useSearchParams } from "next/navigation";
 import { convertQueryStringToObject } from "@utils/neo4j";
 import { observer } from "mobx-react-lite";
-import { FilterKeys, useStore } from "stores";
+import { FilterKeys, useStore } from "@stores/index";
 
 const PostComponent = dynamic(() => import("../posts/Post"), { ssr: false });
 const CustomPageLoader = dynamic(() => import("../common/CustomLoader"), { ssr: false });

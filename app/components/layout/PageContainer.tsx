@@ -43,6 +43,15 @@ const PageContainer = ({
     }
   }, [currentSessionUser])
 
+  useLayoutEffect(() => {
+    if (window.location.hash === "#_=_") {
+      // Remove the fragment without refreshing the page
+      history.replaceState 
+        ? history.replaceState(null, "", " ")
+        : window.location.hash = "";
+    }
+  }, [window.location.hash])
+
   return (
     <>
       <SideBar />

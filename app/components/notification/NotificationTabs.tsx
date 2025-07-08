@@ -22,33 +22,34 @@ const NotificationTabsComponent = () => {
   );
 
   return (
-    <Tabs
-      tabs={[
-        {
-          tabKey: "all",
-          title: "All",
-          content: [],
-          renderer,
-          noRecordsContent: 'You have no notifications'
-        },
-        {
-          tabKey: "mentioned",
-          title: "Mentions",
-          content: [],
-          renderer,
-          noRecordsContent: 'You have no mentioned notifications'
-        },
-        {
-          tabKey: "verified",
-          title: "Verified",
-          content: [],
-          renderer,
-          noRecordsContent: 'You have no verified notifications'
-        },
-      ]}
-      showNumberOfRecords={true}
-    />
+    <div />
   );
 };
+{/* <Tabs
+  tabs={[
+    {
+      tabKey: "all",
+      title: "All",
+      content: [],
+      renderer,
+      noRecordsContent: 'You have no notifications'
+    },
+    {
+      tabKey: "mentioned",
+      title: "Mentions",
+      content: [],
+      renderer,
+      noRecordsContent: 'You have no mentioned notifications'
+    },
+    {
+      tabKey: "verified",
+      title: "Verified",
+      content: [],
+      renderer,
+      noRecordsContent: 'You have no verified notifications'
+    },
+  ]}
+  showNumberOfRecords={true}
+/> */}
 
 export default NotificationTabsComponent;

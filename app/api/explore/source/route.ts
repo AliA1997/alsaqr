@@ -6,14 +6,15 @@ import { extractQryParams } from "@utils/common";
 
 async function GET(request: NextRequest) {
     const [currentPage, itemsPerPage] = extractQryParams(request, ['currentPage', 'itemsPerPage']);
-
+    const currentPageParsed = parseInt(currentPage!);
+    const itemsPerPageParsed = parseInt(itemsPerPage!);
     const { data: newSources } = await axios.get(`https://newsapi.org/v2/top-headlines/sources?sortBy=popularity&apiKey=${process.env.NEWSAPI_KEY}`);
     const { sources } = newSources;
 
-    const startIndex = (+currentPage - 1) * +itemsPerPage;
+    const startIndex = (currentPageParsed - 1) * itemsPerPageParsed;
 
     const result: ExploreNewsSourceToDisplay[] = sources
-                                                    .slice(startIndex, startIndex + itemsPerPage)
+                                                    .slice(startIndex, startIndex + itemsPerPageParsed)
                                                     .map((a: any) => ({
                                                         id: a.id,
                                                         name: a.name,

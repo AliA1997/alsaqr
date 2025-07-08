@@ -66,7 +66,6 @@ const SideBar = ({}: SideBarProps) => {
       setMounted(false);
     }
   }, []);
-  const notLoggedIn = useMemo(() => mounted && !currentSessionUser, [currentSessionUser, mounted]);
 
   useLayoutEffect(() => {
     const showLoginModal = ROUTES_USER_CANT_ACCESS.some(r =>pathname.includes(r));
@@ -79,7 +78,9 @@ const SideBar = ({}: SideBarProps) => {
       closeModal();
 
   }, [currentSessionUser?.id, mounted]);
-  
+
+  const notLoggedIn = useMemo(() => mounted && !currentSessionUser, [currentSessionUser, mounted]);
+
   const hideSidebar = useMemo(() => ROUTE_TO_SHOW_SETTINGS_SIDEBAR === pathname, [pathname]);
 
   return (

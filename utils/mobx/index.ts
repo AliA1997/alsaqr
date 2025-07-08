@@ -9,15 +9,15 @@ import { PagingParams } from "models/common";
 import BookmarkFeedStore from "@stores/bookmarkFeedStore";
 
 export const loadData = async (
-  storeToUse: ExploreStore | FeedStore | ListFeedStore | CommunityFeedStore,
+  storeToUse: FeedStore | ListFeedStore | CommunityFeedStore,
   userId?: string
 ) => {
-  if (storeToUse instanceof ExploreStore)
-    await storeToUse.loadExplorePosts();
-  else if (storeToUse instanceof FeedStore)
+  if (storeToUse instanceof FeedStore)
     await storeToUse.loadPosts();
   else if (storeToUse instanceof ListFeedStore)
     await storeToUse.loadLists(userId!);
+  else if (storeToUse instanceof CommunityFeedStore)
+    await storeToUse.loadCommunities(userId!);
 };
 
 

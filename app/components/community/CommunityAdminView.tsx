@@ -1,3 +1,4 @@
+"use client";
 import React from "react";
 import dynamic from 'next/dynamic';
 import { observer } from "mobx-react-lite";
@@ -26,7 +27,9 @@ function CommunityAdminView({
         return (
             <>
                 <div className='flex justify-between p-5'>
-                     <h1 className='text-4xl'>A Founder's Welcome</h1>
+                     <h1 className='text-4xl'>
+                        {`A Founder's Welcome `}
+                    </h1>
                     <CommonLink 
                         onClick={() => showModal(<UpdateCommunityModal 
                                                     loggedInUserId={currentSessionUser?.id!}

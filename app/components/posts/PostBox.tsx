@@ -1,3 +1,4 @@
+"use client";
 import { EmojiHappyIcon, PhotographIcon } from "@heroicons/react/outline";
 import React, { useCallback, useMemo, useRef, useState } from "react";
 import { motion } from "framer-motion";
@@ -35,11 +36,9 @@ function PostBox({ filterKey }: Props) {
   const [showEmojiPicker, setShowEmojiPicker] = useState<boolean>(false);
 
 
-  const storeToUse: ExploreStore | FeedStore | ListFeedStore | CommunityFeedStore = useMemo(
+  const storeToUse: FeedStore | ListFeedStore | CommunityFeedStore = useMemo(
     () => {
-      if(filterKey == FilterKeys.Explore)
-        return exploreStore;
-      else if(filterKey == FilterKeys.Lists)
+      if(filterKey == FilterKeys.Lists)
         return listFeedStore;
       else if(filterKey == FilterKeys.Community)
         return communityFeedStore;

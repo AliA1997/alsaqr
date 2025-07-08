@@ -1,3 +1,4 @@
+"use client";
 import { ModalBody, ModalPortal } from "@components/common/Modal";
 import { faker } from "@faker-js/faker";
 import { FilterKeys, useStore } from "@stores/index";
@@ -6,7 +7,7 @@ import { motion } from "framer-motion";
 import { PagingParams } from "models/common";
 import { useCallback, useMemo } from "react";
 import toast from "react-hot-toast";
-import { CommonUpsertBoxTypes, CommunityRecord, CreateListOrCommunityForm, ListRecord, PostToDisplay, UserItemToDisplay } from "typings.d";
+import { CommonUpsertBoxTypes, CreateListOrCommunityForm, PostToDisplay, UserItemToDisplay } from "typings.d";
 import { observer } from "mobx-react-lite";
 import { ListOrCommunityFormInputs } from "./ListOrCommunityForm";
 import UsersFeed from "@components/users/UsersFeed";
@@ -204,12 +205,12 @@ function ListOrCommunityUpsertModal({ type, loggedInUserId, communityId }: Props
                             const errors: FormikErrors<any> = {};
                             if (!values.name) {
                                 errors.name = 'Name is required';
-                            } else if (!(type === CommonUpsertBoxTypes.CommunityDiscussion) && !values.avatarOrBannerImage) {
+                            } else if (type != CommonUpsertBoxTypes.CommunityDiscussion && !values.avatarOrBannerImage) {
                                 errors.avatarOrBannerImage = type === CommonUpsertBoxTypes.Community ? 'Community avatar is required' : 'List banner image is required'
                             } else if (!values.tags || !values.tags.length) {
                                 errors.tags = 'Tags is required'
                             }
-                            // alert(JSON.stringify(errors))
+                            
                             return errors;
                         }}
                         onSubmit={async (values, { setSubmitting }) => {

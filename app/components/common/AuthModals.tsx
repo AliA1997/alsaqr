@@ -1,3 +1,4 @@
+"use client";
 import { ModalBody, ModalPortal } from "@components/common/Modal";
 import { FilterKeys, useStore } from "@stores/index";
 import { Formik, FormikErrors } from "formik";

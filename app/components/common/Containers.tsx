@@ -3,15 +3,15 @@ import React from 'react';
 import Image from 'next/image';
 import { User } from 'typings';
 
-export const ContentContainerWithRef = React.forwardRef(({ innerRef, children, classNames, ...otherProps }: React.PropsWithChildren<any>, ref) => {
+export const ContentContainerWithRef = ({ innerRef, children, classNames, ...otherProps }: React.PropsWithChildren<any>) => {
   return (
     <div 
       ref={innerRef}
-    className={`max-w-xl mx-auto bg-white dark:bg-[#0e1517] shadow-md rounded-lg mt-10 ${classNames}`} {...otherProps}>
+      className={`max-w-xl mx-auto bg-white dark:bg-[#0e1517] shadow-md rounded-lg mt-10 ${classNames}`} {...otherProps}>
       {children}
     </div>    
   );
-});
+};
 
 export function ContentContainer({ children, ...otherProps }: React.PropsWithChildren<any>) {
   return (

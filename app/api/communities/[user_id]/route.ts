@@ -74,7 +74,27 @@ async function GET(
       
       pagingResult = await read(
         session,
-        commonCountCipher(selectQuery, 'DISTINCT'),
+        `
+        MATCH (user:User {id: $userId})
+
+        // Get all communities in the database
+        MATCH (community:Community)
+
+        // Get founder for each community (regardless of user relationship)
+        OPTIONAL MATCH (community)-[:COMMUNITY_FOUNDER]->(founder:User)
+
+        // Determine the user's relationship to each community
+        WITH community, founder, user,
+            CASE
+              WHEN EXISTS((community)-[:COMMUNITY_FOUNDER]->(user)) THEN 'FOUNDER'
+              WHEN EXISTS((community)-[:INVITED]->(user)) THEN 'INVITED'
+              WHEN EXISTS((user)-[:JOINED]->(community)) THEN 'JOINED'
+              ELSE 'NONE'
+            END AS relationshipType
+
+        // Return all communities with their relationship status
+        RETURN COUNT(DISTINCT community) as total
+        `,
         {
           userId,
           searchTerm: searchTerm ?? "",
@@ -120,7 +140,27 @@ async function GET(
 
       pagingResult = await read(
         session,
-        commonCountCipher(selectQuery, 'DISTINCT'),
+        `
+        MATCH (user:User {id: $userId})
+
+        // Get all communities in the database
+        MATCH (community:Community)
+
+        // Get founder for each community (regardless of user relationship)
+        OPTIONAL MATCH (community)-[:COMMUNITY_FOUNDER]->(founder:User)
+
+        // Determine the user's relationship to each community
+        WITH community, founder, user,
+            CASE
+              WHEN EXISTS((community)-[:COMMUNITY_FOUNDER]->(user)) THEN 'FOUNDER'
+              WHEN EXISTS((community)-[:INVITED]->(user)) THEN 'INVITED'
+              WHEN EXISTS((user)-[:JOINED]->(community)) THEN 'JOINED'
+              ELSE 'NONE'
+            END AS relationshipType
+
+        // Return all communities with their relationship status
+        RETURN COUNT(DISTINCT community) as total
+        `,
         {
           userId
         },

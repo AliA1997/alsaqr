@@ -12,7 +12,7 @@ const NoRecordsTitle = dynamic(() => import("../common/Titles").then(mod => mod.
 const ContentContainerWithRef = dynamic(() => import("../common/Containers").then(mod => mod.ContentContainerWithRef), { ssr: false });
 
 import { observer } from "mobx-react-lite";
-import { useStore } from "stores";
+import { useStore } from "@stores/index";
 import { PagingParams } from "models/common";
 import { leadingDebounce } from "@utils/common";
 import CommentComponent from "@components/posts/Comment";

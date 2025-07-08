@@ -1,3 +1,4 @@
+"use client";
 import CheckboxCard from "@components/common/CheckboxCard";
 import { InfoCardContainer } from "@components/common/Containers";
 import { ConfirmModal } from "@components/common/Modal";
@@ -62,7 +63,9 @@ const DeleteYourAccount = observer(() => {
 
                                 <ul>
                                     <li className='my-2'>All your profile information, posts, and data will be permanently removed</li>
-                                    <li className='my-2'>You won't be able to reactivate your account or retrieve any content</li>
+                                    <li className='my-2'>
+                                        {`You won't be able to reactivate your account or retrieve any content `}
+                                    </li>
                                     <li className='my-2'>Your username will be available for others to claim</li>
                                 </ul>
 

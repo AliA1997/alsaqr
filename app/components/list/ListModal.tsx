@@ -1,3 +1,4 @@
+"use client";
 import { ModalBody, ModalPortal } from "@components/common/Modal";
 import { Select } from "@components/common/Select";
 import PostComponent from "@components/posts/Post";

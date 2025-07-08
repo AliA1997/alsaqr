@@ -21,13 +21,12 @@ export async function read(session: Session, cypher = "", params = {}, alias?: s
 
         for (const aIdx in alias) {
           const aKey = alias[aIdx];
-          // console.log('aKey', aKey)
+          console.log('aKey', aKey)
           const recordBasedOnAlias = record.get(aKey);
-          // console.log('recordBasedOnAlias', recordBasedOnAlias)
-          // console.log('recordBasedOnAlias.properties', recordBasedOnAlias.properties);
-          // console.log('recordBasedOnAlias instanceof', recordBasedOnAlias instanceof Integer);
 
-          if(recordBasedOnAlias instanceof Integer)
+          if(recordBasedOnAlias === null)
+            result[aKey] = null as any;
+          else if(recordBasedOnAlias instanceof Integer)
             result[aKey] = recordBasedOnAlias.toNumber() as any;
           else if(recordBasedOnAlias instanceof DateTime)
             result[aKey] = convertDateToDisplay(recordBasedOnAlias);
@@ -39,6 +38,7 @@ export async function read(session: Session, cypher = "", params = {}, alias?: s
 
         return result;
       }
+      console.log('alias:', alias);
       return alias === 'total' ? record.get(alias).toNumber() : record.get(alias ?? "u").properties
     });
   } catch (error) {

@@ -1,3 +1,4 @@
+"use client";
 import { motion } from "framer-motion";
 import { BookmarkIcon, HeartIcon, UploadIcon } from "@heroicons/react/outline";
 import { BookmarkIcon as BookmarkFillIcon, HeartIcon as HeartFillIcon } from "@heroicons/react/solid";

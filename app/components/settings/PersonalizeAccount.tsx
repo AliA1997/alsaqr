@@ -1,4 +1,4 @@
-
+"use client";
 import { ContentContainer, ContentContainerWithRef, InfoCardContainer } from "@components/common/Containers";
 import { MultiSelect } from "@components/common/MultiSelect";
 import { RadioCard } from "@components/common/RadioBoxes";

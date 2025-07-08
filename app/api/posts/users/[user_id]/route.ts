@@ -8,7 +8,8 @@ async function GET(
   { params }: { params: { user_id: string } }
 ) {
   const [currentPage, itemsPerPage] = extractQryParams(request, ['currentPage', 'itemsPerPage']);
-  
+  const currentPageParsed = parseInt(currentPage ?? '1');
+  const itemsPerPageParsed = parseInt(itemsPerPage ?? '10');
   const { user_id } = params;
   const userId = user_id as string;
 
@@ -33,7 +34,7 @@ async function GET(
         WITH post, u.username as username, u.avatar as profileImg, COLLECT(DISTINCT c) AS comments, COLLECT(DISTINCT u) AS commenters, COLLECT(DISTINCT reposter) AS reposters, COLLECT(DISTINCT liker) AS likers, "user" as type
         ORDER BY post.createdAt DESCENDING
         RETURN post, username, profileImg, comments, commenters, reposters, likers, type
-        SKIP ${(+currentPage - 1) * +itemsPerPage}
+        SKIP ${(currentPageParsed - 1) * itemsPerPageParsed}
         LIMIT ${itemsPerPage}
 
         UNION
@@ -48,7 +49,7 @@ async function GET(
         WITH post, postUser.username as username, postUser.avatar as profileImg, COLLECT(DISTINCT c) AS comments, COLLECT(DISTINCT u) AS commenters, COLLECT(DISTINCT reposter) AS reposters, COLLECT(DISTINCT liker) AS likers, "bookmarked" as type
         ORDER BY post.createdAt DESCENDING
         RETURN post, username, profileImg, comments, commenters, reposters, likers, type
-        SKIP ${(+currentPage - 1) * +itemsPerPage}
+        SKIP ${(currentPageParsed - 1) * itemsPerPageParsed}
         LIMIT ${itemsPerPage}
 
         UNION
@@ -63,7 +64,7 @@ async function GET(
         WITH post, postUser.username as username, postUser.avatar as profileImg, COLLECT(DISTINCT c) AS comments, COLLECT(DISTINCT u) AS commenters, COLLECT(DISTINCT reposter) AS reposters, COLLECT(DISTINCT liker) AS likers, "liked" as type
         ORDER BY post.createdAt DESCENDING
         RETURN post, username, profileImg, comments, commenters, reposters, likers, type
-        SKIP ${(+currentPage - 1) * +itemsPerPage}
+        SKIP ${(currentPageParsed - 1) * itemsPerPageParsed}
         LIMIT ${itemsPerPage}
 
         UNION
@@ -78,7 +79,7 @@ async function GET(
         WITH post, postUser.username as username, postUser.avatar as profileImg, COLLECT(DISTINCT c) AS comments, COLLECT(DISTINCT u) AS commenters, COLLECT(DISTINCT reposter) AS reposters, COLLECT(DISTINCT liker) AS likers, "reposted" as type
         ORDER BY post.createdAt DESCENDING
         RETURN post, username, profileImg, comments, commenters, reposters, likers, type
-        SKIP ${(+currentPage - 1) * +itemsPerPage}
+        SKIP ${(currentPageParsed - 1) * itemsPerPageParsed}
         LIMIT ${itemsPerPage}
 
         UNION
@@ -93,7 +94,7 @@ async function GET(
         WITH post, postUser.username as username, postUser.avatar as profileImg, COLLECT(DISTINCT c) AS comments, COLLECT(DISTINCT u) AS commenters, COLLECT(DISTINCT reposter) AS reposters, COLLECT(DISTINCT liker) AS likers, "replied" as type
         ORDER BY post.createdAt DESCENDING
         RETURN post, username, profileImg, comments, commenters, reposters, likers, type
-        SKIP ${(+currentPage - 1) * +itemsPerPage}
+        SKIP ${(currentPageParsed - 1) * itemsPerPageParsed}
         LIMIT ${itemsPerPage}
       `,
       { userId },
@@ -102,7 +103,7 @@ async function GET(
 
     const userPosts = allPosts?.filter((p) => p.type === "user");
     const bookmarkedPosts = allPosts?.filter((p) => p.type === "bookmarked");
-    console.log(JSON.stringify(bookmarkedPosts[0].username))
+
     const likedPosts = allPosts?.filter((p) => p.type === "liked");
     const repostedPosts = allPosts?.filter((p) => p.type === "reposted");
     const repliedPosts = allPosts?.filter((p) => p.type === "replied");

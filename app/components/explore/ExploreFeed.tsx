@@ -2,7 +2,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import CustomPageLoader from "../common/CustomLoader";
 import { observer } from "mobx-react-lite";
-import { useStore } from "stores";
+import { useStore } from "@stores/index";
 import { NoRecordsTitle, PageTitle } from "../common/Titles";
 import { ContentContainerWithRef } from "../common/Containers";
 import { Pagination, PagingParams } from "models/common";

@@ -64,7 +64,7 @@ function CommunityDiscussionItemComponent({
             <div className="flex space-x-2">
               {
                 communityDiscussionUsers.slice(0, 3).map((user, index) => (
-                  <MessagesImagePreview user={user}  index={index} />
+                  <MessagesImagePreview key={index} user={user}  index={index} />
                 ))}
             </div>
           </div>

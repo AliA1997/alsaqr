@@ -1,3 +1,4 @@
+"use client";
 import { FieldHelperProps } from "formik";
 import { FileUploadInput, MyInput } from "./Inputs";
 import { RadioCard } from "./RadioBoxes";
@@ -62,7 +63,8 @@ export const ListOrCommunityFormInputs = observer(({ type }: Props) => {
         else
             return "Select Hashtags associated with List";
     }, [type])
-
+    
+    const hideFileUpload = useMemo(() => ![CommonUpsertBoxTypes.Community, CommonUpsertBoxTypes.UpdateCommunity, CommonUpsertBoxTypes.List].some(l => l === type), [type])
 
     return (
         <>
@@ -71,7 +73,7 @@ export const ListOrCommunityFormInputs = observer(({ type }: Props) => {
                 placeholder={namePlaceholder}
                 className="mb-4"
             />
-            {type === CommonUpsertBoxTypes.Community || type === CommonUpsertBoxTypes.List && (
+            {!hideFileUpload && (
                 <FileUploadInput
                     name="avatarOrBannerImage"
                     label={fileUploadLabel}

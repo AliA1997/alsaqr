@@ -31,7 +31,7 @@ export default class CommunityFeedStore {
         }
     }
     pagination: Pagination | undefined = undefined;
-    pagingParams: PagingParams = new PagingParams(1, 10);
+    pagingParams: PagingParams = new PagingParams(1, 25);
 
     communityRegistry: Map<string, CommunityToDisplay> = new Map<string, CommunityToDisplay>();
     currentStepInCommunityCreation: number | undefined = undefined;

@@ -8,7 +8,7 @@ import { useSearchParams } from "next/navigation";
 import { convertQueryStringToObject } from "@utils/neo4j";
 import { ModalLoader } from "../common/CustomLoader";
 import { observer } from "mobx-react-lite";
-import { FilterKeys, useStore } from "stores";
+import { FilterKeys, useStore } from "@stores/index";
 import { PageTitle } from "../common/Titles";
 import { ContentContainerWithRef } from "../common/Containers";
 import { PagingParams } from "models/common";

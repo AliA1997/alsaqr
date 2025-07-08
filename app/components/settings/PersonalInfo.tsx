@@ -1,3 +1,4 @@
+"use client";
 import { ContentContainer, ContentContainerWithRef, InfoCardContainer } from "@components/common/Containers";
 import { RadioCard } from "@components/common/RadioBoxes";
 import { PersonalInfoFormInputs } from "@components/common/RegisterForm";
@@ -93,11 +94,7 @@ const PersonalInfo = observer(() => {
                         /* and other goodies */
                     }) => (
                         <form onSubmit={handleSubmit} className="flex flex-1 flex-col">
-                            <PersonalInfoFormInputs
-                                avatar={values.avatar}
-                                bgThumbnail={values.bgThumbnail}
-                                username={values.username}
-                            />
+                            <PersonalInfoFormInputs />
 
                             <Select
                                     name="countryOfOrigin"
