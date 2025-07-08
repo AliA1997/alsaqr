@@ -10,7 +10,6 @@ import type { CommunityToDisplay } from "../../../typings";
 import {
   stopPropagationOnClick,
 } from "@utils/neo4j/index";
-import { useSession } from "next-auth/react";
 import { useStore } from "@stores/index";
 import { convertDateToDisplay } from "@utils/neo4j/neo4j";
 import { TagOrLabel } from "@components/common/Titles";
@@ -23,9 +22,8 @@ function CommunityItemComponent({
   community,
 }: Props) {
   const router = useRouter();
-  const { data: session } = useSession();
-
-  const { communityFeedStore } = useStore();
+  const { authStore, communityFeedStore } = useStore();
+  const { currentSessionUser } = authStore;
   const { setNavigateCommunity } = communityFeedStore;
 
   const initiallyBooleanValues = useRef<{
@@ -39,8 +37,8 @@ function CommunityItemComponent({
   const communityInfo = community.community;
 
   useLayoutEffect(() => {
-    if (session && session.user && (session.user as any)['id']) {
-      const joinedCommunities = session?.user ? (session.user as any)["joinedCommunities"] : [];
+    if (currentSessionUser?.id) {
+      const joinedCommunities = currentSessionUser ? (currentSessionUser as any)["joinedCommunities"] : [];
 
       const alreadyJoined = joinedCommunities?.some((listSavedById: string) => listSavedById === community.community.id) ?? false;
 
@@ -49,7 +47,7 @@ function CommunityItemComponent({
         commented: false,
       };
     }
-  }, [session]);
+  }, [currentSessionUser]);
 
   const navigateToCommunity = () => {
     setNavigateCommunity(community);

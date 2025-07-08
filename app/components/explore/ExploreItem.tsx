@@ -1,14 +1,10 @@
 "use client";
 import { useRouter } from "next/navigation";
-import React, {
-    useRef,
-} from "react";
+import React from "react";
 import {
     stopPropagationOnClick,
 } from "@utils/neo4j/index";
-import { useSession } from "next-auth/react";
 import { ExploreToDisplay } from "typings";
-import { DotsHorizontalIcon } from "@heroicons/react/outline";
 
 interface Props {
     exploreItem: ExploreToDisplay;
@@ -17,7 +13,6 @@ interface Props {
 function ExploreItemComponent({
     exploreItem,
 }: Props) {
-    const router = useRouter();
 
     const navigateToExploreTopics = () => {
         window.open(exploreItem.url, "_blank")
@@ -32,7 +27,6 @@ function ExploreItemComponent({
                 `}
             onClick={navigateToExploreTopics}
         >
-            {/* <DotsHorizontalIcon className='absolute h-5 w-5 rounded-full bg-gray-900 top-2 right-1 z-20' /> */}
             <div className="w-full h-full overflow-hidden">
 
                 <img

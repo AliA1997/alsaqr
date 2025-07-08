@@ -3,7 +3,9 @@ import { faker } from "@faker-js/faker";
 import { getEmailUsername } from "@utils/neo4j/index";
 import { defineDriver, read, write } from "@utils/neo4j/neo4j";
 import NextAuth, { NextAuthOptions } from "next-auth";
+import DiscordProvider from 'next-auth/providers/discord';
 import GoogleProvider from "next-auth/providers/google";
+import FacebookProvider from 'next-auth/providers/facebook';
 import { ProfileUser } from "typings";
 
 const sessionQuery = `
@@ -25,10 +27,18 @@ export const authOptions: NextAuthOptions = {
     strategy: "jwt",
   },
   providers: [
+    DiscordProvider({
+      clientId: process.env.DISCORD_CLIENT_ID ?? '',
+      clientSecret: process.env.DISCORD_CLIENT_SECRET ?? ''
+    }),
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID ?? "",
       clientSecret: process.env.GOOGLE_CLIENT_SECRET ?? "",
     }),
+    FacebookProvider({
+      clientId: process.env.FACEBOOK_APP_ID ?? "",
+      clientSecret: process.env.FACEBOOK_CLIENT_SECRET ?? ""
+    })
   ],
   pages: {
     signIn: "/",
@@ -71,7 +81,7 @@ export const authOptions: NextAuthOptions = {
         throw new Error("Profile doesn't exist.");
       }
 
-      //Upsert functionality .
+      //Upsert functionality
       try {
         const driver = defineDriver();
         const dSession = driver.session();
@@ -83,6 +93,15 @@ export const authOptions: NextAuthOptions = {
           },
           "user"
         );
+        let profileAvatar = '';
+        const isDiscordAccount = (profile as any)['image_url'] ? (profile as any)['image_url'].includes('discord') : false;
+        if(typeof (profile as any)["picture"] === 'object' && typeof (profile as any)["picture"]['data'] === 'object')
+          profileAvatar = (profile as any)["picture"]['data']['url'];
+        else if(isDiscordAccount)
+          profileAvatar = (profile as any)['image_url'];
+        else
+          profileAvatar = (profile as any)["picture"] ?? '';
+
         // console.log("Neo4j User:", user);
         if (!user?.length)
           await write(
@@ -118,16 +137,14 @@ export const authOptions: NextAuthOptions = {
               id: faker.datatype.uuid(),
               createdAt: new Date().toUTCString(),
               updatedAt: null,
-              username: getEmailUsername(profile?.email),
+              username: isDiscordAccount ? (profile as any)['global_name'] : getEmailUsername(profile?.email),
               email: profile.email,
               firstName: profile?.name ?? '',
               lastName: '',
               bio: '',
               countryOfOrigin: 'United States',
               phone: null,
-              avatar: (profile as any)["picture"]
-                ? (profile as any)["picture"]
-                : null,
+              avatar: profileAvatar,
               bgThumbnail: faker.image.city(),
               dateOfBirth: null,
               geoId: null,
@@ -135,7 +152,7 @@ export const authOptions: NextAuthOptions = {
               preferredMadhab: 'Hanafi',
               religion: "Muslim",
               hobbies: [],
-              frequentMasjid: [],
+              frequentMasjid: '',
               favoriteQuranReciters: [],
               favoriteIslamicScholars: [],
               islamicStudyTopics: [],

@@ -23,6 +23,18 @@ const nextConfig = {
         port: '',
         pathname: '/**'
       },
+      {
+        protocol: "https",
+        hostname: 'platform-lookaside.fbsbx.com',
+        port: '',
+        pathname: '/**'
+      },
+      {
+        protocol: 'https',
+        hostname: 'cdn.discordapp.com',
+        port: '',
+        pathname: '/**'
+      }
     ],
   },
   // Additional configurations can be added here

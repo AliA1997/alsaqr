@@ -1,26 +1,16 @@
 "use client";
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { RefreshIcon } from "@heroicons/react/outline";
-import {
-  DashboardPostToDisplay,
-  PostToDisplay,
-  User,
+import type {
   UserItemToDisplay,
 } from "../../../typings";
-import TweetComponents from "../posts/Post";
-// import { fetchTweets } from "../../utils/tweets/fetchTweets";
-import toast from "react-hot-toast";
 
-import { useSession } from "next-auth/react";
-import TweetBox from "../posts/PostBox";
-import { setFilterState } from "@utils/mobx";
 import { useSearchParams } from "next/navigation";
-import { convertQueryStringToObject, Params } from "@utils/neo4j";
-import CustomPageLoader, { ModalLoader } from "../common/CustomLoader";
+import { convertQueryStringToObject } from "@utils/neo4j";
+import { ModalLoader } from "../common/CustomLoader";
 import { observer } from "mobx-react-lite";
 import { FilterKeys, useStore } from "stores";
 import { PageTitle } from "../common/Titles";
-import { ContentContainer, ContentContainerWithRef } from "../common/Containers";
+import { ContentContainerWithRef } from "../common/Containers";
 import { PagingParams } from "models/common";
 import UserItemComponent from "./UserItem";
 

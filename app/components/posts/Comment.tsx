@@ -9,34 +9,24 @@ import React, {
     useRef,
     useState,
 } from "react";
-// import dynamic from 'next/dynamic';
-import toast from "react-hot-toast";
 import TimeAgo from "react-timeago";
 
-// import { auth } from "../firebase/firebase";
-import type { CommentForm, CommentToDisplay, PostToDisplay, User } from "../../../typings";
+import type { CommentToDisplay, User } from "../../../typings";
 import {
     getPercievedNumberOfRecord,
     stopPropagationOnClick,
 } from "@utils/neo4j/index";
-// import { likeTweet } from "@utils/update-tweets/likeTweet";
-// import { retweet } from "@utils/update-tweets/retweet";
-import { useSession } from "next-auth/react";
-import { FilterKeys, useStore } from "@stores/index";
+import { useStore } from "@stores/index";
 import { LoginModal } from "../common/AuthModals";
-import { convertDateToDisplay } from "@utils/neo4j/neo4j";
-import { AddOrFollowButton, BookmarkedIconButton, CommentIconButton, LikesIconButton, MoreButton, RePostedIconButton } from "../common/IconButtons";
+import { convertDateToDisplay, formatTimeAgo } from "@utils/neo4j/neo4j";
+import { LikesIconButton, RePostedIconButton } from "../common/IconButtons";
 
-import { faker } from "@faker-js/faker";
-import UpsertBoxIconButton from "@components/common/UpsertBoxIconButtons";
-import { ModalLoader } from "@components/common/CustomLoader";
-import NextImage from 'next/image';
 import { TrashIcon } from "@heroicons/react/solid";
 import MoreSection from "@components/common/MoreSection";
 import { ConfirmModal } from "@components/common/Modal";
-import { SaveToListModal } from "@components/list/ListModal";
-import { ROUTES_USER_CANT_ACCESS } from "@utils/constants";
 import { TagOrLabel } from "@components/common/Titles";
+import { PDFDownloadLink } from "@react-pdf/renderer";
+import CommentPDF from "@components/pdf/CommentPdf";
 
 interface Props {
     commentToDisplay: CommentToDisplay;
@@ -50,7 +40,6 @@ function CommentComponent({
     onlyDisplay
 }: Props) {
     const router = useRouter();
-    const { data: session } = useSession();
     const { authStore, commentFeedStore, modalStore } = useStore();
     const { currentSessionUser } = authStore;
     const { showModal, closeModal } = modalStore;
@@ -63,7 +52,7 @@ function CommentComponent({
     } = commentFeedStore;
     const [isRePosted, setIsRePosted] = useState<boolean>(false);
     const [isLiked, setIsLiked] = useState<boolean>(false);
-    const userId = useMemo(() => session && session.user ? (session.user as any)['id'] : "", [session]);
+    const userId = useMemo(() => currentSessionUser ? currentSessionUser.id : "", [currentSessionUser]);
 
     const initiallyBooleanValues = useRef<{
         reposted: boolean;
@@ -115,7 +104,7 @@ function CommentComponent({
                 mounted,
                 currentSessionUser?.id
             ),
-        [isRePosted]
+        [(mounted && isRePosted), (mounted && !isRePosted)]
     );
     const numberOfLikes = useMemo(
         () =>
@@ -126,24 +115,25 @@ function CommentComponent({
                 mounted,
                 currentSessionUser?.id
             ),
-        [isLiked]
+        [(mounted && isLiked), (mounted && !isLiked)]
     );
 
     const checkUserIsLoggedInBeforeUpdatingComment = async (
         callback: () => Promise<void>
     ) => {
-        if (session && session.user && !(session.user as any)['id']) return showModal(<LoginModal />);
+        if (!currentSessionUser) 
+            return showModal(<LoginModal />);
 
         await callback();
     };
 
 
     const navigateToCommentUser = () => {
-        router.push(`users/${commentToDisplay.username}`);
+        router.push(`/users/${commentToDisplay.username}`);
     };
 
     const navigateToComment = () => {
-        router.push(`status/${commentToDisplay.id}`);
+        router.push(`/status/${commentToDisplay.id}`);
     };
 
     const onLikeComment = async () => {
@@ -243,7 +233,7 @@ function CommentComponent({
                     }}
                 />
                 <img
-                    className="h-10 w-10 rounded-full object-cover"
+                    className="h-10 w-10 rounded-full object-cover z-50"
                     src={commentToDisplay.profileImg}
                     alt={commentToDisplay.username}
                     onClick={(e) => {
@@ -343,7 +333,24 @@ function CommentComponent({
                                 className="flex cursor-pointer item-center space-x-3 text-gray-400"
                                 disabled={onlyDisplay ?? false}
                             >
-                                <UploadIcon className="h-5 w-5" />
+                                {commentToDisplay.createdAt ? (
+                                    <PDFDownloadLink 
+                                        fileName={`${commentToDisplay.id}.pdf`}
+                                        document={
+                                        <CommentPDF 
+                                            commentToDisplay={commentToDisplay} 
+                                            showLabel={showLabel ?? false} 
+                                            userId={currentSessionUser?.id ?? ''}
+                                            createdAt={formatTimeAgo(convertDateToDisplay(commentToDisplay.createdAt))}
+                                        />
+                                        }>
+                                        <UploadIcon className="h-5 w-5" />
+                                    </PDFDownloadLink>
+
+                                ) : (
+                                        <UploadIcon className="h-5 w-5" />
+
+                                )}
                             </motion.button>
                         </div>
                     </div>

@@ -6,10 +6,9 @@ import React, {
   useRef,
   useState,
 } from "react";
+import {  NotificationToDisplay } from "../../../typings";
 import dynamic from 'next/dynamic';
 import TimeAgo from "react-timeago";
-import {  NotificationToDisplay } from "../../../typings";
-import { useSession } from "next-auth/react";
 import { useStore } from "@stores/index";
 const LoginModal = dynamic(() => import("../common/AuthModals").then(mod => mod.LoginModal), { ssr: false })
 import { convertDateToDisplay } from "@utils/neo4j/neo4j";
@@ -21,10 +20,9 @@ interface Props {
 function NotificationItemComponent({
   notificationToDisplay,
 }: Props) {
+  const { authStore, modalStore } = useStore();
+  const { currentSessionUser } = authStore;
   const router = useRouter();
-  const { data: session } = useSession();
-  const userId = useMemo(() => session && session.user ? (session.user as any)['id'] : "", [session]);
-  const { modalStore } = useStore();
   const { showModal } = modalStore;
 
   const [isRead, setIsRead] = useState<boolean>(false);
@@ -40,19 +38,19 @@ function NotificationItemComponent({
   const checkUserIsLoggedInBeforeUpdatingTweet = async (
     callback: () => Promise<void>
   ) => {
-    if (session && session.user && !(session.user as any)['id']) return showModal(<LoginModal />)
+    if (currentSessionUser?.id) return showModal(<LoginModal />)
 
     await callback();
   };
 
   useLayoutEffect(() => {
-    if (session && session.user && (session.user as any)['id']) {
+    if (currentSessionUser?.id) {
 
       initiallyBooleanValues.current = {
         read: false
       };
     }
-  }, [session]);
+  }, [currentSessionUser]);
 
   const onIsAlreadyRead = async () => {
     const beforeUpdate = isRead;

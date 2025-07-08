@@ -11,17 +11,17 @@ async function GET(request: NextRequest) {
     const itemsPerPageParsed = parseInt(itemsPerPage!);
     const countryParam = country ?? 'us';
 
-    console.log('itemsPerPageParsed', itemsPerPageParsed)
+    // console.log('itemsPerPageParsed', itemsPerPageParsed)
     const { data: recentNews } = await axios.get(`https://newsapi.org/v2/top-headlines?country=${countryParam}&sortBy=popularity&apiKey=${process.env.NEWSAPI_KEY}`);
     const { articles } = recentNews;
 
     const startIndex = (currentPageParsed - 1) * itemsPerPageParsed;
 
     const totalArticles = (articles ?? []).length;
-    console.log('totalArticles:', totalArticles)
-    console.log('currentpage:', currentPage)
+    // console.log('totalArticles:', totalArticles)
+    // console.log('currentpage:', currentPage)
     
-    console.log('startIndex + itemsPerPageParsed', startIndex + itemsPerPageParsed)
+    // console.log('startIndex + itemsPerPageParsed', startIndex + itemsPerPageParsed)
     const result: ExploreToDisplay[] = articles
                                         .filter((a: any) => a.urlToImage)
                                         .slice(startIndex, startIndex + itemsPerPageParsed)
@@ -36,7 +36,7 @@ async function GET(request: NextRequest) {
       totalItems: totalArticles,
       totalPages: Math.round(totalArticles / itemsPerPageParsed)
     };
-    console.log('FUCK YOU result length:', result.length)
+    
     return NextResponse.json({ 
         result: new PaginatedResult(result, pagination)
      });

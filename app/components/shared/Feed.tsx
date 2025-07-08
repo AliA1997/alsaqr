@@ -2,32 +2,23 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 // import { RefreshIcon } from "@heroicons/react/outline";
 import type {
-  DashboardPostToDisplay,
   PostToDisplay,
 } from "../../../typings";
-// import PostComponent from "../posts/Post";
 import dynamic from 'next/dynamic';
-// import { fetchTweets } from "../../utils/tweets/fetchTweets";
-// import toast from "react-hot-toast";
 
-import { useSession } from "next-auth/react";
 import PostBox from "../posts/PostBox";
-// import { setFilterState } from "@utils/mobx";
 import { useSearchParams } from "next/navigation";
-import { convertQueryStringToObject, Params } from "@utils/neo4j";
+import { convertQueryStringToObject } from "@utils/neo4j";
+import { observer } from "mobx-react-lite";
+import { FilterKeys, useStore } from "stores";
+
 const PostComponent = dynamic(() => import("../posts/Post"), { ssr: false });
 const CustomPageLoader = dynamic(() => import("../common/CustomLoader"), { ssr: false });
 const ModalLoader = dynamic(() => import("../common/CustomLoader").then(mod => mod.ModalLoader), { ssr: false });
 const NoRecordsTitle = dynamic(() => import("../common/Titles").then(mod => mod.NoRecordsTitle), { ssr: false });
 const PageTitle = dynamic(() => import("../common/Titles").then(mod => mod.PageTitle), { ssr: false });
-// const ContentContainer = dynamic(() => import("../common/Containers").then(mod => mod.ContentContainer), { ssr: false });
 const ContentContainerWithRef = dynamic(() => import("../common/Containers").then(mod => mod.ContentContainerWithRef), { ssr: false });
 
-// import CustomPageLoader, { ModalLoader } from "../common/CustomLoader";
-import { observer } from "mobx-react-lite";
-import { FilterKeys, useStore } from "stores";
-// import { NoRecordsTitle, PageTitle } from "../common/Titles";
-// import { ContentContainer, ContentContainerWithRef } from "../common/Containers";
 import { PagingParams } from "models/common";
 import { leadingDebounce } from "@utils/common";
 
@@ -57,11 +48,10 @@ const Feed = observer(({
   onAdd,
   postsAlreadyAddedByIds 
 }: Props) => {
+  const { authStore, bookmarkFeedStore, exploreStore, feedStore, searchStore } = useStore();
+  const { currentSessionUser } = authStore;
   const searchParams = useSearchParams();
-  const { data: session } = useSession();
-  const { user } = session ?? {};
   const [loading, setLoading] = useState<boolean>(false);
-  const { bookmarkFeedStore, exploreStore, feedStore, searchStore } = useStore();
   const [isLoading, setIsLoading] = useState(false);
   const containerRef = useRef(null);
   const loaderRef = useRef(null);
@@ -228,7 +218,7 @@ const Feed = observer(({
         const nextPage = currentPage + 1;
         const totalItemsOnNextPage = nextPage * itemsPerPage;
         const hasMoreItems = (totalItems > totalItemsOnNextPage);
-        debugger;
+
         if (firstEntry?.isIntersecting && !feedLoadingInitial && hasMoreItems) {
           fetchMoreItems(feedPagingParams.currentPage + 1);
         }
@@ -252,16 +242,16 @@ const Feed = observer(({
     };
   }, [fetchMoreItems]);
 
-  const userId = useMemo(() => user ? (user as any)["id"] : "", [session]);
-  const bookmarks = useMemo(() => user ? (user as any)["bookmarks"] : undefined, [session]);
-  const reposts = useMemo(() => user ? (user as any)["reposts"] : undefined, [session]);
-  const likedPosts = useMemo(() => user ? (user as any)["likedPosts"] : undefined, [session]);
+  const userId = useMemo(() => currentSessionUser ? (currentSessionUser as any)["id"] : "", [currentSessionUser]);
+  const bookmarks = useMemo(() => currentSessionUser ? (currentSessionUser as any)["bookmarks"] : undefined, [currentSessionUser]);
+  const reposts = useMemo(() => currentSessionUser ? (currentSessionUser as any)["reposts"] : undefined, [currentSessionUser]);
+  const likedPosts = useMemo(() => currentSessionUser ? (currentSessionUser as any)["likedPosts"] : undefined, [currentSessionUser]);
 
   return (
     <div className="col-span-7 scrollbar-hide border-x max-h-screen overflow-scroll lg:col-span-5 dark:border-gray-800">
       {title && <PageTitle>{title}</PageTitle>}
       <div>
-        {session && !hideTweetBox && (
+        {currentSessionUser && !hideTweetBox && (
           <PostBox filterKey={filterKey ? filterKey : FilterKeys.Normal} />
         )}
       </div>

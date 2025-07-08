@@ -1,17 +1,12 @@
-import { FieldHelperProps, Formik, FormikErrors } from "formik";
-import { motion } from "framer-motion";
+import { FieldHelperProps } from "formik";
 import { FileUploadInput, MyInput } from "./Inputs";
 import { RadioCard } from "./RadioBoxes";
 import { MultiSelect } from "./MultiSelect";
-import { useSession } from "next-auth/react";
 import { useCallback, useMemo } from "react";
-import { useStore } from "@stores/index";
 import { CommonUpsertBoxTypes } from "typings.d";
-import { PagingParams } from "models/common";
-import { faker } from "@faker-js/faker";
-import toast from "react-hot-toast";
 import { observer } from "mobx-react-lite";
 import { TAG_OPTIONS } from "@utils/tagOptions";
+import { useStore } from "@stores/index";
 
 
 interface Props {
@@ -34,9 +29,8 @@ const options = [
 
 export const ListOrCommunityFormInputs = observer(({ type }: Props) => {
 
-    const { data: session } = useSession();
-    const { user } = session ?? {};
-    const userId = useMemo(() => user ? (user as any)["id"] : "", [session]);
+    const { authStore } = useStore();
+    const { currentSessionUser } = authStore;
 
     const handleFileChange = useCallback(
         (event: React.ChangeEvent<HTMLInputElement>, helpers: FieldHelperProps<any>) => {

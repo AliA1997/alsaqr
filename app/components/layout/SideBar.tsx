@@ -29,6 +29,7 @@ const RegisterModal = dynamic(() => import("../common/AuthModals").then(mod => m
 
 import { ROUTE_TO_SHOW_SETTINGS_SIDEBAR, ROUTES_USER_CANT_ACCESS } from "@utils/constants";
 import { SettingsTabs } from "models/enums";
+import { useCheckSession } from "hooks/useCheckSession";
 
 type SideBarProps = {};
 
@@ -38,6 +39,7 @@ const SideBar = ({}: SideBarProps) => {
   const [isDropdownOpen, setIsDropdownOpen] = React.useState<boolean>(false);
   const { authStore, modalStore, settingsStore } = useStore();
   const { currentSessionUser } = authStore;
+  useCheckSession(authStore.setCurrentSessionUser, currentSessionUser);
   const { closeModal, showModal } = modalStore;
   const { setCurrentTabIdx } = settingsStore;
 
@@ -48,7 +50,7 @@ const SideBar = ({}: SideBarProps) => {
 
   const handleDropdownEnter = useCallback(
     () => setIsDropdownOpen(!isDropdownOpen),
-    []
+    [isDropdownOpen]
   );
 
   
@@ -73,7 +75,9 @@ const SideBar = ({}: SideBarProps) => {
       <div className={`
           ${hideSidebar ? 'col-span-2' : 'col-span-1 md:col-span-2'}
           flex flex-col item-center mt-2 md:mt-0 md:px-1 md:px-4 md:items-start
-        `}>
+        `}
+        onClick={() => setIsDropdownOpen(false)}
+      >
         <div className="flex justify-start">
           <img
             className={`

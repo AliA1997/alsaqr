@@ -8,21 +8,17 @@ import type {
 import { useParams } from "next/navigation";
 import { observer } from "mobx-react-lite";
 import { useStore } from "@stores/index";
-const UserHeader = dynamic(() => import("./UserHeader"), { ssr: false });
+
 const CustomPageLoader = dynamic(() => import("@components/common/CustomLoader"), { ssr: false });
 const Tabs = dynamic(() => import( "@components/common/Tabs"), { ssr: false });
 const PostComponent = dynamic(() => import("../posts/Post"), { ssr: false });
-// import UserHeader from "./UserHeader";
-// import Tabs from "@components/common/Tabs";
-// import CustomPageLoader  from "@components/common/CustomLoader";
 
-// import PostComponent from "../posts/Post";
 import type { Session } from "next-auth";
 import { getSession } from "next-auth/react";
+import UserHeader from "./UserHeader";
 
 
 const MainProfile = () => {
-  // const { data: session } = useSession();
   const { userStore } = useStore();
   const { 
     loadProfile, 
@@ -69,87 +65,69 @@ const MainProfile = () => {
     []
   );
 
-  if(!currentUserProfile) {
-    return <CustomPageLoader title="Loading..." />;
-  }
-
-  // console.log('currentUserProfilePosts', JSON.stringify(currentUserProfilePosts));
-
-  return (
-    <div className="col-span-7 scrollbar-hide border-x max-h-screen overflow-scroll lg:col-span-5 dark:border-gray-800">
-      <div>
-        {currentUserProfile && (
-          <>
-            <UserHeader
-              currentSession={currentSession}
-              refreshProfileInfo={refreshProfileInfo}
-              profileInfo={currentUserProfile}
-              numberOfPosts={currentUserProfilePosts?.userPosts?.length ?? 0}
-              followerCount={currentUserProfile.followers?.length ?? 0}
-              followingCount={currentUserProfile.following?.length ?? 0}
-            />
-            {/* <React.Suspense fallback={<h2>Loading...</h2>}> */}
-              <Tabs
-                tabs={[
-                  {
-                    tabKey: "recent",
-                    title: "Recent",
-                    content: currentUserProfilePosts?.userPosts ?? [],
-                    renderer,
-                    noRecordsContent: 'No posts'
-                  },
-                  {
-                    tabKey: "reposts",
-                    title: "Reposts",
-                    content: currentUserProfilePosts?.repostedPosts ?? [],
-                    renderer,
-                    noRecordsContent: 'No reposts found'
-                  },
-                  {
-                    tabKey: "bookmarks",
-                    title: "Bookmarks",
-                    content: currentUserProfilePosts?.bookmarkedPosts ?? [],
-                    renderer,
-                    noRecordsContent: `No bookmarks found`
-                  },
-                  {
-                    tabKey: "replied-posts",
-                    title: "Replies",
-                    content: currentUserProfilePosts?.repliedPosts ?? [],
-                    renderer,
-                    noRecordsContent: `No replied posts found`
-                  },
-                  {
-                    tabKey: "liked-posts",
-                    title: "Liked Posts",
-                    content: currentUserProfilePosts?.likedPosts ?? [],
-                    renderer,
-                    noRecordsContent: `No liked posts found`
-                  },
-                ]}
-                loading={loadingPosts}
+  if(currentUserProfile) 
+    return (
+      <div className="col-span-7 scrollbar-hide border-x max-h-screen overflow-scroll lg:col-span-5 dark:border-gray-800">
+        <div>
+          {currentUserProfile && (
+            <>
+              <UserHeader
+                currentSession={currentSession}
+                refreshProfileInfo={refreshProfileInfo}
+                profileInfo={currentUserProfile}
+                numberOfPosts={currentUserProfilePosts?.userPosts?.length ?? 0}
+                followerCount={currentUserProfile.followers?.length ?? 0}
+                followingCount={currentUserProfile.following?.length ?? 0}
               />
-            {/* </React.Suspense> */}
-          </>
-        )}
+              {/* <React.Suspense fallback={<h2>Loading...</h2>}> */}
+                <Tabs
+                  tabs={[
+                    {
+                      tabKey: "recent",
+                      title: "Recent",
+                      content: currentUserProfilePosts?.userPosts ?? [],
+                      renderer,
+                      noRecordsContent: 'No posts'
+                    },
+                    {
+                      tabKey: "reposts",
+                      title: "Reposts",
+                      content: currentUserProfilePosts?.repostedPosts ?? [],
+                      renderer,
+                      noRecordsContent: 'No reposts found'
+                    },
+                    {
+                      tabKey: "bookmarks",
+                      title: "Bookmarks",
+                      content: currentUserProfilePosts?.bookmarkedPosts ?? [],
+                      renderer,
+                      noRecordsContent: `No bookmarks found`
+                    },
+                    {
+                      tabKey: "replied-posts",
+                      title: "Replies",
+                      content: currentUserProfilePosts?.repliedPosts ?? [],
+                      renderer,
+                      noRecordsContent: `No replied posts found`
+                    },
+                    {
+                      tabKey: "liked-posts",
+                      title: "Liked Posts",
+                      content: currentUserProfilePosts?.likedPosts ?? [],
+                      renderer,
+                      noRecordsContent: `No liked posts found`
+                    },
+                  ]}
+                  loading={loadingPosts}
+                />
+              {/* </React.Suspense> */}
+            </>
+          )}
+        </div>
       </div>
-      {/* <div>
-        {tweets.map((tweet) => (
-          <div key={tweet.id}>
-            {tweet.username === userName && (
-              <TweetComponents
-                tweet={tweet}
-                userId={user ? (user as any)['id'] : ""}
-                setUserPName={setUserPName}
-                userName={userName}
-                setUserPhotoUrl={setUserPhotoUrl}
-                pushNote={false}
-              />
-            )}
-          </div>
-        ))}
-      </div> */}
-    </div>
   );
+
+  return <CustomPageLoader title="Loading..." />;
+
 };
 export default observer(MainProfile);

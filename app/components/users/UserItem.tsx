@@ -2,22 +2,18 @@
 import { useRouter } from "next/navigation";
 import React, {
     useLayoutEffect,
-    useMemo,
     useRef,
     useState,
 } from "react";
 
 import {UserItemToDisplay } from "../../../typings";
 import {
-    getPercievedNumberOfRecord,
     stopPropagationOnClick,
 } from "@utils/neo4j/index";
-import { useSession } from "next-auth/react";
 import { FilterKeys, useStore } from "@stores/index";
 import { LoginModal } from "../common/AuthModals";
-import { convertDateToDisplay, shortenText } from "@utils/neo4j/neo4j";
+import { shortenText } from "@utils/neo4j/neo4j";
 import { MAX_BIO_LENGTH_FEED } from "@utils/constants";
-import { observer } from "mobx-react-lite";
 import { AddOrFollowButton } from "../common/IconButtons";
 
 interface Props {
@@ -42,7 +38,8 @@ function UserItemComponent({
     justDisplay
 }: Props) {
     const router = useRouter();
-    const { modalStore } = useStore();
+    const { authStore, modalStore } = useStore();
+    const { currentSessionUser } = authStore;
     const { showModal, closeModal } = modalStore;
 
     const userItemInfo = userItemToDisplay.user;

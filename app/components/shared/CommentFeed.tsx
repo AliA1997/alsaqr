@@ -1,34 +1,18 @@
 "use client";
 import React, { useEffect, useMemo, useRef, useState } from "react";
-// import { RefreshIcon } from "@heroicons/react/outline";
 import type {
   CommentToDisplay,
-  DashboardPostToDisplay,
-  PostToDisplay,
 } from "../../../typings";
-// import PostComponent from "../posts/Post";
 import dynamic from 'next/dynamic';
-// import { fetchTweets } from "../../utils/tweets/fetchTweets";
-// import toast from "react-hot-toast";
 
-import { useSession } from "next-auth/react";
-import PostBox from "../posts/PostBox";
-// import { setFilterState } from "@utils/mobx";
 import { useSearchParams } from "next/navigation";
 import { convertQueryStringToObject, Params } from "@utils/neo4j";
-const PostComponent = dynamic(() => import("../posts/Post"), { ssr: false });
-const CustomPageLoader = dynamic(() => import("../common/CustomLoader"), { ssr: false });
 const ModalLoader = dynamic(() => import("../common/CustomLoader").then(mod => mod.ModalLoader), { ssr: false });
 const NoRecordsTitle = dynamic(() => import("../common/Titles").then(mod => mod.NoRecordsTitle), { ssr: false });
-const PageTitle = dynamic(() => import("../common/Titles").then(mod => mod.PageTitle), { ssr: false });
-// const ContentContainer = dynamic(() => import("../common/Containers").then(mod => mod.ContentContainer), { ssr: false });
 const ContentContainerWithRef = dynamic(() => import("../common/Containers").then(mod => mod.ContentContainerWithRef), { ssr: false });
 
-// import CustomPageLoader, { ModalLoader } from "../common/CustomLoader";
 import { observer } from "mobx-react-lite";
-import { FilterKeys, useStore } from "stores";
-// import { NoRecordsTitle, PageTitle } from "../common/Titles";
-// import { ContentContainer, ContentContainerWithRef } from "../common/Containers";
+import { useStore } from "stores";
 import { PagingParams } from "models/common";
 import { leadingDebounce } from "@utils/common";
 import CommentComponent from "@components/posts/Comment";
@@ -52,13 +36,22 @@ const CommentFeed = observer(({
   alreadyLoadedComments
 }: Props) => {
   const searchParams = useSearchParams();
-  const { data: session } = useSession();
-  const { user } = session ?? {};
+  
+  const [mounted, setMounted] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(false);
-  const { commentFeedStore } = useStore();
+  const { authStore, commentFeedStore } = useStore();
+  const { currentSessionUser } = authStore;
   const [isLoading, setIsLoading] = useState(false);
   const containerRef = useRef(null);
   const loaderRef = useRef(null);
+
+  useEffect(() => {
+    setMounted(true);
+
+    return () => {
+      setMounted(false);
+    }
+  }, [])
 
   const feedSetLoadingInitial = useMemo(() => {
     return commentFeedStore.setLoadingInitial;
@@ -187,36 +180,39 @@ const CommentFeed = observer(({
     };
   }, [fetchMoreItems]);
 
-  const userId = useMemo(() => user ? (user as any)["id"] : "", [session]);
+  const userId = useMemo(() => currentSessionUser ? currentSessionUser.id : "", [currentSessionUser]);
 
-  return (
-    <div className="col-span-7 scrollbar-hide border-x max-h-screen overflow-scroll lg:col-span-5 dark:border-gray-800">
-      <ContentContainerWithRef
-        classNames={`
-          text-center overflow-y-auto scrollbar-hide
-          min-h-[30vh] max-h-[40vh]
-        `}
-        innerRef={containerRef}
-      >
-        {loading ? (
-          <ModalLoader />
-        ) : (
-          <>
-            {loadedComments && loadedComments.length
-              ? loadedComments.map((commentRec, commentKey) => (
-                <CommentComponent
-                  key={commentRec.id}
-                  commentToDisplay={commentRec}
-                  onlyDisplay={false}
-                />
-              ))
-              : <NoRecordsTitle>Be the first comment</NoRecordsTitle>}
-            <LoadMoreTrigger />
-          </>
-        )}
-      </ContentContainerWithRef>
-    </div>
-  );
+  if(!loading && mounted)
+    return (
+      <div className="col-span-7 scrollbar-hide border-x max-h-screen overflow-scroll lg:col-span-5 dark:border-gray-800">
+        <ContentContainerWithRef
+          classNames={`
+            text-center overflow-y-auto scrollbar-hide
+            min-h-[30vh] max-h-[40vh]
+          `}
+          innerRef={containerRef}
+        >
+          {loading ? (
+            <ModalLoader />
+          ) : (
+            <>
+              {loadedComments && loadedComments.length
+                ? loadedComments.map((commentRec, commentKey) => (
+                  <CommentComponent
+                    key={commentRec.id}
+                    commentToDisplay={commentRec}
+                    onlyDisplay={false}
+                  />
+                ))
+                : <NoRecordsTitle>Be the first comment</NoRecordsTitle>}
+              <LoadMoreTrigger />
+            </>
+          )}
+        </ContentContainerWithRef>
+      </div>
+    );
+
+  return <ModalLoader />
 });
 
 export { CommentFeedContainer };

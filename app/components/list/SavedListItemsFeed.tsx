@@ -1,18 +1,13 @@
 "use client";
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 
-import { useSession } from "next-auth/react";
-import { useSearchParams } from "next/navigation";
-import { convertQueryStringToObject, Params } from "@utils/neo4j";
 import CustomPageLoader from "../common/CustomLoader";
 import { observer } from "mobx-react-lite";
 import { useStore } from "stores";
 import { NoRecordsTitle, PageTitle } from "../common/Titles";
 import { ContentContainerWithRef } from "../common/Containers";
 import { PagingParams } from "models/common";
-import { ListItemToDisplay } from "models/list";
 import SavedListItem from "./SavedListItem";
-import ListItemComponent from "./ListItem";
 
 interface Props {
   listId: string;
@@ -27,8 +22,6 @@ const SavedListItemsFeed = observer(({  listId }: Props) => {
     listInfoForSavedListItems,
     loadSavedListItems,
     loadingListItems,
-    savedListItemsPredicate,
-    setPredicate,
     savedListItemsPagingParams,
     savedListItemsPagination,
     setSavedListItemsPagingParams

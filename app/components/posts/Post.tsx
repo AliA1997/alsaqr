@@ -9,27 +9,27 @@ import React, {
   useRef,
   useState,
 } from "react";
-// import dynamic from 'next/dynamic';
 import toast from "react-hot-toast";
 import TimeAgo from "react-timeago";
 
-// import { auth } from "../firebase/firebase";
-import type { CommentForm, CommentToDisplay, PostToDisplay, User } from "../../../typings";
+import type { CommentForm, PostToDisplay, User } from "../../../typings";
 import {
   getPercievedNumberOfRecord,
   stopPropagationOnClick,
 } from "@utils/neo4j/index";
-// import { likeTweet } from "@utils/update-tweets/likeTweet";
-// import { retweet } from "@utils/update-tweets/retweet";
-import { useSession } from "next-auth/react";
 import { FilterKeys, useStore } from "@stores/index";
 import { LoginModal } from "../common/AuthModals";
-import { convertDateToDisplay } from "@utils/neo4j/neo4j";
-import { AddOrFollowButton, BookmarkedIconButton, CommentIconButton, LikesIconButton, MoreButton, RePostedIconButton } from "../common/IconButtons";
+import { convertDateToDisplay, formatTimeAgo } from "@utils/neo4j/neo4j";
+import {
+  AddOrFollowButton,
+  BookmarkedIconButton,
+  CommentIconButton,
+  LikesIconButton,
+  RePostedIconButton
+} from "../common/IconButtons";
 
 import { faker } from "@faker-js/faker";
 import UpsertBoxIconButton from "@components/common/UpsertBoxIconButtons";
-import { ModalLoader } from "@components/common/CustomLoader";
 import NextImage from 'next/image';
 import { TrashIcon } from "@heroicons/react/solid";
 import MoreSection from "@components/common/MoreSection";
@@ -38,6 +38,10 @@ import { SaveToListModal } from "@components/list/ListModal";
 import { ROUTES_USER_CANT_ACCESS } from "@utils/constants";
 import CommentFeed from "@components/shared/CommentFeed";
 import { TagOrLabel } from "@components/common/Titles";
+import { usePDF } from "react-to-pdf";
+import { PDFDownloadLink } from '@react-pdf/renderer';
+import PostPDF from "@components/pdf/PostPdf";
+
 
 interface Props {
   postToDisplay: PostToDisplay;
@@ -60,7 +64,6 @@ function PostComponent({
 }: Props) {
   const [mounted, setMounted] = useState<boolean>(false);
   const router = useRouter();
-  const { data: session } = useSession();
   const { authStore, commentFeedStore, feedStore, modalStore } = useStore();
   const { currentSessionUser } = authStore;
   const { showModal, closeModal } = modalStore;
@@ -107,7 +110,7 @@ function PostComponent({
         mounted,
         currentSessionUser?.id
       ),
-    [isRePosted]
+    [(mounted && isRePosted), (mounted && !isRePosted)]
   );
   const numberOfLikes = useMemo(
     () =>
@@ -118,37 +121,30 @@ function PostComponent({
         mounted,
         currentSessionUser?.id
       ),
-    [isLiked]
+    [(mounted && isLiked), (mounted && !isLiked)]
   );
   const numberOfComments = useMemo(() => {
     return postToDisplay.comments.length;
   }, [postToDisplay, addComment, commentBoxOpen]);
-  // const isBookmarkedRef = useRef<boolean>(bookmarks?.some(bk => bk === tweet.tweet.id) ?? false);
 
   const postInfo = postToDisplay.post;
-  // const refreshComments = async () => {
-  //   loadComments(postInfo.id)
-  //     .then((lCmts: CommentToDisplay[]) => {
-  //       setCurrentComments(lCmts);
-  //     })
-  //     .catch((err: any) => {
-  //       console.log("Error fetching comments:", JSON.stringify(err));
-  //     });
-  // };
+  const { toPDF, targetRef } = usePDF({ filename: `${postInfo.id}.pdf` })
+
   const checkUserIsLoggedInBeforeUpdatingTweet = async (
     callback: () => Promise<void>
   ) => {
-    if (!session || !session?.user) return showModal(<LoginModal />);
+    if (!currentSessionUser)
+      return showModal(<LoginModal />);
 
     await callback();
   };
 
   useLayoutEffect(() => {
     //If any of the bookmarks are not undefined, that means
-    if (session && session.user && (session.user as any)['id']) {
-      const likedPosts = session?.user ? (session.user as any)["likedPosts"] : [];
+    if (currentSessionUser) {
+      const likedPosts = currentSessionUser ? (currentSessionUser as any)["likedPosts"] : [];
       const postAlreadyLiked = postToDisplay.likers.some(l => l.id === currentSessionUser?.id);
-      const reposts = session?.user ? (session.user as any)["reposts"] : [];
+      const reposts = currentSessionUser ? (currentSessionUser as any)["reposts"] : [];
       const postAlreadyReposted = postToDisplay.reposters.some(l => l.id === currentSessionUser?.id);
 
       const twtAlreadyLiked =
@@ -160,7 +156,7 @@ function PostComponent({
         (reposts?.some((repost: string) => repost === postInfo.id) ?? false);
 
       const twtAlreadyBookmarked =
-        (session.user as any).bookmarks?.some((bk: string) => bk === postInfo.id) ?? false;
+        (currentSessionUser as any).bookmarks?.some((bk: string) => bk === postInfo.id) ?? false;
 
       if (postsAlreadyAddedByIds)
         setIsAdded(postsAlreadyAddedByIds.some(pstId => pstId === postInfo.id));
@@ -174,7 +170,7 @@ function PostComponent({
       setIsRePosted(twtAlreadyRetweeted);
       setIsLiked(twtAlreadyLiked);
     }
-  }, [session]);
+  }, [currentSessionUser]);
 
   useEffect(() => {
 
@@ -207,11 +203,11 @@ function PostComponent({
   };
 
   const navigateToTweetUser = () => {
-    router.push(`users/${postToDisplay.username}`);
+    router.push(`/users/${postToDisplay.username}`);
   };
 
   const navigateToTweet = () => {
-    router.push(`status/${postInfo.id}`);
+    router.push(`/status/${postInfo.id}`);
   };
 
   const onLikeTweet = async () => {
@@ -247,8 +243,6 @@ function PostComponent({
     }
   };
 
-  const commentOnTweet = () => { };
-
   const onBookmarkTweet = async () => {
     const beforeUpdate = isBookmarked;
     try {
@@ -266,7 +260,7 @@ function PostComponent({
   };
 
 
-  const userId = useMemo(() => session && session.user ? (session.user as any)['id'] : "", [session]);
+  const userId = useMemo(() => currentSessionUser ? currentSessionUser.id : "", [currentSessionUser]);
   const isSearchedPosts = useMemo(() => (filterKey ?? FilterKeys.Normal) === FilterKeys.SearchPosts, [filterKey]);
   const onIsAlreadyAdded = async () => {
     const beforeUpdate = isAdded;
@@ -340,6 +334,7 @@ function PostComponent({
         relative flex flex-col space-x-3 border-y border-gray-100 p-5 
         dark:border-gray-800 ${!onlyDisplay && 'hover:shadow-lg dark:hover:bg-[#000000]'}  
       `}
+      ref={targetRef}
     >
       {showLabel && (
         <TagOrLabel
@@ -368,7 +363,7 @@ function PostComponent({
           }}
         />
         <img
-          className="h-10 w-10 rounded-full object-cover"
+          className="h-10 w-10 rounded-full object-cover z-50 hover:bg-blue-200"
           src={postToDisplay.profileImg}
           alt={postToDisplay.username}
           onClick={(e) => {
@@ -424,9 +419,9 @@ function PostComponent({
             />
           </div>
           <p className="pt-1">{postInfo.text}</p>
-          <div style={{ display: 'flex', gap: '4px',  }} className="my-5">
+          <div style={{ display: 'flex', gap: '4px', }} className="my-5">
             {postInfo.tags.map((tag, index) => (
-              <span 
+              <span
                 key={index}
                 style={{
                   backgroundColor: '#e0f2fe',
@@ -458,13 +453,13 @@ function PostComponent({
             <>
               <MoreSection
                 moreOptions={moreOptions}
-                moreOptionClassNames="bg-red-700"
+                moreOptionClassNames={`${showLabel ? 'right-10' : ''}`}
               />
               <div className="mt-5 flex justify-between">
                 <CommentIconButton
                   onClick={(e) =>
                     stopPropagationOnClick(e, () => {
-                      if (!session || !session.user)
+                      if (!currentSessionUser)
                         showModal(<LoginModal />);
 
                       setCommentBoxOpen(!commentBoxOpen);
@@ -495,8 +490,29 @@ function PostComponent({
                     whileTap={{ scale: 0.9 }}
                     className="flex cursor-pointer item-center space-x-3 text-gray-400"
                     disabled={onlyDisplay ?? false}
+                    onClick={(e) => stopPropagationOnClick(e, () => console.log('stopped propagation'))}
+                    type='button'
                   >
-                    <UploadIcon className="h-5 w-5" />
+                    {postInfo.createdAt
+                      ? (
+                        <PDFDownloadLink
+                          fileName={`${postInfo.id}.pdf`}
+                          document={
+                            <PostPDF
+                              postToDisplay={postToDisplay}
+                              showLabel={showLabel ?? false}
+                              userId={currentSessionUser?.id ?? ''}
+                              createdAt={formatTimeAgo(convertDateToDisplay(postInfo.createdAt))}
+                            />
+                          }>
+                          <UploadIcon className="h-5 w-5" />
+                        </PDFDownloadLink>
+                      )
+                      : (
+                        <UploadIcon className="h-5 w-5" />
+
+                      )}
+
                   </motion.button>
                 </div>
               </div>

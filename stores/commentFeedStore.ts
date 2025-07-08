@@ -22,6 +22,7 @@ export default class CommentFeedStore {
 
 
     loadingInitial = false;
+    loadingComment = false;
     loadingUpsert = false;
     predicate = new Map();
     setPredicate = (predicate: string, value: string | number | Date | undefined) => {
@@ -49,6 +50,9 @@ export default class CommentFeedStore {
 
     setLoadingInitial = (value: boolean) => {
         this.loadingInitial = value;
+    }
+    setLoadingComment = (value: boolean) => {
+        this.loadingComment = value;
     }
     setLoadedComment = (val: CommentToDisplay) => {
         this.loadedComment = val;
@@ -98,7 +102,7 @@ export default class CommentFeedStore {
 
     loadComment = async (commentId: string) => {
 
-        this.setLoadingInitial(true);
+        this.setLoadingComment(true);
 
         try {
             if(this.pagingParams.currentPage === 1)
@@ -106,13 +110,12 @@ export default class CommentFeedStore {
         
             const { comment } = await agent.commentApiClient.getCommentsById(commentId) ?? [];
             
-            alert(JSON.stringify(comment))
             runInAction(() => {
                 this.setLoadedComment(comment)
             });
 
         } finally {
-            this.setLoadingInitial(false);
+            this.setLoadingComment(false);
         }
 
     }

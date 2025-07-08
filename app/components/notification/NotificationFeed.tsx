@@ -1,31 +1,26 @@
 "use client";
 import React, { useEffect, useMemo, useRef } from "react";
 import dynamic from 'next/dynamic';
-import { useSession } from "next-auth/react";
 
 import { useSearchParams } from "next/navigation";
 import { convertQueryStringToObject } from "@utils/neo4j";
-// import CustomPageLoader from "../common/CustomLoader";
-const CustomPageLoader = dynamic(() => import("../common/CustomLoader"), { ssr: false });
-
 import { observer } from "mobx-react-lite";
 import { useStore } from "stores";
-// import { NoRecordsTitle, PageTitle } from "../common/Titles";
+import { PagingParams } from "models/common";
+
+const CustomPageLoader = dynamic(() => import("../common/CustomLoader"), { ssr: false });
 const NoRecordsTitle = dynamic(() => import( "../common/Titles").then(mod => mod.NoRecordsTitle), { ssr: false });
 const PageTitle = dynamic(() => import( "../common/Titles").then(mod => mod.PageTitle), { ssr: false });
 const ContentContainerWithRef = dynamic(() => import("../common/Containers").then(mod => mod.ContentContainerWithRef), { ssr: false });
-
-import { PagingParams } from "models/common";
-// import NotificationItemComponent from "./NotificationItem";
 const NotificationItemComponent = dynamic(() => import("./NotificationItem"), { ssr: false });
 
 interface Props {}
 
 const NotificationFeed = observer(({}: Props) => {
   const searchParams = useSearchParams();
-  const { data: session } = useSession();
-  const { user } = session ?? {};
-  const userId = useMemo(() => user ? (user as any)["id"] : "", [session]);
+  const { authStore } = useStore();
+  const { currentSessionUser } = authStore;
+  const userId = useMemo(() => currentSessionUser ? currentSessionUser.id : "", [currentSessionUser]);
 
   const { notificationStore } = useStore();
   const { 

@@ -53,9 +53,13 @@ function MoreSection({
         () => setIsDropdownOpen(!isDropdownOpen),
         [isDropdownOpen]
     );
+
     return (
         <>
-            <div className="absolute top-0 right-0 pr-[1.1rem] mt-2 w-full flex justify-between">
+            <div className={`
+                absolute top-0 right-0 pr-[1.1rem] mt-2 w-full flex justify-between 
+                ${moreOptionClassNames ? moreOptionClassNames : ''}
+            `}>
                 <div />
                 <MoreButton
                     onClick={e => stopPropagationOnClick(e, handleDropdownEnter)}

@@ -6,6 +6,8 @@ import { useStore } from "@stores/index";
 import { observer } from "mobx-react-lite";
 import {  RegisterModal } from "../common/AuthModals";
 import { leadingDebounce } from "@utils/common";
+import { getSession, useSession } from "next-auth/react";
+import { useCheckSession } from "hooks/useCheckSession";
 
 type PageContainerProps = {
   title?: string;
@@ -15,16 +17,17 @@ type PageContainerProps = {
 const PageContainer = ({
   children,
 }: React.PropsWithChildren<PageContainerProps>) => {
+  const { data:session } = useSession();
   const { authStore, modalStore } = useStore();
   const { currentSessionUser } = authStore;
   const { 
-    closeModal,
     completeRegistrationModalShown,
     modalToShow, 
     setCompleteRegistrationModalShown,
     showModal, 
   } = modalStore;
   const retryCount = useRef(0);
+  // useCheckSession(authStore.setCurrentSessionUser, currentSessionUser);
 
   useLayoutEffect(() => {
     

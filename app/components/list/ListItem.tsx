@@ -1,6 +1,4 @@
 "use client";
-import { faker } from "@faker-js/faker";
-import { SaveIcon } from "@heroicons/react/outline";
 import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
 import React, {
@@ -9,16 +7,13 @@ import React, {
   useRef,
   useState,
 } from "react";
-import toast from "react-hot-toast";
 import TimeAgo from "react-timeago";
 
-import { Comment, CommentToDisplay, ListToDisplay, User } from "../../../typings";
+import type { ListToDisplay } from "../../../typings";
 import {
-  getPercievedNumberOfRecord,
   stopPropagationOnClick,
 } from "@utils/neo4j/index";
-import { SaveIcon as SaveIconFillIcon, TrashIcon } from "@heroicons/react/solid";
-import { useSession } from "next-auth/react";
+import { SaveIcon, TrashIcon } from "@heroicons/react/solid";
 import agent from "@utils/common";
 import { useStore } from "@stores/index";
 import { LoginModal } from "../common/AuthModals";
@@ -36,7 +31,6 @@ function ListItemComponent({
   onlyDisplay
 }: Props) {
   const router = useRouter();
-  const { data: session } = useSession();
   const { authStore, modalStore, listFeedStore } = useStore();
   const { currentSessionUser } = authStore;
   const { closeModal, showModal } = modalStore;
@@ -56,18 +50,19 @@ function ListItemComponent({
   const listInfo = listToDisplay.list;
   const founder = listToDisplay.savedBy;
 
-  const checkUserIsLoggedInBeforeUpdatingTweet = async (
+  const checkUserIsLoggedInBeforeUpdatingList = async (
     callback: () => Promise<void>
   ) => {
-    if (session && session.user && !(session.user as any)['id']) return showModal(<LoginModal />);
+    if (!currentSessionUser) 
+      return showModal(<LoginModal />);
 
     await callback();
   };
 
   useLayoutEffect(() => {
     //If any of the bookmarks are not undefined, that means
-    if (session && session.user && (session.user as any)['id']) {
-      const savedLists = session?.user ? (session.user as any)["savedLists"] : [];
+    if (currentSessionUser) {
+      const savedLists: any[] = [];
 
       const listAlreadySaved =
         savedLists?.some((listSavedById: string) => listSavedById === listToDisplay.list.id) ?? false;
@@ -77,7 +72,7 @@ function ListItemComponent({
         commented: false,
       };
     }
-  }, [session]);
+  }, [currentSessionUser]);
 
   const navigateToTweetUser = (username: string) => {
     router.push(`users/${username}`);
@@ -90,7 +85,7 @@ function ListItemComponent({
   const onIsAlreadySaved = async () => {
     const beforeUpdate = isAlreadySaved;
     try {
-      await checkUserIsLoggedInBeforeUpdatingTweet(async () => {
+      await checkUserIsLoggedInBeforeUpdatingList(async () => {
         setIsAlraedySaved(!isAlreadySaved);
         await agent.mutatePostApiClient.likePost({
           statusId: listToDisplay.list.id,
@@ -103,7 +98,7 @@ function ListItemComponent({
     }
   };
 
-  const userId = useMemo(() => session && session.user ? (session.user as any)['id'] : "", [session]);
+  const userId = useMemo(() => currentSessionUser ? currentSessionUser.id : "", [currentSessionUser]);
 
   const moreOptions = useMemo(() => {
     const defaultOpts = [];

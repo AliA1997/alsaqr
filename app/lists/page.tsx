@@ -1,22 +1,27 @@
 "use client";
-import React from "react";
+import React, { useEffect, useState } from "react";
 import dynamic from 'next/dynamic';
-// import { useGetSession } from "hooks/useGetSession";
-// import { FeedContainer } from "@components/shared/Feed";
-// import { NoRecordsTitle, PageTitle } from "@components/common/Titles";
-
-// import TweetBox from "@components/posts/PostBox";
-import { FilterKeys } from "@stores/index";
-// import ListItemComponent from "@components/list/ListItem";
-// import { ContentContainer, ContentContainerWithRef } from "@components/common/Containers";
-// import { listApiClient } from "@utils/listsApiClient";
+import { FilterKeys, useStore } from "@stores/index";
 import { observer } from "mobx-react-lite";
-// import ListOrCommunityBox from "@components/ListOrCommunityBox";
-// import { CommonUpsertBoxTypes } from "@typings";
-// import { useSession } from "next-auth/react";
+import CustomPageLoader from "@components/common/CustomLoader";
 const ListOrCommunityFeed = dynamic(() => import("@components/shared/ListOrCommunityFeed"), { ssr: false });
-// import ListOrCommunityFeed from "@components/shared/ListOrCommunityFeed";
+
 
 export default observer(function ListsPage() {
-  return <ListOrCommunityFeed filterKey={FilterKeys.Lists} title="Lists" />;
+  const { listFeedStore } = useStore();
+  const [mounted, setMounted] = useState<boolean>(false);
+  const { loadingInitial } = listFeedStore;
+
+  useEffect(() => {
+    setMounted(true);
+
+    return () => {
+      setMounted(false);
+    };
+  }, []);
+
+  if(!loadingInitial && mounted)
+    return <ListOrCommunityFeed filterKey={FilterKeys.Lists} title="Lists" />;
+  
+  return <CustomPageLoader title="Loading..." />
 });

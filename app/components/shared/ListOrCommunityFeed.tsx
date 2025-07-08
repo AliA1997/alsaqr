@@ -1,5 +1,5 @@
 "use client";
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef } from "react";
 import { 
   CommonUpsertBoxTypes,
 } from 'models/enums';
@@ -8,33 +8,23 @@ import type {
   ListToDisplay,
 } from "@typings";
 import dynamic from 'next/dynamic';
-// import toast from "react-hot-toast";
+import { convertQueryStringToObject } from "@utils/neo4j";
 
-import { useSession } from "next-auth/react";
-import { useSearchParams } from "next/navigation";
-import { convertQueryStringToObject, Params } from "@utils/neo4j";
-// import CustomPageLoader from "../common/CustomLoader";
-const CustomPageLoader = dynamic(() => import("../common/CustomLoader"), { ssr: false });
 import { observer } from "mobx-react-lite";
 import { FilterKeys, useStore } from "stores";
+import { PagingParams } from "models/common";
+
+const CustomPageLoader = dynamic(() => import("../common/CustomLoader"), { ssr: false });
 const NoRecordsTitle = dynamic(() => import("../common/Titles").then(mod => mod.NoRecordsTitle), { ssr: false });
 const PageTitle = dynamic(() => import("../common/Titles").then(mod => mod.PageTitle), { ssr: false });
 const ContentContainerWithRef = dynamic(() => import("../common/Containers").then(mod => mod.ContentContainerWithRef), { ssr: false });
 
-// import { NoRecordsTitle, PageTitle } from "../common/Titles";
-// import { ContentContainerWithRef } from "../common/Containers";
-import { PagingParams } from "models/common";
-// import ListOrCommunityBox from "./ListOrCommunityBox";
-// import ListItemComponent from "../list/ListItem";
 const ListItemComponent = dynamic(() => import("../list/ListItem"), { ssr: false });
 const CommunityItemComponent = dynamic(() => import("../community/CommunityItem"), { ssr: false });
 const ListOrCommunityUpsertModal = dynamic(() => import("../common/ListOrCommunityUpsertModal"), { ssr: false });
 const CommunityDiscussionItemComponent = dynamic(() => import("@components/community/CommunityDiscussionItem"), { ssr: false });
 
-// import CommunityItemComponent from "../community/CommunityItem";
-// import ListOrCommunityUpsertModal from "../common/ListOrCommunityUpsertModal";
 import type { CommunityDiscussionToDisplay } from "models/community";
-// import CommunityDiscussionItemComponent from "@components/community/CommunityDiscussionItem";
 
 interface Props {
   title?: string;
@@ -42,17 +32,7 @@ interface Props {
   communityId?: string;
 }
 
-function FeedContainer({ children }: React.PropsWithChildren<any>) {
-  return (
-    <div className="col-span-7 scrollbar-hide border-x max-h-screen overflow-scroll lg:col-span-5 dark:border-gray-800">
-      {children}
-    </div>
-  );
-}
-
-
 const ListOrCommunityFeed = observer(({ title, filterKey, communityId }: Props) => {
-  const searchParams = useSearchParams();
   const { authStore, modalStore, listFeedStore, communityDiscussionFeedStore, communityFeedStore } = useStore();
   const { currentSessionUser } = authStore;
   const containerRef = useRef(null);

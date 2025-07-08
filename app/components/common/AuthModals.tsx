@@ -1,10 +1,9 @@
 import { ModalBody, ModalPortal } from "@components/common/Modal";
 import { FilterKeys, useStore } from "@stores/index";
-import { ROUTES_USER_CANT_ACCESS } from "@utils/constants";
 import { Formik, FormikErrors } from "formik";
 import { motion } from "framer-motion";
 import { observer } from "mobx-react-lite";
-import { signIn, useSession } from "next-auth/react";
+import { signIn } from "next-auth/react";
 import Image from "next/image";
 import { useCallback, useMemo } from "react";
 import { CommonUpsertBoxTypes, User, UserItemToDisplay, UserRegisterForm } from "typings.d";
@@ -17,8 +16,9 @@ import { ProfileImagePreview } from "./Containers";
 export const LoginModal = observer(() => {
   const { modalStore } = useStore();
   const { closeModal } = modalStore;
+  const handleDiscordSignIn = () => signIn('discord')
   const handleGoogleSignIn = () => signIn("google");
-  const { data: session } = useSession();
+  const handleFacebookSignIn = () => signIn('facebook');
 
   return (
     <ModalPortal>
@@ -28,23 +28,62 @@ export const LoginModal = observer(() => {
           closeModal();
 
       }}>
-        <button
-          className={`
-                flex items-center p-3 border rounded-lg font-medium 
-                text-gray-600 border-gray-300 hover:bg-gray-100 hover:text-gray-800
-                dark:text-gray-200 dark:border-gray-600 dark:hover:bg-gray-700 dark:hover:text-white
-              `}
-          onClick={handleGoogleSignIn}
-        >
-          <Image
-            src="/google-icon.svg"
-            height={20}
-            width={20}
-            alt="Google Social Button Icon"
-            className="mr-2"
-          />
-          Sign in with Google
-        </button>
+        <div className='flex flex-col justify-center'>
+          <button
+            className={`
+                  flex items-center p-3 border rounded-lg font-medium 
+                  text-gray-600 border-gray-300 hover:bg-gray-100 hover:text-gray-800
+                  dark:text-gray-200 dark:border-gray-600 dark:hover:bg-gray-700 dark:hover:text-white
+                `}
+            onClick={handleGoogleSignIn}
+          >
+            <Image
+              src="/google-icon.svg"
+              height={30}
+              width={30}
+              alt="Google Social Button Icon"
+              className="mr-2"
+            />
+            Sign in with Google
+          </button>
+
+          <button
+            className={`
+                  flex items-center p-3 border rounded-lg font-medium 
+                  text-gray-600 border-gray-300 hover:bg-gray-100 hover:text-gray-800
+                  dark:text-gray-200 dark:border-gray-600 dark:hover:bg-gray-700 dark:hover:text-white
+                `}
+            onClick={handleFacebookSignIn}
+          >
+            <Image
+              src="/facebook-icon.svg"
+              height={30}
+              width={30}
+              alt="Facebook Social Button Icon"
+              className="mr-2"
+            />
+            Sign in with Facebook
+          </button>
+          
+          <button
+            className={`
+                  flex items-center p-3 border rounded-lg font-medium 
+                  text-gray-600 border-gray-300 hover:bg-gray-100 hover:text-gray-800
+                  dark:text-gray-200 dark:border-gray-600 dark:hover:bg-gray-700 dark:hover:text-white
+                `}
+            onClick={handleDiscordSignIn}
+          >
+            <Image
+              src="/discord-icon.svg"
+              height={30}
+              width={30}
+              alt="Discord Social Button Icon"
+              className="mr-2"
+            />
+            Sign in with Discord
+          </button>
+        </div>
+
       </ModalBody>
     </ModalPortal>
   );
@@ -135,18 +174,10 @@ export const  RegisterModal = observer(({ userInfo }: RegisterModalProps) => {
                   />
 
                 {currentStepInUserRegistration === 0 && (
-                  <PersonalInfoFormInputs 
-                    avatar={values.avatar} 
-                    bgThumbnail={values.bgThumbnail} 
-                    username={values.username}
-                  />
+                  <PersonalInfoFormInputs />
                 )}
                 {currentStepInUserRegistration === 1 && (
-                  <HobbiesAndOptionalInfoFormInputs
-                    avatar={values.avatar} 
-                    bgThumbnail={values.bgThumbnail} 
-                    username={values.username}
-                  />
+                  <HobbiesAndOptionalInfoFormInputs />
                 )}
                 {currentStepInUserRegistration === 2 && (
                     <UsersFeed

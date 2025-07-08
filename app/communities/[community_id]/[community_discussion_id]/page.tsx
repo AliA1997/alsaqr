@@ -3,7 +3,8 @@ import React, { useEffect, useMemo, useState } from "react";
 
 import { observer } from "mobx-react-lite";
 import CommunityDiscussionMessageRoom from "@components/community/CommunityDiscussionMessageRoom";
-import { useSession } from "next-auth/react";
+import { useStore } from "@stores/index";
+import CustomPageLoader from "@components/common/CustomLoader";
 
 interface CommunityDiscussionForumPageProps {
   params: {
@@ -13,25 +14,31 @@ interface CommunityDiscussionForumPageProps {
 }
 
 const CommunityDiscussionForumPage = ({ params }: CommunityDiscussionForumPageProps) => {
-    const {data:session} = useSession();
+    const [mounted, setMounted] = useState<boolean>(false);
+    const {authStore} = useStore();
+    const { currentSessionUser } = authStore;
+
+    useEffect(() => {
+      setMounted(true);
+
+      () => {
+        setMounted(false);
+      }
+    }, [])
     
-    if(session && session.user)
+    if(currentSessionUser)
       return <CommunityDiscussionMessageRoom 
-                loggedInUser={session?.user!}
+                loggedInUser={currentSessionUser!}
                 communityDiscussionId={params.community_discussion_id}
                 communityId={params.community_id}
               />
-    else
+    else if(mounted)
       return  (
         <div>You need to be logged in to access this chat.</div>
       );
-//   return (
-//     <ListOrCommunityFeed 
-//         filterKey={FilterKeys.CommunityDiscussion}
-//         title="Community Discussions"
-//         communityId={params.community_discussion_id}
-//     />
-//   );
+    else
+      return <CustomPageLoader title="Loading..." />
+
 };
 
 

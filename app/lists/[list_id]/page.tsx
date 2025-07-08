@@ -1,15 +1,10 @@
 'use client';
-import dynamic from "next/dynamic";
-import React, { Suspense, useEffect, useMemo, useRef, useState } from "react";
-const TweetComponent = dynamic(() => import("../../components/posts/Post"), {
-  ssr: false,
-});
+import React, { useEffect, useState } from "react";
+
 import { observer } from "mobx-react-lite";
-import { useStore } from "@stores/index";
-import { ContentContainerWithRef } from "@components/common/Containers";
-import CustomPageLoader from "@components/common/CustomLoader";
-import { useSession } from "next-auth/react";
 import SavedListItemsFeed from "@components/list/SavedListItemsFeed";
+import { useStore } from "@stores/index";
+import CustomPageLoader from "@components/common/CustomLoader";
 
 interface ListPageProps {
   params: {
@@ -18,9 +13,23 @@ interface ListPageProps {
 }
 
 const ListPage = ({ params }: ListPageProps) => {
-  return (
-    <SavedListItemsFeed listId={params.list_id} />
-  );
+  const { listFeedStore } = useStore();
+  const { loadingListItems } = listFeedStore
+  const [mounted, setMounted] = useState<boolean>(false);
+  useEffect(() => {
+    setMounted(true);
+
+    return () => {
+      setMounted(false);
+    }
+  }, []);
+
+  if(!loadingListItems && mounted)
+    return (
+      <SavedListItemsFeed listId={params.list_id} />
+    );
+  
+  return <CustomPageLoader title="Loading..." />
 };
 
 

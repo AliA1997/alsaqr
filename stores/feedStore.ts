@@ -176,7 +176,7 @@ export default class FeedStore {
         this.setLoadingPost(true);
         try {
             const {post} = await agent.postApiClient.getPost(postId) ?? {};
-            console.log('loaded Post:', JSON.stringify(post));
+
             runInAction(() => {
                 this.setLoadedPost(post);
             });

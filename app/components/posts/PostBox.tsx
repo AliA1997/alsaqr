@@ -4,11 +4,9 @@ import { motion } from "framer-motion";
 import NextImage from 'next/image';
 import toast from "react-hot-toast";
 
-import { ListRecord,  PostRecord } from "../../../typings";
-import { useSession } from "next-auth/react";
+import {  PostRecord } from "../../../typings";
 import {
-  defaultSearchParams,
-  getEmailUsername,
+  defaultSearchParams
 } from "@utils/neo4j/index";
 import Picker from "@emoji-mart/react";
 import emojiData from "@emoji-mart/data";
@@ -23,22 +21,19 @@ import FeedStore from "@stores/feedStore";
 import ListFeedStore from "@stores/listFeedStore";
 import CommunityFeedStore from "@stores/communityFeedStore";
 import agent from "@utils/common";
-import { MultiSelect } from "@components/common/MultiSelect";
-import { TAG_OPTIONS } from "@utils/tagOptions";
 
 interface Props {
   filterKey: FilterKeys;
 }
 
 function PostBox({ filterKey }: Props) {
-  const { data: session } = useSession();
-
+  const { authStore, exploreStore,  feedStore, listFeedStore, communityFeedStore } = useStore();
+  const { currentSessionUser } = authStore;
   const [input, setInput] = useState<string>("");
   const [image, setImage] = useState<string>("");
   const [hashtags, setHashtags] = useState<string[]>([]);
   const [showEmojiPicker, setShowEmojiPicker] = useState<boolean>(false);
 
-  const { exploreStore,  feedStore, listFeedStore, communityFeedStore } = useStore();
 
   const storeToUse: ExploreStore | FeedStore | ListFeedStore | CommunityFeedStore = useMemo(
     () => {
@@ -103,7 +98,7 @@ function PostBox({ filterKey }: Props) {
       blockTweet: true,
       text: input,
       image: image,
-      userId: session?.user.id,
+      userId: currentSessionUser?.id,
       tags: hashtags ?? []
       // username: getEmailUsername(session!.user?.email!)!,
       // profileImg: session!.user?.image!,
@@ -161,7 +156,7 @@ function PostBox({ filterKey }: Props) {
     >
       <img
         className="h-14 w-14 rounded-full object-cover mt-4"
-        src={(session?.user ?? {}).image ?? ""}
+        src={currentSessionUser?.avatar ?? ""}
         alt=""
       />
       <div className="flex flex-1 item-center pl-2">

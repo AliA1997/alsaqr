@@ -1,26 +1,16 @@
 import { FieldHelperProps } from "formik";
 import { observer } from "mobx-react-lite";
-import { useSession } from "next-auth/react";
-import { useCallback, useMemo } from "react";
+import { useCallback } from "react";
 import { FileUploadInput, MyDatePicker, MyInput } from "./Inputs";
 import { MultiSelect } from "./MultiSelect";
 import { RadioCard } from "./RadioBoxes";
 import { HOBBIES_OPTIONS, MARITAL_STATUS_OPTIONS, RELIGION_OPTIONS } from "@utils/constants";
 import { Select } from "./Select";
 import { COUNTRY_OPTIONS } from "@utils/countriesOptions";
-import { ProfileImagePreview } from "./Containers";
 
-interface PersonalInfoFormInputsProps {
-    avatar: string;
-    bgThumbnail: string;
-    username: string;
-}
+interface PersonalInfoFormInputsProps {}
 
-export const PersonalInfoFormInputs = observer(({ avatar, bgThumbnail, username }: PersonalInfoFormInputsProps) => {
-
-    const { data: session } = useSession();
-    const { user } = session ?? {};
-    const userId = useMemo(() => user ? (user as any)["id"] : "", [session]);
+export const PersonalInfoFormInputs = observer(({}: PersonalInfoFormInputsProps) => {
 
     const handleFileChange = useCallback(
         (event: React.ChangeEvent<HTMLInputElement>, helpers: FieldHelperProps<any>) => {
@@ -98,17 +88,9 @@ export const PersonalInfoFormInputs = observer(({ avatar, bgThumbnail, username 
 
 
 
-interface HobbiesAndOptionalInfoFormInputsProps {
-    avatar: string;
-    bgThumbnail: string;
-    username: string;
-}
+interface HobbiesAndOptionalInfoFormInputsProps {}
 
-export const HobbiesAndOptionalInfoFormInputs = observer(({ avatar, bgThumbnail, username }: HobbiesAndOptionalInfoFormInputsProps) => {
-
-    const { data: session } = useSession();
-    const { user } = session ?? {};
-
+export const HobbiesAndOptionalInfoFormInputs = observer(({}: HobbiesAndOptionalInfoFormInputsProps) => {
 
     return (
         <>

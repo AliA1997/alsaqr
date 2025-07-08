@@ -137,7 +137,7 @@ export default class CommunityFeedStore {
         this.setLoadingInitial(true);
         try {
             const { result } = await agent.communityApiClient.getCommunities(this.axiosParams, userId) ?? [];
-            console.log("FUCK YOU RESULT:", result);
+
             runInAction(() => {
                 result.data.forEach((community: CommunityToDisplay) => {
                     this.setCommunity(community.community.id, community)
