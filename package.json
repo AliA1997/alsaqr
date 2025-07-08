@@ -45,7 +45,7 @@
     "react-timeago": "^7.1.0",
     "react-to-pdf": "^2.0.1",
     "react-virtualized": "^9.22.5",
-    "tailwind-scrollbar": "^2.0.1",
+    "tailwind-scrollbar": "^3.1.0",
     "tailwind-scrollbar-hide": "^1.1.7",
     "universal-cookie": "^7.2.2",
     "yup": "^1.6.1"
