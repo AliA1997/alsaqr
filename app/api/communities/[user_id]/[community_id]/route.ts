@@ -30,19 +30,25 @@ async function GET_COMMUNITY_INFO(
       WITH community, founder,
      EXISTS((community)-[:COMMUNITY_FOUNDER]->(:User {id: $userId})) AS isFounder
 
+     // Get the invite requested users
+     OPTIONAL MATCH (community)-[:INVITE_REQUESTED]->(inviteRequestedByUser:User)
+      WITH community, founder, isFounder as isFounder, 
+          COLLECT(DISTINCT inviteRequestedByUser) AS inviteRequestedUsers
+
       // Count invited users
       OPTIONAL MATCH (community)-[:INVITED]->(invitedUser:User)
-      WITH community, founder, isFounder as isFounder, 
+      WITH community, founder, isFounder as isFounder, inviteRequestedUsers,
           COUNT(DISTINCT invitedUser) AS invitedCount
 
       // Count joined users
       OPTIONAL MATCH (joinedUser:User)-[:JOINED]->(community)
-      WITH community, founder, isFounder as isFounder, invitedCount,
+      WITH community, founder, isFounder as isFounder, inviteRequestedUsers, invitedCount,
           COUNT(DISTINCT joinedUser) AS joinedCount
 
       RETURN community,
         isFounder,
         founder,
+        inviteRequestedUsers,
         invitedCount,
         joinedCount
     `;
@@ -53,10 +59,11 @@ async function GET_COMMUNITY_INFO(
         userId,
         communityId
       },
-      ["community", "isFounder", "founder", "invitedCount", "joinedCount"]
+      ["community", "isFounder", "founder", "inviteRequestedUsers", "invitedCount", "joinedCount"]
     );
 
     adminCommunityInfo = results && results.length ? results[0] : undefined;
+    console.log('adminCommunityInfo:', adminCommunityInfo)
 
   } catch (err) {
     return NextResponse.json({ message: "Fetch communities error!", success: false });

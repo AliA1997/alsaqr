@@ -1,8 +1,8 @@
 import { makeAutoObservable, reaction, runInAction } from "mobx";
-import type { CreateListOrCommunityForm, CreateListOrCommunityFormDto } from "../typings.d";
+import { CreateListOrCommunityForm, CreateListOrCommunityFormDto, RelationshipType } from "../typings.d";
 import { Pagination, PagingParams } from "models/common";
 import agent from "@utils/common";
-import type { CommunityDiscussionToDisplay } from "models/community";
+import type { AcceptOrDenyCommunityInviteConfirmationDto, CommunityDiscussionToDisplay } from "models/community";
 import { DEFAULT_CREATED_LIST_OR_COMMUNITY_FORM } from "@utils/constants";
 import { store } from ".";
 
@@ -19,7 +19,7 @@ export default class CommunityDiscussionFeedStore {
         );
     }
 
-
+    loadingJoinCommunityDiscussion = false;
     loadingInitial = false;
     loadingUpsert = false;
     predicate = new Map();
@@ -61,7 +61,13 @@ export default class CommunityDiscussionFeedStore {
     setCommunityDiscussion = (communityDiscussionId: string, communityDiscussion: CommunityDiscussionToDisplay) => {
         this.communityDiscussionsRegistry.set(communityDiscussionId, communityDiscussion);
     }
-
+    private updateCommunityDiscussionRelationship = (communityId: string, newStatus: RelationshipType) => {
+        if(this.communityDiscussionsRegistry.has(communityId)) {
+            const communityDiscussionInfo = this.communityDiscussionsRegistry.get(communityId);
+            communityDiscussionInfo!.relationshipType = newStatus;
+            this.setCommunityDiscussion(communityId, communityDiscussionInfo!);
+        }
+    }
     resetListsState = () => {
         this.predicate.clear();
         this.communityDiscussionsRegistry.clear();
@@ -75,6 +81,92 @@ export default class CommunityDiscussionFeedStore {
 
         return params;
     }
+    setLoadingJoinCommunityDiscussion = (val: boolean) => {
+        this.loadingJoinCommunityDiscussion = val;
+    }
+
+
+    unjoinPublicCommunityDiscussion = async (communityId: string, communityDiscussionId: string) => {
+
+        this.setLoadingJoinCommunityDiscussion(true);
+        try {
+            const authUserSession = store.authStore.currentSessionUser;
+            const userId = authUserSession?.id ?? "";
+            const joinCommunityDto = {
+                username: authUserSession?.username ?? "",
+                email: authUserSession?.email ?? "",
+            }
+            await agent.communityApiClient.unjoinCommunity(joinCommunityDto, userId, communityId)
+
+            runInAction(() => {
+                this.updateCommunityDiscussionRelationship(communityDiscussionId, RelationshipType.None);
+            });
+        } finally {
+            this.setLoadingJoinCommunityDiscussion(false);
+        }
+
+    }
+    joinPublicCommunityDiscussion = async (communityId: string, communityDiscussionId: string) => {
+
+        this.setLoadingJoinCommunityDiscussion(true);
+        try {
+            const authUserSession = store.authStore.currentSessionUser;
+            const userId = authUserSession?.id ?? "";
+            const joinCommunityDto = {
+                username: authUserSession?.username ?? "",
+                email: authUserSession?.email ?? "",
+            }
+            await agent.communityApiClient.joinCommunity(joinCommunityDto, userId, communityId)
+
+            runInAction(() => {
+                this.updateCommunityDiscussionRelationship(communityDiscussionId, RelationshipType.Joined);
+            });
+        } finally {
+            this.setLoadingJoinCommunityDiscussion(false);
+        }
+
+    }
+    requestToJoinPrivateCommunityDiscussion = async (communityId: string, communityDiscussionId: string) => {
+
+        this.setLoadingJoinCommunityDiscussion(true);
+        try {
+            const authUserSession = store.authStore.currentSessionUser;
+            const userId = authUserSession?.id ?? "";
+            const joinCommunityDto = {
+                username: authUserSession?.username ?? "",
+                email: authUserSession?.email ?? "",
+            }
+            await agent.communityApiClient.requestToJoinCommunity(joinCommunityDto, userId, communityId)
+
+            runInAction(() => {
+                this.updateCommunityDiscussionRelationship(communityDiscussionId, RelationshipType.InviteRequested);
+            });
+        } finally {
+            this.setLoadingJoinCommunityDiscussion(false);
+        }
+
+    }
+    acceptRequestToJoinPrivateCommunityDiscussion = async (
+        communityId: string, 
+        communityDiscussionId: string,
+        invitedUserId: string,
+        acceptToDenyRequest: AcceptOrDenyCommunityInviteConfirmationDto) => {
+
+        this.setLoadingJoinCommunityDiscussion(true);
+        try {
+            const authUserSession = store.authStore.currentSessionUser;
+            const userId = authUserSession?.id ?? "";
+            await agent.communityApiClient.acceptOrDenyToJoinRequestToCommunity(acceptToDenyRequest, invitedUserId, communityId)
+
+            runInAction(async () => {
+                await this.loadCommunityDiscussions(userId, communityId);
+            });
+        } finally {
+            this.setLoadingJoinCommunityDiscussion(false);
+        }
+
+    }
+
 
     addCommunityDiscussion = async (newCommunityDiscussion: CreateListOrCommunityForm, userId: string, communityId: string) => {
 

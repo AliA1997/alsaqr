@@ -24,6 +24,12 @@ export enum NotificationType {
   CommentedPost = 'commented_post',
   NewList = "new_list",
   NewCommunity = "new_community",
+  UnjoinedCommunity = "user_unjoined",
+  JoinedCommunity = "user_joined",
+  RequestJoinCommunity = "user_request_join",
+  UnjoinedCommunityDiscussion = "user_unjoined_discussion",
+  JoinedCommunityDiscussion = "user_joined_discussion",
+  RequestJoinCommunityDiscussion = "user_request_join_discussion",
   NewPost = "new_post",
 }
 
@@ -234,16 +240,25 @@ export interface CommunityRecordToDisplay extends CommunityRecord {
   founderProfileImg: string;
 }
 
+export enum  RelationshipType {
+  Joined = 'JOINED',
+  Invited = 'INVITED',
+  Founder = 'FOUNDER',
+  InviteRequested = 'INVITE_REQUESTED',
+  None = 'NONE'
+};
+
 export interface CommunityToDisplay {
   community: CommunityRecordToDisplay,
   founder: UserInfo,
-  relationshipType: 'JOINED' | 'INVITED' | 'FOUNDER'
+  relationshipType: RelationshipType,
 }
 
 export interface CommunityAdminInfo {
   community: CommunityRecordToDisplay;
   isFounder: boolean;
   founder: UserInfo;
+  inviteRequestedUsers: User[]; 
   invitedCount: number;
   joinedCount: number;
 }
@@ -367,6 +382,7 @@ export interface PostedRelationship {
 export interface CommentedRelationship {
   timestamp: string;
 }
+
 
 
 export interface Neo4jConfig {

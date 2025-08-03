@@ -37,10 +37,24 @@ async function GET_COMMUNITY_DISCUSSIONS(
 
     if(searchTerm){
       selectQuery = `
-          MATCH (community:Community { id: $communityId })-[:DISCUSSION_POSTED]->(communityDiscussion: CommunityDiscussion)
-          WHERE communityDiscussion.name CONTAINS $searchTerm
-          WITH communityDiscussion
-          RETURN communityDiscussion
+        MATCH (user:User {id: $userId})
+        MATCH (community:Community { id: $communityId })-[:DISCUSSION_POSTED]->(communityDiscussion: CommunityDiscussion)
+        OPTIONAL MATCH (communityDiscussion)-[:INVITED_TO_DISCUSSION]->(iUsers: User)
+        OPTIONAL MATCH (communityDiscussion)-[:JOINED_TO_DISCUSSION]->(jUsers: User)
+        // Determine the user's relationship to each community
+        WITH communityDiscussion, iUsers, jUsers,
+            CASE
+              WHEN EXISTS((community)-[:REQUEST_INVITE_TO_DISCUSSION]->(user)) THEN 'INVITE_REQUESTED'
+              WHEN EXISTS((user)-[:CREATED_DISCUSSION]->(communityDiscussion)) THEN 'FOUNDER'
+              WHEN EXISTS((community)-[:INVITED_TO_DISCUSSION]->(user)) THEN 'INVITED'
+              WHEN EXISTS((user)-[:JOINED_TO_DISCUSSION]->(community)) THEN 'JOINED'
+              ELSE 'NONE'
+            END AS relationshipType
+          WITH communityDiscussion,
+              collect(DISTINCT iUsers) as invitedUsers,
+              collect(DISTINCT jUsers) as joinedUsers,
+              relationshipType
+          RETURN communityDiscussion, invitedUsers, joinedUsers, relationshipType
       `;
 
       selectResult = await read(
@@ -48,11 +62,12 @@ async function GET_COMMUNITY_DISCUSSIONS(
         `${selectQuery} ${pagingQuery}`,
         {
           communityId,
+          userId,
           searchTerm: searchTerm ?? "",
           skip: int((currentPageParsed - 1) *  itemsPerPageParsed),
           itemsPerPage: int(itemsPerPageParsed)
         },
-        ["communityDiscussion"]
+        ["communityDiscussion", 'invitedUsers', 'joinedUsers', 'relationshipType']
     );
       
       pagingResult = await read(
@@ -60,35 +75,49 @@ async function GET_COMMUNITY_DISCUSSIONS(
         commonCountCipher(selectQuery, 'communityDiscussion'),
         {
           communityId,
+          userId,
           searchTerm: searchTerm ?? "",
         },
         'total'
       );
     } else {
       selectQuery = `
-          MATCH (community:Community { id: $communityId })-[:DISCUSSION_POSTED]->(communityDiscussion: CommunityDiscussion)
-          OPTIONAL MATCH (cmtyDisc)-[:INVITED_TO_DISCUSSION]->(iUsers: User)
-          OPTIONAL MATCH (cmtyDisc)-[:JOINED_DISCUSSION]->(jUsers: User)
+        MATCH (user:User {id: $userId})
+        MATCH (community:Community { id: $communityId })-[:DISCUSSION_POSTED]->(communityDiscussion: CommunityDiscussion)
+        OPTIONAL MATCH (communityDiscussion)-[:INVITED_TO_DISCUSSION]->(iUsers: User)
+        OPTIONAL MATCH (communityDiscussion)-[:JOINED_TO_DISCUSSION]->(jUsers: User)
+        // Determine the user's relationship to each community
+        WITH communityDiscussion, iUsers, jUsers,
+            CASE
+              WHEN EXISTS((community)-[:REQUEST_INVITE_TO_DISCUSSION]->(user)) THEN 'INVITE_REQUESTED'
+              WHEN EXISTS((user)-[:CREATED_DISCUSSION]->(communityDiscussion)) THEN 'FOUNDER'
+              WHEN EXISTS((community)-[:INVITED_TO_DISCUSSION]->(user)) THEN 'INVITED'
+              WHEN EXISTS((user)-[:JOINED_TO_DISCUSSION]->(community)) THEN 'JOINED'
+              ELSE 'NONE'
+            END AS relationshipType
           WITH communityDiscussion,
               collect(DISTINCT iUsers) as invitedUsers,
-              collect(DISTINCT jUsers) as joinedUsers
-          RETURN communityDiscussion, invitedUsers, joinedUsers
+              collect(DISTINCT jUsers) as joinedUsers,
+              relationshipType
+          RETURN communityDiscussion, invitedUsers, joinedUsers, relationshipType
       `;
       selectResult = await read(
         session,
         `${selectQuery} ${pagingQuery}`,
         {
           communityId,
+          userId,
           skip: int((currentPageParsed - 1) *  itemsPerPageParsed),
           itemsPerPage: int(itemsPerPageParsed)
         },
-        ["communityDiscussion", 'invitedUsers', 'joinedUsers']
+        ["communityDiscussion", 'invitedUsers', 'joinedUsers', 'relationshipType']
       );
 
       pagingResult = await read(
         session,
         commonCountCipher(selectQuery, 'communityDiscussion'),
         {
+          userId,
           communityId
         },
         'total'

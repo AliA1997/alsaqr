@@ -2,7 +2,7 @@
 // user - [:CREATED_DISCUSSION]-> CommunityDiscussion
 // community - [:DISCUSSION_POSTED] -> CommunityDiscussion
 
-import { CommunityRecord, User } from "typings";
+import { CommunityRecord, CommunityRecordToDisplay, RelationshipType, User, UserInfo } from "typings.d";
 
 // communityDiscussion - [:POSTED_DISCUSSION_ON] -> community
 export interface CommunityDiscussion {
@@ -30,6 +30,7 @@ export interface CommunityDiscussionInfoForMessageRoom {
 
 export interface CommunityDiscussionToDisplay {
   communityDiscussion: CommunityDiscussionRecord;
+  relationshipType: RelationshipType;
   invitedUsers: User[];
   joinedUsers: User[];
 }
@@ -77,3 +78,42 @@ export interface UpdateCommunityForm {
 }
 
 export interface UpdateCommunityFormDto extends UpdateCommunityForm {}
+
+// InviteConfirmation
+export interface CommunityInviteConfirmation {
+  _id?: string; 
+  communityId: string;
+  userId: string;
+  username: string;
+  email: string;
+  confirmedAt: Date;
+  accepted?: boolean;
+  denied?: boolean;
+  expiresAt: Date;
+}
+
+export interface CommunityDiscussionInviteConfirmation extends CommunityInviteConfirmation {
+  communityDiscussionId: string;
+}
+
+export interface CommunityInviteConfirmationDto {
+  username: string;
+  email: string;
+}
+
+export interface AcceptOrDenyCommunityInviteConfirmationDto {
+  accept?: boolean;
+  deny?: boolean;
+}
+
+
+
+export interface CommunityDiscussionAdminInfo {
+  community: CommunityRecordToDisplay;
+  communityDiscussion: CommunityDiscussionRecord;
+  isFounder: boolean;
+  founder: UserInfo;
+  inviteRequestedUsers: User[]; 
+  invitedCount: number;
+  joinedCount: number;
+}

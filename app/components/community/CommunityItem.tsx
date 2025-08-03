@@ -1,50 +1,63 @@
 "use client";
 import { useRouter } from "next/navigation";
 import React, {
+  Suspense,
   useLayoutEffect,
+  useMemo,
   useRef,
+  useState,
 } from "react";
 import TimeAgo from "react-timeago";
 
-import type { CommunityToDisplay } from "../../../typings";
+import { RelationshipType, type CommunityToDisplay } from "../../../typings.d";
 import {
   stopPropagationOnClick,
 } from "@utils/neo4j/index";
 import { useStore } from "@stores/index";
 import { convertDateToDisplay } from "@utils/neo4j/neo4j";
 import { TagOrLabel } from "@components/common/Titles";
+import { ButtonLoader } from "@components/common/CustomLoader";
+import { PlusCircleIcon } from "@heroicons/react/outline";
+import { OptimizedImage } from "@components/common/Image";
+import { InfoButton } from "@components/common/Buttons";
 
 interface Props {
   community: CommunityToDisplay;
 }
 
 function CommunityItemComponent({
-  community,
+  community
 }: Props) {
   const router = useRouter();
   const { authStore, communityFeedStore } = useStore();
   const { currentSessionUser } = authStore;
-  const { setNavigateCommunity } = communityFeedStore;
+  const {
+    setNavigateCommunity,
+    loadingJoinCommunity,
+    joinPublicCommunity,
+    unjoinPublicCommunity,
+    requestToJoinPrivateCommunity,
+  } = communityFeedStore;
 
   const initiallyBooleanValues = useRef<{
     joined: boolean;
-    commented: boolean;
   }>({
     joined: false,
-    commented: false,
   });
 
   const communityInfo = community.community;
+  const userId = useMemo(() => currentSessionUser?.id ?? '', [currentSessionUser]);
+  const [submitting, setSubmitting] = useState<boolean>(false);
+  const [joined, setJoined] = useState<boolean>(false);
 
   useLayoutEffect(() => {
-    if (currentSessionUser?.id) {
+    if (userId) {
       const joinedCommunities = currentSessionUser ? (currentSessionUser as any)["joinedCommunities"] : [];
 
       const alreadyJoined = joinedCommunities?.some((listSavedById: string) => listSavedById === community.community.id) ?? false;
 
       initiallyBooleanValues.current = {
-        joined: alreadyJoined,
-        commented: false,
+        joined: alreadyJoined
       };
     }
   }, [currentSessionUser]);
@@ -54,6 +67,14 @@ function CommunityItemComponent({
     router.push(`communities/${communityInfo.id}`);
   };
 
+  const hasToRequestPermissionToJoin = useMemo(() => {
+    return (community.community.isPrivate && community.relationshipType === RelationshipType.None)
+  }, [community.relationshipType])
+  const hasToJoin = useMemo(() => community.relationshipType === RelationshipType.None, [community.relationshipType]);
+  const requestedInvite = useMemo(() => community.relationshipType === RelationshipType.InviteRequested, [community.relationshipType]);
+  const canUnJoin = useMemo(() => community.relationshipType === RelationshipType.Joined || joined, [community.relationshipType, joined]);
+
+  console.log('community:', community.relationshipType)
   return (
     <>
       <div
@@ -62,20 +83,16 @@ function CommunityItemComponent({
           hover:shadow-lg dark:border-gray-800 dark:hover:bg-[#000000] rounded-full 
           p-2 hover:shadow-lg dark:border-gray-800 dark:hover:bg-[#0e1517] rounded-full
           w-full       /* Full width on mobile */
-          md:w-[20vw] 
-          lg:w-[48%]
+          md:w-[23vw] 
+          lg:w-[49%]
           3xl:w-[30%]
-          h-[6em]
-          cursor-pointer
+          h-[7.5rem]
         `}
-        onClick={navigateToCommunity}
       >
-        <div className="absolute m-0 inset-0"></div>
-        <div className="flex flex-col justify-between h-full space-x-3 cursor-pointer">
+        <div className="flex flex-col justify-between h-full space-x-3">
           <div className="flex item-center justify-between space-x-1">
-            <div className='flex'>
-              <img
-                className="h-10 w-10 rounded-full object-cover "
+            <div className='flex  hover:underline cursor-pointer'>
+              <OptimizedImage
                 src={communityInfo.avatar}
                 alt={communityInfo.name}
                 onClick={(e) => stopPropagationOnClick(e, navigateToCommunity)}
@@ -94,17 +111,63 @@ function CommunityItemComponent({
           </div>
           <TagOrLabel
             color={
-              community.relationshipType === 'FOUNDER' ? 'gold'
-                : community.relationshipType === 'INVITED' ? 'success'
-                  : community.relationshipType === 'JOINED' ? 'primary'
-                    : 'info'
+              community.relationshipType === RelationshipType.Founder ? 'gold'
+                : community.relationshipType === RelationshipType.Invited ? 'success'
+                  : community.relationshipType === RelationshipType.Joined ? 'primary'
+                    : community.relationshipType === RelationshipType.InviteRequested ? 'secondary'
+                      : 'neutral'
             }
             size="sm"
             className='mt-[-1rem] min-w-[3rem] max-w-fit self-end'
           >
-            {community.relationshipType}
+            {requestedInvite ? 'PENDING REQUEST TO JOIN' : community.relationshipType}
+          </TagOrLabel>
+          <TagOrLabel
+            color={community.community.isPrivate ? 'danger' : 'info'}
+            size="sm"
+            className='mt-[0.5rem] min-w-[3rem] max-w-fit self-end'
+          >
+            {community.community.isPrivate ? 'Private' : 'Public'}
           </TagOrLabel>
         </div>
+        {(hasToJoin || canUnJoin) && (
+          <div className="flex absolute top-[4.5rem] left-[4rem] justify-center h-full space-x-3 z-[100]">
+            <InfoButton
+              disabled={submitting}
+              onClick={async (e: any) => {
+                e.stopPropagation();
+                setSubmitting(true);
+                if (hasToRequestPermissionToJoin) {
+                  await requestToJoinPrivateCommunity(community.community.id);
+                }
+                else if (canUnJoin) {
+                  await unjoinPublicCommunity(community.community.id);
+                  setJoined(false);
+                }
+                else {
+                  await joinPublicCommunity(community.community.id);
+                  setJoined(true);
+                }
+                setSubmitting(false);
+              }}
+              classNames="px-0 cursor-default"
+            >
+              {submitting ? (
+                <ButtonLoader />
+              ) : (
+                <p className={`
+                  flex
+                  min-w-[4rem] max-w-[12rem] cursor-pointer hover:underline ${canUnJoin ? 'hover:text-red-400' : 'hover:text-maydan'}
+                `}>
+                  <span className={`mt-1 text-inherit`}>
+                    {canUnJoin ? 'Leave' : hasToRequestPermissionToJoin ? 'Request to Join' : 'Join'}
+                  </span>
+                  {!canUnJoin && <PlusCircleIcon className="ml-0 h-[1.5rem] w-[1.5rem] py-1" />}
+                </p>
+              )}
+            </InfoButton>
+          </div>
+        )}
       </div>
     </>
   );

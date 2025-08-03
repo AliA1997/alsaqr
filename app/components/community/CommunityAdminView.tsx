@@ -4,7 +4,8 @@ import dynamic from 'next/dynamic';
 import { observer } from "mobx-react-lite";
 import type { CommunityAdminInfo } from "typings";
 import { convertDateToDisplay } from "@utils/neo4j/neo4j";
-import { useStore } from "@stores/index";
+import { FilterKeys, useStore } from "@stores/index";
+import RequestedInvitesModal from "@components/common/RequestedInvitesModal";
 const InfoCardContainer = dynamic(() => import( "@components/common/Containers").then(mod => mod.InfoCardContainer), { ssr: false });
 const TagOrLabel = dynamic(() => import("@components/common/Titles").then(mod => mod.TagOrLabel), { ssr: false });
 const CommonLink = dynamic(() => import("@components/common/Links").then(mod => mod.CommonLink), { ssr: false });
@@ -75,6 +76,39 @@ function CommunityAdminView({
                             {communityAdminInfo.joinedCount}
                         </h1>
                     </InfoCardContainer>
+                    {communityAdminInfo.community.isPrivate && (
+                        <InfoCardContainer>
+                            <p className='absolute left-0 top-0 w-full text-center text-sm text-gray-700 dark:text-gray-100'>Pending Invites:</p>
+                            <h1 className='w-full text-center text-3xl'>
+                                {communityAdminInfo.inviteRequestedUsers?.length ?? 0}
+                            </h1>
+                            <button
+                                type='button'
+                                onClick={async (e) => {
+                                    e.stopPropagation();
+                                    showModal(
+                                        <RequestedInvitesModal
+                                            invitedUsers={communityAdminInfo.inviteRequestedUsers}
+                                            title="Pending Invite Requests"
+                                            filterKey={FilterKeys.Community}
+                                            entityInvitedToId={communityAdminInfo.community.id}
+                                        />
+                                    );
+                                }}
+                                className={`
+                                min-w-[4rem] max-w-[12rem] max-h-[3rem] border px-3 py-1 
+                                font-bold 
+                                text-gray-900
+                                dark:text-white 
+                                hover:text-maydan
+                                hover:opacity-90
+                                disabled:opacity-40
+                                text-xs
+                                flex
+                                `}
+                            >Accept Or Deny Invites</button>
+                        </InfoCardContainer>
+                    )}
                     <InfoCardContainer>
                         <p className='absolute left-0 top-0 w-full text-center text-sm text-gray-700 dark:text-gray-100'>Created on: </p>
                         <h1 className='w-full text-center mt-2'>

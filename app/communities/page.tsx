@@ -6,7 +6,7 @@ const ListOrCommunityFeed = dynamic(() => import("@components/shared/ListOrCommu
 import { FilterKeys } from "@stores/index";
 
 function CommunitiesPage() {
-
+  
   return <ListOrCommunityFeed filterKey={FilterKeys.Community} title="Communities" />
 }
 

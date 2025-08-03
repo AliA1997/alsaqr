@@ -32,13 +32,14 @@ import { SettingsTabs } from "models/enums";
 import { useCheckSession } from "hooks/useCheckSession";
 import { User } from "typings";
 import { useSession } from "next-auth/react";
+import { OptimizedImage } from "@components/common/Image";
 
 type SideBarProps = {};
 
 const SideBar = ({}: SideBarProps) => {
   const router = useRouter();
   const pathname = usePathname();
-  const { data:session } = useSession();
+  const { status } = useSession();
   
   const [mounted, setMounted] = useState<boolean>(false);
 
@@ -79,7 +80,7 @@ const SideBar = ({}: SideBarProps) => {
 
   }, [currentSessionUser?.id, mounted]);
 
-  const notLoggedIn = useMemo(() => mounted && !currentSessionUser, [currentSessionUser, mounted]);
+  const notLoggedIn = useMemo(() => mounted && status !== "authenticated", [status, mounted]);
 
   const hideSidebar = useMemo(() => ROUTE_TO_SHOW_SETTINGS_SIDEBAR === pathname, [pathname]);
 
@@ -167,11 +168,10 @@ const SideBar = ({}: SideBarProps) => {
                           transition-all duration-200 hover:bg-gray-100 dark:hover:bg-gray-600 mb-1 mt-1 
                         `}
                       >
-                        <img
-                          className="m-0 mt-3 w-full h-full md:h-14 md:w-14 rounded-full"
+                        <OptimizedImage
+                          classNames="m-0 mt-3 w-full h-full md:h-14 md:w-14 rounded-full"
                           src={currentSessionUser?.avatar ?? ''}
                           alt="Avatar"
-                          loading="lazy"
                         />
                         {/* <div className="flex flex-col justify-center  p-3 opacity-50 text-xs sm:text-sm lg:text-md"> */}
                         <div className="flex flex-col display-none md:display-initial hidden group-hover:text-maydan md:inline-flex text-base font-light text-xs lg:text-sm">

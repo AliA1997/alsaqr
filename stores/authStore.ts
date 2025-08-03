@@ -1,3 +1,4 @@
+import Auth from '@utils/auth';
 import agent from '@utils/common';
 import { DEFAULT_USER_REGISTRATION_FORM } from '@utils/constants';
 import { makeAutoObservable, runInAction } from 'mobx';
@@ -6,10 +7,22 @@ import { User, UserRegisterForm, UserRegisterFormDto } from 'typings';
 
 export default class AuthStore {
   currentSessionUser: User | undefined = undefined;
-
+  auth: Auth | undefined = undefined;
   constructor() {
+    this.auth = new Auth();
     makeAutoObservable(this);
   }
+  // initializeFromStorage = async () => {
+  //   if (!this.auth)
+  //     this.auth = new Auth();
+
+  //   const token = this.auth?.getToken();
+  //   if (token) {
+  //     this.setUserSessionToken(token);
+  //     this.setCurrentSessionUser(loggedInUser);
+  //     console.log("Found existing session token");
+  //   }
+  // }
   loadingRegistration: boolean = false;
   loadingUpsert: boolean = false;
   currentStepInUserRegistration: number | undefined = 0;

@@ -2,7 +2,7 @@
 import { useRouter } from "next/navigation";
 import React, { SVGProps, useMemo } from "react";
 import { nonRoutableTitles } from "@utils/neo4j/index";
-import { signOut } from "next-auth/react";
+import { signOut, useSession } from "next-auth/react";
 import { CommonLink, CommonLinkProps } from "../common/Links";
 import { DELETE_YOUR_ACCOUNT, ROUTES_USER_CANT_ACCESS } from "@utils/constants";
 import { observer } from "mobx-react-lite";
@@ -32,11 +32,12 @@ function SidebarRow({
   href,
   overrideOnClick
 }: SidebarRowProps) {
+  const { status } = useSession();
   const { authStore, modalStore } = useStore();
   const { currentSessionUser, setCurrentSessionUser } = authStore;
   const { showModal } = modalStore;
   const router = useRouter();
-  const notLoggedIn = useMemo(() => !currentSessionUser, [currentSessionUser]);
+  const notLoggedIn = useMemo(() => status !== "authenticated", [currentSessionUser]);
   
   const sidebarOnClick = async (e: React.MouseEvent) => {
     if (!nonRoutableTitles.includes(title) && !overrideOnClick) {

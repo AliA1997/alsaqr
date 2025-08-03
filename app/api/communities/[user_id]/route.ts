@@ -46,6 +46,7 @@ async function GET(
         // Determine the user's relationship to each community
         WITH community, founder, user,
             CASE
+              WHEN EXISTS((community)-[:INVITE_REQUESTED]->(user)) THEN 'INVITE_REQUESTED'
               WHEN EXISTS((community)-[:COMMUNITY_FOUNDER]->(user)) THEN 'FOUNDER'
               WHEN EXISTS((community)-[:INVITED]->(user)) THEN 'INVITED'
               WHEN EXISTS((user)-[:JOINED]->(community)) THEN 'JOINED'
@@ -86,6 +87,7 @@ async function GET(
         // Determine the user's relationship to each community
         WITH community, founder, user,
             CASE
+              WHEN EXISTS((community)-[:INVITE_REQUESTED]->(user)) THEN 'INVITE_REQUESTED'
               WHEN EXISTS((community)-[:COMMUNITY_FOUNDER]->(user)) THEN 'FOUNDER'
               WHEN EXISTS((community)-[:INVITED]->(user)) THEN 'INVITED'
               WHEN EXISTS((user)-[:JOINED]->(community)) THEN 'JOINED'
@@ -114,6 +116,7 @@ async function GET(
         // Determine the user's relationship to each community
         WITH community, founder, user,
             CASE
+              WHEN EXISTS((community)-[:INVITE_REQUESTED]->(user)) THEN 'INVITE_REQUESTED'
               WHEN EXISTS((community)-[:COMMUNITY_FOUNDER]->(user)) THEN 'FOUNDER'
               WHEN EXISTS((community)-[:INVITED]->(user)) THEN 'INVITED'
               WHEN EXISTS((user)-[:JOINED]->(community)) THEN 'JOINED'
@@ -152,6 +155,7 @@ async function GET(
         // Determine the user's relationship to each community
         WITH community, founder, user,
             CASE
+              WHEN EXISTS((community)-[:INVITE_REQUESTED]->(user)) THEN 'INVITE_REQUESTED'
               WHEN EXISTS((community)-[:COMMUNITY_FOUNDER]->(user)) THEN 'FOUNDER'
               WHEN EXISTS((community)-[:INVITED]->(user)) THEN 'INVITED'
               WHEN EXISTS((user)-[:JOINED]->(community)) THEN 'JOINED'

@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useMemo, useRef } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { 
   CommonUpsertBoxTypes,
 } from 'models/enums';
@@ -13,10 +13,10 @@ import { convertQueryStringToObject } from "@utils/neo4j";
 import { observer } from "mobx-react-lite";
 import { FilterKeys, useStore } from "@stores/index";
 import { PagingParams } from "models/common";
+import { PageTitle } from '../common/Titles';
 
 const CustomPageLoader = dynamic(() => import("../common/CustomLoader"), { ssr: false });
 const NoRecordsTitle = dynamic(() => import("../common/Titles").then(mod => mod.NoRecordsTitle), { ssr: false });
-const PageTitle = dynamic(() => import("../common/Titles").then(mod => mod.PageTitle), { ssr: false });
 const ContentContainerWithRef = dynamic(() => import("../common/Containers").then(mod => mod.ContentContainerWithRef), { ssr: false });
 
 const ListItemComponent = dynamic(() => import("../list/ListItem"), { ssr: false });
@@ -37,21 +37,21 @@ const ListOrCommunityFeed = observer(({ title, filterKey, communityId }: Props) 
   const { currentSessionUser } = authStore;
   const containerRef = useRef(null);
   const loaderRef = useRef(null);
-
+  const [mounted, setMounted] = useState<boolean>(false);
 
   const setFeedPagingParams = (pagingParams: PagingParams) => {
-    if (filterKey === FilterKeys.Explore) return communityFeedStore.setPagingParams(pagingParams);
+    if (filterKey === FilterKeys.Community) return communityFeedStore.setPagingParams(pagingParams);
     else if(filterKey === FilterKeys.CommunityDiscussion) return communityDiscussionFeedStore.setPagingParams(pagingParams);
     else return listFeedStore.setPagingParams(pagingParams);
   };
   const setFeedPredicate = (key: string, value: string | number | Date | undefined) => {
-    if (filterKey === FilterKeys.Explore) return communityFeedStore.setPredicate(key, value);
+    if (filterKey === FilterKeys.Community) return communityFeedStore.setPredicate(key, value);
     else if(filterKey === FilterKeys.CommunityDiscussion) return communityDiscussionFeedStore.setPredicate(key, value);
     else return listFeedStore.setPredicate(key, value);
   };
 
   const feedLoadingInitial = useMemo(() => {
-    if (filterKey === FilterKeys.Explore) return communityFeedStore.loadingInitial;
+    if (filterKey === FilterKeys.Community) return communityFeedStore.loadingInitial;
     else if(filterKey === FilterKeys.CommunityDiscussion) return communityDiscussionFeedStore.loadingInitial;
     else return listFeedStore.loadingInitial;
   }, [
@@ -60,7 +60,7 @@ const ListOrCommunityFeed = observer(({ title, filterKey, communityId }: Props) 
     communityDiscussionFeedStore.loadingInitial
   ]);
   const feedPagingParams = useMemo(() => {
-    if (filterKey === FilterKeys.Explore) return communityFeedStore.pagingParams;
+    if (filterKey === FilterKeys.Community) return communityFeedStore.pagingParams;
     else if(filterKey === FilterKeys.CommunityDiscussion) return communityDiscussionFeedStore.pagingParams;
     else return listFeedStore.pagingParams;
   }, [
@@ -69,7 +69,7 @@ const ListOrCommunityFeed = observer(({ title, filterKey, communityId }: Props) 
     communityDiscussionFeedStore.pagingParams.currentPage
   ]);
   const feedPagination = useMemo(() => {
-    if (filterKey === FilterKeys.Explore) return communityFeedStore.pagination;
+    if (filterKey === FilterKeys.Community) return communityFeedStore.pagination;
     else if(filterKey === FilterKeys.CommunityDiscussion) return communityDiscussionFeedStore.pagination;
     else return listFeedStore.pagination;
   }, [
@@ -78,7 +78,7 @@ const ListOrCommunityFeed = observer(({ title, filterKey, communityId }: Props) 
     communityDiscussionFeedStore.pagination?.currentPage
   ]);
   const filterPredicate: Map<string, any> = useMemo(() => {
-    if (filterKey === FilterKeys.Explore) return communityFeedStore.predicate;
+    if (filterKey === FilterKeys.Community) return communityFeedStore.predicate;
     else if(filterKey === FilterKeys.CommunityDiscussion) return communityDiscussionFeedStore.predicate;
     // else if (filterKey === FilterKeys.Search) return searchStore.predicate;
     else return listFeedStore.predicate;
@@ -110,7 +110,7 @@ const ListOrCommunityFeed = observer(({ title, filterKey, communityId }: Props) 
     }
   }
   const fetchMoreItems = async (pageNum: number) => {
-    setFeedPagingParams(new PagingParams(pageNum, 10))
+    setFeedPagingParams(new PagingParams(pageNum, 25))
     await loadFeedRecords();
   };
   const loadFeedRecords = async () => {
@@ -128,8 +128,14 @@ const ListOrCommunityFeed = observer(({ title, filterKey, communityId }: Props) 
 
     if (!filterKey) return;
 
-    if(currentSessionUser?.id)
+    if(currentSessionUser?.id) {
       getPosts();
+      setMounted(true);
+    }
+
+    return () => {
+      setMounted(false);
+    }
   }, [currentSessionUser?.id]);
 
   const loadedRecords = useMemo(() => {
@@ -153,26 +159,25 @@ const ListOrCommunityFeed = observer(({ title, filterKey, communityId }: Props) 
     );
   };
 
-  // 2. Fix your Intersection Observer useEffect
   useEffect(() => {
     const observer = new IntersectionObserver(
       (entries) => {
         const firstEntry = entries[0];
         const currentPage = feedPagination?.currentPage ?? 0;
-        const itemsPerPage = feedPagination?.itemsPerPage ?? 10;
+        const itemsPerPage = feedPagination?.itemsPerPage ?? 25;
         const totalItems = feedPagination?.totalItems ?? 0;
 
         const nextPage = currentPage + 1;
         const totalItemsOnNextPage = nextPage * itemsPerPage;
         const hasMoreItems = (totalItems > totalItemsOnNextPage);
-        if (firstEntry?.isIntersecting && !feedLoadingInitial && hasMoreItems) {
+        if (firstEntry?.isIntersecting && !feedLoadingInitial && hasMoreItems && mounted) {
           fetchMoreItems(feedPagingParams.currentPage + 1);
         }
       },
       {
         root: containerRef.current,
         rootMargin: '100px',
-        threshold: 0.2
+        threshold: 0.1
       }
     );
 
@@ -186,7 +191,7 @@ const ListOrCommunityFeed = observer(({ title, filterKey, communityId }: Props) 
         observer.unobserve(currentLoader);
       }
     };
-  }, [fetchMoreItems]);
+  }, []);
 
   const commonUpsertBoxType = useMemo(() => {
     if(filterKey === FilterKeys.Community) return CommonUpsertBoxTypes.Community;
@@ -220,15 +225,14 @@ const ListOrCommunityFeed = observer(({ title, filterKey, communityId }: Props) 
                 ? 'Create Community Discussion' : 'Create List'}
           </button>
       </div>
-      {feedLoadingInitial ? (
+      {feedLoadingInitial || !mounted ? (
         <CustomPageLoader title="Loading" />
       ) : (
         <ContentContainerWithRef
           classNames={`
-            ${filterKey === FilterKeys.Community || filterKey === FilterKeys.CommunityDiscussion ? 'flex flex-wrap max-w-4xl min-h-100' : ''}
+            ${filterKey === FilterKeys.Community || filterKey === FilterKeys.CommunityDiscussion ? 'flex flex-wrap min-h-100' : ''}
           `}
           innerRef={containerRef}
-          
         >
           <>
             {loadedRecords && loadedRecords.length 

@@ -7,7 +7,7 @@ export const ContentContainerWithRef = ({ innerRef, children, classNames, ...oth
   return (
     <div 
       ref={innerRef}
-      className={`max-w-xl mx-auto bg-white dark:bg-[#0e1517] shadow-md rounded-lg mt-10 ${classNames}`} {...otherProps}>
+      className={`max-w-3xl mx-auto bg-white dark:bg-[#0e1517] shadow-md rounded-lg mt-10 ${classNames && classNames}`} {...otherProps}>
       {children}
     </div>    
   );

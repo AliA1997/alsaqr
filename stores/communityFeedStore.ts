@@ -1,17 +1,17 @@
 import { makeAutoObservable, reaction, runInAction } from "mobx";
-import { CommunityRecord, CommunityToDisplay, CreateListOrCommunityForm, CreateListOrCommunityFormDto } from "../typings.d";
+import { CommunityRecord, CommunityToDisplay, CreateListOrCommunityForm, CreateListOrCommunityFormDto, RelationshipType } from "../typings.d";
 import { Pagination, PagingParams } from "models/common";
 import agent from "@utils/common";
 import {DEFAULT_CREATED_LIST_OR_COMMUNITY_FORM } from "@utils/constants";
 import ModalStore from "./modalStore";
 import { store } from ".";
-import { UpdateCommunityForm, UpdateCommunityFormDto } from "models/community";
+import { AcceptOrDenyCommunityInviteConfirmationDto, UpdateCommunityForm, UpdateCommunityFormDto } from "models/community";
 
 export default class CommunityFeedStore {
 
     constructor() {
         makeAutoObservable(this);
-
+        
         reaction(
             () => this.predicate.keys(),
             () => {
@@ -22,6 +22,7 @@ export default class CommunityFeedStore {
 
     loadingInitial = false;
     loadingUpsert = false;
+    loadingJoinCommunity = false;
     predicate = new Map();
     setPredicate = (predicate: string, value: string | number | Date | undefined) => {
         if(value) {
@@ -44,6 +45,9 @@ export default class CommunityFeedStore {
     setNavigateCommunity = (val: CommunityToDisplay | undefined) => {
         this.navigatedCommunity = val;
     }
+    setLoadingJoinCommunity = (val: boolean) => {
+        this.loadingJoinCommunity = val;
+    }
     setLoadingInitial = (val: boolean) => {
         this.loadingInitial = val;
     }
@@ -61,6 +65,13 @@ export default class CommunityFeedStore {
 
     setCommunity = (communityId: string, community: CommunityToDisplay) => {
         this.communityRegistry.set(communityId, community);
+    }
+    private updateCommunityRelationship = (communityId: string, newStatus: RelationshipType) => {
+        if(this.communityRegistry.has(communityId)) {
+            const communityInfo = this.communityRegistry.get(communityId);
+            communityInfo!.relationshipType = newStatus;
+            this.setCommunity(communityId, communityInfo!);
+        }
     }
     setCurrentStepInCommunityCreation = (currentStep: number) => {
         this.currentStepInCommunityCreation = currentStep;
@@ -108,6 +119,86 @@ export default class CommunityFeedStore {
 
     }
 
+    unjoinPublicCommunity = async (communityId: string) => {
+
+        this.setLoadingJoinCommunity(true);
+        try {
+            const authUserSession = store.authStore.currentSessionUser;
+            const userId = authUserSession?.id ?? "";
+            const joinCommunityDto = {
+                username: authUserSession?.username ?? "",
+                email: authUserSession?.email ?? "",
+            }
+            await agent.communityApiClient.unjoinCommunity(joinCommunityDto, userId, communityId)
+
+            runInAction(() => {
+                this.updateCommunityRelationship(communityId, RelationshipType.None);
+            });
+        } finally {
+            this.setLoadingJoinCommunity(false);
+        }
+
+    }
+    joinPublicCommunity = async (communityId: string) => {
+
+        this.setLoadingJoinCommunity(true);
+        try {
+            const authUserSession = store.authStore.currentSessionUser;
+            const userId = authUserSession?.id ?? "";
+            const joinCommunityDto = {
+                username: authUserSession?.username ?? "",
+                email: authUserSession?.email ?? "",
+            }
+            await agent.communityApiClient.joinCommunity(joinCommunityDto, userId, communityId)
+
+            runInAction(() => {
+                this.updateCommunityRelationship(communityId, RelationshipType.Joined);
+            });
+        } finally {
+            this.setLoadingJoinCommunity(false);
+        }
+
+    }
+    requestToJoinPrivateCommunity = async (communityId: string) => {
+
+        this.setLoadingJoinCommunity(true);
+        try {
+            const authUserSession = store.authStore.currentSessionUser;
+            const userId = authUserSession?.id ?? "";
+            const joinCommunityDto = {
+                username: authUserSession?.username ?? "",
+                email: authUserSession?.email ?? "",
+            }
+            await agent.communityApiClient.requestToJoinCommunity(joinCommunityDto, userId, communityId)
+
+            runInAction(() => {
+                this.updateCommunityRelationship(communityId, RelationshipType.InviteRequested);
+            });
+        } finally {
+            this.setLoadingJoinCommunity(false);
+        }
+
+    }
+    acceptRequestToJoinPrivateCommunity = async (
+        communityId: string, 
+        invitedUserId: string,
+        acceptToDenyRequest: AcceptOrDenyCommunityInviteConfirmationDto) => {
+
+        this.setLoadingJoinCommunity(true);
+        try {
+            const authUserSession = store.authStore.currentSessionUser;
+            const userId = authUserSession?.id ?? "";
+            await agent.communityApiClient.acceptOrDenyToJoinRequestToCommunity(acceptToDenyRequest, invitedUserId, communityId)
+
+            runInAction(async () => {
+                await this.loadCommunities(userId);
+            });
+        } finally {
+            this.setLoadingJoinCommunity(false);
+        }
+
+    }
+
     addCommunity = async (newCommunity: CreateListOrCommunityForm, userId: string) => {
 
         this.setLoadingInitial(true);
@@ -132,9 +223,13 @@ export default class CommunityFeedStore {
 
     }
 
-    loadCommunities = async (userId: string) => {
+    loadCommunities = async (userId: string, refresh?: boolean) => {
 
         this.setLoadingInitial(true);
+        if(refresh) {
+            this.communityRegistry.clear();
+            this.setPagingParams(new PagingParams(1, 25));
+        }
         try {
             const { result } = await agent.communityApiClient.getCommunities(this.axiosParams, userId) ?? [];
 

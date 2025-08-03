@@ -21,7 +21,7 @@ export async function read(session: Session, cypher = "", params = {}, alias?: s
 
         for (const aIdx in alias) {
           const aKey = alias[aIdx];
-          console.log('aKey', aKey)
+          // console.log('aKey', aKey)
           const recordBasedOnAlias = record.get(aKey);
 
           if(recordBasedOnAlias === null)
