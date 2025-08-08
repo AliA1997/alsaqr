@@ -21,6 +21,16 @@ export interface CommunityDiscussionRecord extends CommunityDiscussion {
 
 }
 
+
+export interface CommunityDiscussionAdminInfo {
+  communityDiscussion: CommunityDiscussionRecord;
+  isFounder: boolean;
+  founder: UserInfo;
+  inviteRequestedUsers: User[]; 
+  invitedCount: number;
+  joinedCount: number;
+}
+
 export interface CommunityDiscussionInfoForMessageRoom {
   communityDiscussion: CommunityDiscussionRecord;
   community: CommunityRecord;
@@ -104,16 +114,4 @@ export interface CommunityInviteConfirmationDto {
 export interface AcceptOrDenyCommunityInviteConfirmationDto {
   accept?: boolean;
   deny?: boolean;
-}
-
-
-
-export interface CommunityDiscussionAdminInfo {
-  community: CommunityRecordToDisplay;
-  communityDiscussion: CommunityDiscussionRecord;
-  isFounder: boolean;
-  founder: UserInfo;
-  inviteRequestedUsers: User[]; 
-  invitedCount: number;
-  joinedCount: number;
 }

@@ -25,7 +25,7 @@ async function PUT_REQUEST_TO_UNJOIN_COMMUNITY_DISCUSSION(
     await write(
         session,
         `
-          MATCH (u:User { id: $userId })-[jr:JOINED_TO_DISCUSSION]->(communityDiscussion: CommunityDiscussion { id: $communityDiscussionId })
+          MATCH (communityDiscussion: CommunityDiscussion { id: $communityDiscussionId })-[jr:JOINED_TO_DISCUSSION]->(u:User { id: $userId })
           DELETE jr;
         `,
         { userId: user_id as string, communityDiscussionId: community_discussion_id as string }
@@ -54,7 +54,7 @@ async function PUT_REQUEST_TO_UNJOIN_COMMUNITY_DISCUSSION(
     return NextResponse.json(
       {
         success: true,
-        message: 'Joined Discussion Successfully',
+        message: 'Left Discussion Successfully',
       },
       { status: 201 }
     );

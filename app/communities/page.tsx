@@ -1,13 +1,11 @@
 "use client";
 import React from "react";
 import dynamic from 'next/dynamic';
-const ListOrCommunityFeed = dynamic(() => import("@components/shared/ListOrCommunityFeed"), { ssr: false });
-
-import { FilterKeys } from "@stores/index";
+const CommunityFeed = dynamic(() => import("@components/shared/CommunityFeed"), { ssr: false });
 
 function CommunitiesPage() {
   
-  return <ListOrCommunityFeed filterKey={FilterKeys.Community} title="Communities" />
+  return <CommunityFeed />
 }
 
 export default CommunitiesPage;

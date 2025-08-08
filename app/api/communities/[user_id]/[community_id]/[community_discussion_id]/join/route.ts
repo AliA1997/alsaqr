@@ -27,7 +27,7 @@ async function PUT_TO_JOIN_COMMUNITY_DISCUSSION(
             // Match the community discussion node
             MERGE (communityDiscussion: CommunityDiscussion {id: $communityDiscussionId})
             // Create the 'JOINED' relationship with a timestamp
-            MERGE (invitedUser)-[r:JOINED_TO_DISCUSSION]->(community)
+            MERGE (communityDiscussion)-[r:JOINED_TO_DISCUSSION]->(invitedUser)
             ON CREATE SET r.timestamp = timestamp()
         `,
             { userId: user_id as string, communityDiscussionId: community_discussion_id as string }

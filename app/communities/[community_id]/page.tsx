@@ -7,7 +7,7 @@ import { CommunityAdminInfo, CommunityToDisplay } from "typings";
 import { communityApiClient } from "@utils/communityApiClient";
 import CommunityAdminView from "@components/community/CommunityAdminView";
 import CustomPageLoader from "@components/common/CustomLoader";
-const ListOrCommunityFeed = dynamic(() => import("@components/shared/ListOrCommunityFeed"), { ssr: false });
+const CommunityDiscussionFeed = dynamic(() => import("@components/shared/CommunityDiscussionFeed"), { ssr: false });
 
 interface CommunityItemPageProps {
   params: {
@@ -17,8 +17,7 @@ interface CommunityItemPageProps {
 
 const CommunityItemPage = observer(({ params }: CommunityItemPageProps) => {
   const [loading, setLoading] = useState<boolean>(true);
-  const { authStore, communityDiscussionFeedStore } = useStore();
-  const { loadingInitial: feedLoading } = communityDiscussionFeedStore;
+  const { authStore } = useStore();
   const { currentSessionUser } = authStore;
   const [communityInfo, setCommunityInfo] = useState<CommunityAdminInfo | undefined>(undefined);
 
@@ -58,11 +57,7 @@ const CommunityItemPage = observer(({ params }: CommunityItemPageProps) => {
             refreshCommunityAdminInfo={refreshCommunityInfo}
           />
         )}
-        <ListOrCommunityFeed
-          filterKey={FilterKeys.CommunityDiscussion}
-          title="Community Discussions"
-          communityId={params.community_id}
-        />
+        <CommunityDiscussionFeed communityId={params.community_id ?? ""} />
       </>
     );
 });

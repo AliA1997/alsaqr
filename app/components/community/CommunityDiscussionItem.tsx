@@ -2,7 +2,6 @@
 import { useRouter } from "next/navigation";
 import React, {
   useMemo,
-  useRef,
   useState,
 } from "react";
 import { useStore } from "@stores/index";
@@ -13,14 +12,16 @@ import { RelationshipType } from "typings.d";
 import { InfoButton } from "@components/common/Buttons";
 import { ButtonLoader } from "@components/common/CustomLoader";
 import { PlusCircleIcon } from "@heroicons/react/solid";
+import { observer } from "mobx-react-lite";
+import { stopPropagationOnClick } from "@utils/neo4j";
 
 interface Props {
   communityDiscussionToDisplay: CommunityDiscussionToDisplay;
 }
 
-function CommunityDiscussionItemComponent({
+const CommunityDiscussionItemComponent = observer(({
   communityDiscussionToDisplay,
-}: Props) {
+}: Props) => {
   const router = useRouter();
 
   const { authStore, modalStore, communityDiscussionFeedStore } = useStore();
@@ -30,19 +31,14 @@ function CommunityDiscussionItemComponent({
     joinPublicCommunityDiscussion,
     unjoinPublicCommunityDiscussion,
     requestToJoinPrivateCommunityDiscussion,
-   } = communityDiscussionFeedStore;
+  } = communityDiscussionFeedStore;
 
   const communityDiscussionInfo = communityDiscussionToDisplay.communityDiscussion;
-  const initiallyBooleanValues = useRef<{
-    joined: boolean;
-  }>({
-    joined: false,
-  });
 
-  const userId = useMemo(() => currentSessionUser?.id ?? '', [currentSessionUser]);
   const [submitting, setSubmitting] = useState<boolean>(false);
+  const [currentRelationshipType, setCurrentRelationshipType] = useState<RelationshipType>(communityDiscussionToDisplay.relationshipType)
   const [joined, setJoined] = useState<boolean>(false);
-  
+
   const communityDiscussionUsers = useMemo(() => {
     const iUsers = communityDiscussionToDisplay.invitedUsers ?? [];
     const jUsers = communityDiscussionToDisplay.joinedUsers ?? [];
@@ -55,39 +51,37 @@ function CommunityDiscussionItemComponent({
   const navigateToCommunityDiscussion = () => {
     router.push(`/communities/${communityDiscussionInfo.communityId}/${communityDiscussionInfo.id}`);
   };
-  
+
   const hasToRequestPermissionToJoin = useMemo(() => {
-    return (communityDiscussionInfo.isPrivate && communityDiscussionToDisplay.relationshipType === RelationshipType.None)
-  }, [communityDiscussionToDisplay.relationshipType])
-  const hasToJoin = useMemo(() => communityDiscussionToDisplay.relationshipType === RelationshipType.None, [communityDiscussionToDisplay.relationshipType]);
-  const requestedInvite = useMemo(() => communityDiscussionToDisplay.relationshipType === RelationshipType.InviteRequested, [communityDiscussionToDisplay.relationshipType]);
-  const canUnJoin = useMemo(() => communityDiscussionToDisplay.relationshipType === RelationshipType.Joined || joined, [communityDiscussionToDisplay.relationshipType, joined]);
-  
-  console.log('communityDiscussionToDisplay:', communityDiscussionToDisplay.relationshipType)
+    return (communityDiscussionInfo.isPrivate && currentRelationshipType === RelationshipType.None)
+  }, [currentRelationshipType, communityDiscussionToDisplay.relationshipType])
+  const hasToJoin = useMemo(() => currentRelationshipType === RelationshipType.None, [currentRelationshipType, communityDiscussionToDisplay.relationshipType]);
+  const requestedInvite = useMemo(() => currentRelationshipType === RelationshipType.InviteRequested, [currentRelationshipType, communityDiscussionToDisplay.relationshipType]);
+  const canUnJoin = useMemo(() => currentRelationshipType === RelationshipType.Joined || joined, [currentRelationshipType, communityDiscussionToDisplay.relationshipType, joined]);
+
+  console.log('communityDiscussionToDisplay:', currentRelationshipType)
 
   return (
     <>
       <div
         className={`
-          flex flex-col relative justify-between space-x-3 border-y border-gray-100 
+          flex flex-col relative justify-around space-x-3 border-y border-gray-100 
           p-5 hover:shadow-lg dark:border-gray-800 dark:hover:bg-[#0e1517] rounded-full
           w-full       /* Full width on mobile */
-          md:w-[20vw] 
-          lg:w-[48%]
-          2xl:w-[48%]
-          h-[5em]
+          md:w-[21rem] 
+          lg:w-[49%]
+          3xl:w-[30%]
+          h-[10rem]
           mb-4         /* Add some bottom margin between items */
-          mx-auto      /* Center the div if it doesn't fill full width */
         `}
       >
-        <div className="absolute m-0 inset-0"></div>
-        <div className="flex flex-col justify-between h-full space-x-3">
-          <div 
+        <div className="flex flex-col justify-start h-full space-x-3 p-1">
+          <div
             className="flex justify-around item-center space-x-1 cursor-pointer hover:underline"
-            onClick={navigateToCommunityDiscussion}
+            onClick={(e) => stopPropagationOnClick(e, navigateToCommunityDiscussion)}
           >
             <div className='flex flex-col'>
-              <h6>
+              <h6 className='text-sm'>
                 {communityDiscussionInfo.name}
               </h6>
               <p className="text-sm text-gray-500 dark:text-gray-400">
@@ -97,72 +91,80 @@ function CommunityDiscussionItemComponent({
             <div className="flex space-x-2">
               {
                 communityDiscussionUsers.slice(0, 3).map((user, index) => (
-                  <MessagesImagePreview key={index} user={user}  index={index} />
+                  <MessagesImagePreview key={index} user={user} index={index} />
                 ))}
             </div>
           </div>
-          <TagOrLabel
-            color={
-              communityDiscussionToDisplay.relationshipType === RelationshipType.Founder ? 'gold'
-                : communityDiscussionToDisplay.relationshipType === RelationshipType.Invited ? 'success'
-                  : communityDiscussionToDisplay.relationshipType === RelationshipType.Joined ? 'primary'
-                    : communityDiscussionToDisplay.relationshipType === RelationshipType.InviteRequested ? 'secondary'
-                      : 'neutral'
-            }
-            size="sm"
-            className='mt-[-1rem] min-w-[3rem] max-w-fit self-end'
-          >
-            {requestedInvite ? 'PENDING REQUEST TO JOIN' : communityDiscussionToDisplay.relationshipType}
-          </TagOrLabel>
-          <TagOrLabel
-            color={communityDiscussionInfo.isPrivate ? 'danger' : 'info'}
-            size="sm"
-            className='mt-[0.5rem] min-w-[3rem] max-w-fit self-end'
-          >
-            {communityDiscussionInfo.isPrivate ? 'Private' : 'Public'}
-          </TagOrLabel>
-        </div>
-        {(hasToJoin || canUnJoin) && (
-          <div className="flex absolute top-[4.5rem] left-[4rem] justify-center h-full space-x-3 z-[100]">
-            <InfoButton
-              disabled={submitting}
-              onClick={async (e: any) => {
-                e.stopPropagation();
-                setSubmitting(true);
-                if (hasToRequestPermissionToJoin) {
-                  await requestToJoinPrivateCommunityDiscussion(communityDiscussionInfo.communityId, communityDiscussionInfo.id);
-                }
-                else if (canUnJoin) {
-                  await unjoinPublicCommunityDiscussion(communityDiscussionInfo.communityId, communityDiscussionInfo.id);
-                  setJoined(false);
-                }
-                else {
-                  await joinPublicCommunityDiscussion(communityDiscussionInfo.communityId, communityDiscussionInfo.id);
-                  setJoined(true);
-                }
-                setSubmitting(false);
-              }}
-              classNames="px-0 cursor-default"
+
+          <div className='flex justify-start'>
+            <TagOrLabel
+              color={
+                currentRelationshipType === RelationshipType.Founder ? 'gold'
+                  : currentRelationshipType === RelationshipType.Invited ? 'success'
+                    : currentRelationshipType === RelationshipType.Joined ? 'primary'
+                      : currentRelationshipType === RelationshipType.InviteRequested ? 'secondary'
+                        : 'neutral'
+              }
+              size="sm"
+              className='w-full max-w-fit self-end self-[unset]'
             >
-              {submitting ? (
-                <ButtonLoader />
-              ) : (
-                <p className={`
-                  flex
-                  min-w-[4rem] max-w-[12rem] cursor-pointer hover:underline ${canUnJoin ? 'hover:text-red-400' : 'hover:text-maydan'}
-                `}>
-                  <span className={`mt-1 text-inherit`}>
-                    {canUnJoin ? 'Leave' : hasToRequestPermissionToJoin ? 'Request to Join' : 'Join'}
-                  </span>
-                  {!canUnJoin && <PlusCircleIcon className="ml-0 h-[1.5rem] w-[1.5rem] py-1" />}
-                </p>
-              )}
-            </InfoButton>
+              {requestedInvite ? 'PENDING REQUEST TO JOIN' : currentRelationshipType}
+            </TagOrLabel>
+            <TagOrLabel
+              color={communityDiscussionInfo.isPrivate ? 'danger' : 'info'}
+              size="sm"
+              className='mt-[0.5rem] w-full max-w-fit self-[unset]'
+            >
+              {communityDiscussionInfo.isPrivate ? 'Private' : 'Public'}
+            </TagOrLabel>
           </div>
-        )}
+
+          {(hasToJoin || canUnJoin) && (
+            <div className="flex justify-center h-full space-x-3 z-[10]">
+              <InfoButton
+                disabled={submitting}
+                onClick={async (e: any) => {
+                  e.stopPropagation();
+                  setSubmitting(true);
+                  if (hasToRequestPermissionToJoin) {
+                    await requestToJoinPrivateCommunityDiscussion(communityDiscussionInfo.communityId, communityDiscussionInfo.id);
+                    setCurrentRelationshipType(RelationshipType.InviteRequested);
+                  }
+                  else if (canUnJoin) {
+                    await unjoinPublicCommunityDiscussion(communityDiscussionInfo.communityId, communityDiscussionInfo.id);
+                    setCurrentRelationshipType(RelationshipType.None);
+                    setJoined(false);
+                  }
+                  else {
+                    await joinPublicCommunityDiscussion(communityDiscussionInfo.communityId, communityDiscussionInfo.id);
+                    setCurrentRelationshipType(RelationshipType.Joined);
+                    setJoined(true);
+                  }
+                  setSubmitting(false);
+                }}
+                classNames="px-0 cursor-default"
+              >
+                {submitting ? (
+                  <ButtonLoader />
+                ) : (
+                  <p className={`
+                  flex font-[1rem]
+                  min-w-[4rem] max-w-[15rem] cursor-pointer hover:underline ${canUnJoin ? 'hover:text-red-400' : 'hover:text-maydan'}
+                `}>
+                    <span className={`mt-1 text-inherit`}>
+                      {canUnJoin ? 'Leave' : hasToRequestPermissionToJoin ? 'Request to Join' : 'Join'}
+                    </span>
+                    {!canUnJoin && <PlusCircleIcon className="ml-0 h-[1.5rem] w-[1.5rem] py-1" />}
+                  </p>
+                )}
+              </InfoButton>
+            </div>
+          )}
+        </div>
+
       </div>
     </>
   );
-}
+});
 
-export default CommunityDiscussionItemComponent;
+export default CommunityDiscussionItemComponent

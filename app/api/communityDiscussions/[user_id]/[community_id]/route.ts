@@ -44,10 +44,10 @@ async function GET_COMMUNITY_DISCUSSIONS(
         // Determine the user's relationship to each community
         WITH communityDiscussion, iUsers, jUsers,
             CASE
-              WHEN EXISTS((community)-[:REQUEST_INVITE_TO_DISCUSSION]->(user)) THEN 'INVITE_REQUESTED'
+              WHEN EXISTS((communityDiscussion)-[:INVITE_REQUESTED_FOR_DISCUSSION]->(user)) THEN 'INVITE_REQUESTED'
               WHEN EXISTS((user)-[:CREATED_DISCUSSION]->(communityDiscussion)) THEN 'FOUNDER'
-              WHEN EXISTS((community)-[:INVITED_TO_DISCUSSION]->(user)) THEN 'INVITED'
-              WHEN EXISTS((user)-[:JOINED_TO_DISCUSSION]->(community)) THEN 'JOINED'
+              WHEN EXISTS((communityDiscussion)-[:INVITED_TO_DISCUSSION]->(user)) THEN 'INVITED'
+              WHEN EXISTS((communityDiscussion)-[:JOINED_TO_DISCUSSION]->(user)) THEN 'JOINED'
               ELSE 'NONE'
             END AS relationshipType
           WITH communityDiscussion,
@@ -89,10 +89,10 @@ async function GET_COMMUNITY_DISCUSSIONS(
         // Determine the user's relationship to each community
         WITH communityDiscussion, iUsers, jUsers,
             CASE
-              WHEN EXISTS((community)-[:REQUEST_INVITE_TO_DISCUSSION]->(user)) THEN 'INVITE_REQUESTED'
+              WHEN EXISTS((communityDiscussion)-[:INVITE_REQUESTED_FOR_DISCUSSION]->(user)) THEN 'INVITE_REQUESTED'
               WHEN EXISTS((user)-[:CREATED_DISCUSSION]->(communityDiscussion)) THEN 'FOUNDER'
-              WHEN EXISTS((community)-[:INVITED_TO_DISCUSSION]->(user)) THEN 'INVITED'
-              WHEN EXISTS((user)-[:JOINED_TO_DISCUSSION]->(community)) THEN 'JOINED'
+              WHEN EXISTS((communityDiscussion)-[:INVITED_TO_DISCUSSION]->(user)) THEN 'INVITED'
+              WHEN EXISTS((communityDiscussion)-[:JOINED_TO_DISCUSSION]->(user)) THEN 'JOINED'
               ELSE 'NONE'
             END AS relationshipType
           WITH communityDiscussion,

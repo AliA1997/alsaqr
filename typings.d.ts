@@ -245,6 +245,7 @@ export enum  RelationshipType {
   Invited = 'INVITED',
   Founder = 'FOUNDER',
   InviteRequested = 'INVITE_REQUESTED',
+  InviteRequestedForCommunityDiscussion = 'INVITE_REQUESTED_FOR_DISCUSSION',
   None = 'NONE'
 };
 

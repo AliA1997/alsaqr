@@ -40,6 +40,8 @@ function SidebarRow({
   const notLoggedIn = useMemo(() => status !== "authenticated", [currentSessionUser]);
   
   const sidebarOnClick = async (e: React.MouseEvent) => {
+    if(e)
+      e.preventDefault();
     if (!nonRoutableTitles.includes(title) && !overrideOnClick) {
 
       

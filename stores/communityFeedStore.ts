@@ -201,24 +201,23 @@ export default class CommunityFeedStore {
 
     addCommunity = async (newCommunity: CreateListOrCommunityForm, userId: string) => {
 
-        this.setLoadingInitial(true);
+        this.setLoadingUpsert(true);
         try {
             const newCommunityDto: CreateListOrCommunityFormDto = { 
                 ...newCommunity, 
                 usersAdded: newCommunity.usersAdded.map(u => u.user.id),
                 postsAdded: newCommunity.postsAdded.map(p => p.post.id)
             };
-            agent.communityApiClient.addCommunity(newCommunityDto, userId)
-                .then(() => {
-                    store.modalStore.closeModal();
-                })
+            await agent.communityApiClient.addCommunity(newCommunityDto, userId)
+            store.modalStore.closeModal();
+            await this.loadCommunities(userId, true);
 
             runInAction(() => {
                 this.setCurrentStepInCommunityCreation(0);
                 this.setCommunityCreationForm(DEFAULT_CREATED_LIST_OR_COMMUNITY_FORM);
             });
         } finally {
-            this.setLoadingInitial(false);
+            this.setLoadingUpsert(false);
         }
 
     }

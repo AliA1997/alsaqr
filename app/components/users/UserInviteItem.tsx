@@ -24,41 +24,62 @@ interface Props {
     userItemToDisplay: UserItemToDisplay;
     filterKey: FilterKeys;
     entityInvitedToId: string;
+    childEntityInviteToId?: string;
 }
 
 function UserInviteItemComponent({
     userItemToDisplay,
     filterKey,
-    entityInvitedToId
+    entityInvitedToId,
+    childEntityInviteToId
 }: Props) {
     const router = useRouter();
     const { communityFeedStore, communityDiscussionFeedStore, modalStore } = useStore();
     const userItemInfo = userItemToDisplay.user;
     const { closeModal } = modalStore;
     const [submitting, setSubmitting] = useState<boolean>(false);
-
+    const [decisionMade, setDecisionMade] = useState<"accept" | "deny" | undefined>(undefined);
     const acceptInvite = useCallback(async () => {
+        setDecisionMade("accept");
+
         if(filterKey === FilterKeys.CommunityDiscussion) 
-            return null;
+            await communityDiscussionFeedStore.acceptRequestToJoinPrivateCommunityDiscussion(
+                entityInvitedToId, 
+                childEntityInviteToId!,
+                userItemToDisplay.user.id,
+                {
+                    accept: true
+                });
         else 
-            return await communityFeedStore.acceptRequestToJoinPrivateCommunity(
+            await communityFeedStore.acceptRequestToJoinPrivateCommunity(
                 entityInvitedToId, 
                 userItemToDisplay.user.id,
                 {
                     accept: true
-                })
+                });
+
+        setDecisionMade(undefined);
     }, [filterKey, userItemToDisplay.user]);
 
     const denyInvite = useCallback(async () => {
+        setDecisionMade("deny");
         if(filterKey === FilterKeys.CommunityDiscussion) 
-            return null;
+            await communityDiscussionFeedStore.acceptRequestToJoinPrivateCommunityDiscussion(
+                entityInvitedToId, 
+                childEntityInviteToId!,
+                userItemToDisplay.user.id,
+                {
+                    deny: true
+                });
         else 
-            return await communityFeedStore.acceptRequestToJoinPrivateCommunity(
+            await communityFeedStore.acceptRequestToJoinPrivateCommunity(
                 entityInvitedToId, 
                 userItemToDisplay.user.id,
                 {
                     deny: true
                 })
+
+        setDecisionMade(undefined);
     }, [filterKey, userItemToDisplay.user])
 
     const navigateToUser = () => router.push(`users/${userItemInfo.username}`);
@@ -98,7 +119,7 @@ function UserInviteItemComponent({
                                         closeModal();
                                     }}
                                 >
-                                    {submitting ? (
+                                    {decisionMade === "accept" ? (
                                         <ButtonLoader />
                                     ) : (
                                         <>
@@ -119,7 +140,7 @@ function UserInviteItemComponent({
                                         closeModal();
                                     }}
                                 >
-                                    {submitting ? (
+                                    {decisionMade === "deny" ? (
                                         <ButtonLoader />
                                     ) : (
                                         <>

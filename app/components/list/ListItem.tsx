@@ -138,16 +138,15 @@ function ListItemComponent({
       <div
         className={`
           flex flex-col relative justify-between space-x-3 border-y border-gray-100 
-          p-5 hover:shadow-lg dark:border-gray-800 dark:hover:bg-[#000000] h-[20em] 
+          p-5 mr-1 mb-2 hover:shadow-lg dark:border-gray-800 dark:hover:bg-[#000000] h-[8.5rem] w-[30rem] lg:w-[20rem]
           hover:cursor-pointer`}
-        style={{ backgroundImage: `url('${listInfo.bannerImage}')`, objectFit: 'cover' }}
-        onClick={navigateToList}
+        style={{ backgroundImage: `url('${listInfo.bannerImage}')`, objectFit: "scale-down" }}
       >
         <div className="absolute m-0 inset-0 bg-gradient-to-t from-gray-900/40 to-gray-900/20"></div>
         <div className="flex flex-col justify-between h-full space-x-3 cursor-pointer">
-          <div className="flex item-center space-x-1">
+          <div className="flex item-center space-x-1 z-10">
             <img
-              className="h-10 w-10 rounded-full object-cover "
+              className="h-10 w-10 rounded-full object-cover hover:underline"
               src={founder.avatar}
               alt={founder.username}
               onClick={(e) => stopPropagationOnClick(e, navigateToTweetUser)}
@@ -194,7 +193,7 @@ function ListItemComponent({
               : null
             }
           </div>
-          <p className="pt-1 text-white text-3xl">{listInfo.name}</p>
+          <p className="pt-1 text-gray-100 text-2xl hover:underline  z-10" onClick={e => stopPropagationOnClick(e, navigateToList)}>{listInfo.name}</p>
         </div>
         {/* {!onlyDisplay && (
           <div className="flex justify-end w-full px-1">

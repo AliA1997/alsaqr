@@ -133,17 +133,17 @@ async function PUT_ACCEPT_OR_DENY_REQUEST_TO_JOIN_COMMUNITY(
         { status: 404 }
       );
 
-    if (communityInvitationResult.denied)
-      return NextResponse.json(
-        { error: 'Community Invite has been denied for this user.' },
-        { status: 401 }
-      );
+    // if (communityInvitationResult.denied)
+    //   return NextResponse.json(
+    //     { error: 'Community Invite has been denied for this user.' },
+    //     { status: 401 }
+    //   );
 
-    if (communityInvitationResult.accepted)
-      return NextResponse.json(
-        { error: 'Community Invite has already been accepted for this user.' },
-        { status: 401 }
-      );
+    // if (communityInvitationResult.accepted)
+    //   return NextResponse.json(
+    //     { error: 'Community Invite has already been accepted for this user.' },
+    //     { status: 401 }
+    //   );
 
     if (values.accept) {
       await write(
@@ -218,7 +218,7 @@ async function PUT_ACCEPT_OR_DENY_REQUEST_TO_JOIN_COMMUNITY(
     await write(
       session,
       `
-          MATCH (community:Community {id: $communityId})-[r:REQUEST_INVITE]->(invitedUser:User {id: $userId})
+          MATCH (community:Community {id: $communityId})-[r:INVITE_REQUESTED]->(invitedUser:User {id: $userId})
           DELETE r
           `,
       { userId: user_id as string, communityId: community_id as string }

@@ -48,19 +48,8 @@ function CommunityItemComponent({
   const communityInfo = community.community;
   const userId = useMemo(() => currentSessionUser?.id ?? '', [currentSessionUser]);
   const [submitting, setSubmitting] = useState<boolean>(false);
+  const [currentRelationshipType, setCurrentRelationshipType] = useState<RelationshipType>(community.relationshipType)
   const [joined, setJoined] = useState<boolean>(false);
-
-  useLayoutEffect(() => {
-    if (userId) {
-      const joinedCommunities = currentSessionUser ? (currentSessionUser as any)["joinedCommunities"] : [];
-
-      const alreadyJoined = joinedCommunities?.some((listSavedById: string) => listSavedById === community.community.id) ?? false;
-
-      initiallyBooleanValues.current = {
-        joined: alreadyJoined
-      };
-    }
-  }, [currentSessionUser]);
 
   const navigateToCommunity = () => {
     setNavigateCommunity(community);
@@ -68,11 +57,12 @@ function CommunityItemComponent({
   };
 
   const hasToRequestPermissionToJoin = useMemo(() => {
-    return (community.community.isPrivate && community.relationshipType === RelationshipType.None)
-  }, [community.relationshipType])
-  const hasToJoin = useMemo(() => community.relationshipType === RelationshipType.None, [community.relationshipType]);
-  const requestedInvite = useMemo(() => community.relationshipType === RelationshipType.InviteRequested, [community.relationshipType]);
-  const canUnJoin = useMemo(() => community.relationshipType === RelationshipType.Joined || joined, [community.relationshipType, joined]);
+    return (community.community.isPrivate && currentRelationshipType === RelationshipType.None)
+  }, [community.relationshipType, currentRelationshipType])
+
+  const hasToJoin = useMemo(() => currentRelationshipType === RelationshipType.None, [community.relationshipType, currentRelationshipType]);
+  const requestedInvite = useMemo(() => currentRelationshipType === RelationshipType.InviteRequested, [community.relationshipType, currentRelationshipType]);
+  const canUnJoin = useMemo(() => currentRelationshipType === RelationshipType.Joined || joined, [community.relationshipType, currentRelationshipType, joined]);
 
   console.log('community:', community.relationshipType)
   return (
@@ -91,11 +81,10 @@ function CommunityItemComponent({
       >
         <div className="flex flex-col justify-between h-full space-x-3">
           <div className="flex item-center justify-between space-x-1">
-            <div className='flex  hover:underline cursor-pointer'>
+            <div className='flex  hover:underline cursor-pointer' onClick={(e) => stopPropagationOnClick(e, navigateToCommunity)}>
               <OptimizedImage
                 src={communityInfo.avatar}
                 alt={communityInfo.name}
-                onClick={(e) => stopPropagationOnClick(e, navigateToCommunity)}
               />
               <p className='text-sm ml-2'>
                 {communityInfo.name}
@@ -111,16 +100,16 @@ function CommunityItemComponent({
           </div>
           <TagOrLabel
             color={
-              community.relationshipType === RelationshipType.Founder ? 'gold'
-                : community.relationshipType === RelationshipType.Invited ? 'success'
-                  : community.relationshipType === RelationshipType.Joined ? 'primary'
-                    : community.relationshipType === RelationshipType.InviteRequested ? 'secondary'
+              currentRelationshipType === RelationshipType.Founder ? 'gold'
+                : currentRelationshipType === RelationshipType.Invited ? 'success'
+                  : currentRelationshipType === RelationshipType.Joined ? 'primary'
+                    : currentRelationshipType === RelationshipType.InviteRequested ? 'secondary'
                       : 'neutral'
             }
             size="sm"
             className='mt-[-1rem] min-w-[3rem] max-w-fit self-end'
           >
-            {requestedInvite ? 'PENDING REQUEST TO JOIN' : community.relationshipType}
+            {requestedInvite ? 'PENDING REQUEST TO JOIN' : currentRelationshipType}
           </TagOrLabel>
           <TagOrLabel
             color={community.community.isPrivate ? 'danger' : 'info'}
@@ -139,13 +128,16 @@ function CommunityItemComponent({
                 setSubmitting(true);
                 if (hasToRequestPermissionToJoin) {
                   await requestToJoinPrivateCommunity(community.community.id);
+                  setCurrentRelationshipType(RelationshipType.InviteRequested);
                 }
                 else if (canUnJoin) {
                   await unjoinPublicCommunity(community.community.id);
+                  setCurrentRelationshipType(RelationshipType.None);
                   setJoined(false);
                 }
                 else {
                   await joinPublicCommunity(community.community.id);
+                  setCurrentRelationshipType(RelationshipType.Joined);
                   setJoined(true);
                 }
                 setSubmitting(false);

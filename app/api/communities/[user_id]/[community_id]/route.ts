@@ -63,7 +63,7 @@ async function GET_COMMUNITY_INFO(
     );
 
     adminCommunityInfo = results && results.length ? results[0] : undefined;
-    console.log('adminCommunityInfo:', adminCommunityInfo)
+    // console.log('adminCommunityInfo:', adminCommunityInfo)
 
   } catch (err) {
     return NextResponse.json({ message: "Fetch communities error!", success: false });

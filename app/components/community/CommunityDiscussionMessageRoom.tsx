@@ -7,7 +7,7 @@ import { communityApiClient } from '@utils/communityApiClient';
 import { convertDateToDisplay } from '@utils/neo4j/neo4j';
 import { motion } from 'framer-motion';
 import { Pagination } from 'models/common';
-import { CommunityDiscussionInfoForMessageRoom, CommunityDiscussionMessageDto, CommunityDiscussionMessageToDisplay } from 'models/community';
+import { CommunityDiscussionAdminInfo, CommunityDiscussionInfoForMessageRoom, CommunityDiscussionMessageDto, CommunityDiscussionMessageToDisplay } from 'models/community';
 import { User } from 'next-auth';
 import { useState, useEffect, useRef, useMemo } from 'react';
 import NextImage from 'next/image';
@@ -15,6 +15,7 @@ import TimeAgo from "react-timeago";
 import CustomPageLoader, { ButtonLoader } from '@components/common/CustomLoader';
 import toast from 'react-hot-toast';
 import { useRouter } from 'next/navigation';
+import CommunityDiscussionAdminView from './CommunityDiscussionAdminView';
 
 type Props = {
   loggedInUser: User;
@@ -31,7 +32,9 @@ const CommunityDiscussionMessageRoom = ({
 
   const [submitting, setSubmitting] = useState<boolean>(false);
   const [loadingMessages, setLoadingMessages] = useState<boolean>(true);
+  const [loadingAdminInfo, setLoadingAdminInfo] = useState<boolean>(false);
   const [commmityDiscussionInfo, setCommunityDiscussionInfo] = useState<CommunityDiscussionInfoForMessageRoom | undefined>(undefined);
+  const [adminCommunityDiscussionInfo, setAdminCommunityDiscussionInfo] = useState<CommunityDiscussionAdminInfo | undefined>(undefined);
   const userId = useMemo(() => loggedInUser?.id, [loggedInUser]);
 
   useEffect(() => {
@@ -40,9 +43,16 @@ const CommunityDiscussionMessageRoom = ({
 
       setCommunityDiscussionInfo(result);
     }
+    async function getAdminCommunityDiscussionInfo() {
+      const result = await agent.communityApiClient.getAdminCommunityDiscussionInfo(userId, communityId, communityDiscussionId);
 
-    if (communityDiscussionId && communityId)
+      setAdminCommunityDiscussionInfo(result);
+    }
+
+    if (communityDiscussionId && communityId) {
       getCommunityDiscussionInfo();
+      getAdminCommunityDiscussionInfo();
+    }
   }, [
     communityDiscussionId,
     communityId
@@ -127,6 +137,14 @@ const CommunityDiscussionMessageRoom = ({
       setSubmitting(false);
     }
   };
+  async function refreshCommunityDiscussionInfo(communityId: string) {
+      const communityDiscussionInfoResult = await communityApiClient
+        .getAdminCommunityDiscussionInfo(loggedInUser.id, communityId, communityDiscussionId);
+  
+      setCommunityDiscussionInfo(communityDiscussionInfoResult);
+      setLoadingAdminInfo(false);
+  }
+  
 
   const communityDiscussionUsers = useMemo(() => {
     const jUsers = commmityDiscussionInfo?.joinedUsers ?? [];
@@ -135,6 +153,7 @@ const CommunityDiscussionMessageRoom = ({
     return Array.from(new Set([...jUsers, ...iUsers]).values())
   }, [commmityDiscussionInfo])
 
+  console.log("JSON.stringiy:", JSON.stringify(adminCommunityDiscussionInfo))
   return (
     <div className="flex flex-col h-screen bg-gray-50 dark:bg-[#0e1517]">
       {/* Header */}
@@ -164,7 +183,12 @@ const CommunityDiscussionMessageRoom = ({
           </p>
         </div>
       </div>
-
+      {adminCommunityDiscussionInfo?.isFounder && (
+        <CommunityDiscussionAdminView
+          communityDiscussionAdminInfo={adminCommunityDiscussionInfo}
+          refreshCommunityDiscussionAdminInfo={refreshCommunityDiscussionInfo} 
+        />
+      )}
       {/* Messages */}
       <div className="flex-1 overflow-y-auto p-4 space-y-3">
         {loadingMessages ? (

@@ -1,12 +1,6 @@
-import { faker } from "@faker-js/faker";
-import { extractQryParams } from "@utils/common";
-import { commonCountCipher } from "@utils/neo4j";
-import { defineDriver, read, write } from "@utils/neo4j/neo4j";
-import { PaginatedResult, Pagination } from "models/common";
-import {  CommunityDiscussionInfoForMessageRoom, CommunityDiscussionMessage, CommunityDiscussionMessageDto, CommunityDiscussionMessageToDisplay } from "models/community";
-import { int } from "neo4j-driver";
+import { defineDriver, read } from "@utils/neo4j/neo4j";
+import {  CommunityDiscussionInfoForMessageRoom } from "models/community";
 import { NextRequest, NextResponse } from "next/server";
-
 
 async function GET_COMMUNITY_DISCUSSION_INFO(
   request: NextRequest,
@@ -16,8 +10,6 @@ async function GET_COMMUNITY_DISCUSSION_INFO(
   const communityDiscussionId = community_discussion_id as string;
   const communityId = community_id as string;
 
-  let communityDiscussionMessages: CommunityDiscussionMessageToDisplay[] = [];
-  let pagination: Pagination | undefined = undefined;
   let communityDiscussionInfo: CommunityDiscussionInfoForMessageRoom | undefined; 
   
 if (!communityId) {

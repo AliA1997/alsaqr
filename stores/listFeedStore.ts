@@ -32,7 +32,7 @@ export default class ListFeedStore {
             this.predicate.delete(predicate);
         }
     }
-    pagingParams: PagingParams = new PagingParams(1, 10);
+    pagingParams: PagingParams = new PagingParams(1, 25);
     pagination: Pagination | undefined = undefined;
     savedListItemsPagingParams: PagingParams = new PagingParams(1, 10);
     savedListItemsPagination: Pagination | undefined = undefined;
@@ -88,11 +88,11 @@ export default class ListFeedStore {
         this.predicate.clear();
     }
     resetPagingParams = () => {
-        this.pagingParams = new PagingParams(1 , 10);
+        this.pagingParams = new PagingParams(1 , 25);
     }
 
     resetListsState = () => {
-        this.pagingParams = new PagingParams(1, 10);
+        this.pagingParams = new PagingParams(1, 25);
         this.predicate.clear();
         this.listsRegistry.clear();
     }

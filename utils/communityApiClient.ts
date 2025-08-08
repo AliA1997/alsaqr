@@ -23,6 +23,8 @@ export const communityApiClient = {
     getCommunities: (params: URLSearchParams | undefined, userId: string) =>
         axios.get(`/api/communities/${userId}`, { params }).then(axiosResponseBody),
     
+    getAdminCommunityDiscussionInfo: (userId: string, communityId: string, communityDiscussionId: string) =>
+        axios.get(`/api/communities/${userId}/${communityId}/${communityDiscussionId}/admin`, {  }).then(axiosResponseBody),
     addCommunityDiscussion: (values: CreateListOrCommunityFormDto, userId: string, communityId: string) =>
         axios.post(`/api/communityDiscussions/${userId}/${communityId}`, { values }).then(axiosResponseBody),
     getCommunityDiscussions: (params: URLSearchParams | undefined, userId: string,  communityId: string) =>

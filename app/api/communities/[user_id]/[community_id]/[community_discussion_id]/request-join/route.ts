@@ -48,7 +48,7 @@ async function POST_REQUEST_TO_JOIN_COMMUNITY_DISCUSSION(
           MERGE (invitedUser:User {id: $userId})
           // Match the community node
           MERGE (communityDiscussion:CommunityDiscussion {id: $communityDiscussionId})
-          // Create the 'INVITE_REQUESTED' relationship with a timestamp
+          // Create the 'INVITE_REQUESTED_FOR_DISCUSSION' relationship with a timestamp
           MERGE (communityDiscussion)-[r:INVITE_REQUESTED_FOR_DISCUSSION]->(invitedUser)
           ON CREATE SET r.timestamp = timestamp()
         `,
@@ -79,7 +79,7 @@ async function POST_REQUEST_TO_JOIN_COMMUNITY_DISCUSSION(
               notificationType: "user_request_join_discussion"
           })
       `,
-      { userId: user_id as string, communityId: community_id as string }
+      { userId: user_id as string, communityDiscussionId: community_discussion_id as string }
     );
     // Return success response
     return NextResponse.json(
@@ -187,7 +187,7 @@ async function PUT_ACCEPT_OR_DENY_REQUEST_TO_JOIN_COMMUNITY_DISCUSSION(
                 notificationType: "user_joined_discussion"
             })
         `,
-        { userId: user_id as string, communityId: community_id as string }
+        { userId: user_id as string, communityDiscussionId: community_discussion_id as string, communityId: community_id as string }
       );
     } else {
       // Create notification for denied invite
@@ -223,7 +223,7 @@ async function PUT_ACCEPT_OR_DENY_REQUEST_TO_JOIN_COMMUNITY_DISCUSSION(
     await write(
       session,
       `
-          MATCH (communityDiscussion: CommunityDiscussion {id: $communityDiscussionId})-[r:REQUEST_INVITE_TO_DISCUSSION]->(invitedUser:User {id: $userId})
+          MATCH (communityDiscussion: CommunityDiscussion {id: $communityDiscussionId})-[r:INVITE_REQUESTED_FOR_DISCUSSION]->(invitedUser:User {id: $userId})
           DELETE r
           `,
       { userId: user_id as string, communityDiscussionId: community_discussion_id as string }

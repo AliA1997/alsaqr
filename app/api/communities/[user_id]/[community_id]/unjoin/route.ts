@@ -54,7 +54,7 @@ async function PUT_REQUEST_TO_UNJOIN_COMMUNITY(
     return NextResponse.json(
       {
         success: true,
-        message: 'Joined Successfully',
+        message: 'Left community Successfully',
       },
       { status: 201 }
     );

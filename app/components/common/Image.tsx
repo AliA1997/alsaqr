@@ -40,7 +40,7 @@ export function OptimizedImage({
     return (
         <Image
             className={classNames ? classNames : "h-10 w-10 rounded-full object-cover"}
-            src={imageUrl}
+            src={imageUrl ?? ""}
             alt={alt}
             height={50}
             width={50}

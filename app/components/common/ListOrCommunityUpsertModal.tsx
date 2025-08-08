@@ -104,11 +104,11 @@ function ListOrCommunityUpsertModal({ type, loggedInUserId, communityId }: Props
         [type]
     );
     const upsertLoading = useMemo(() => {
-        if(type === CommonUpsertBoxTypes.Community) return communityFeedStore.loadingInitial;
+        if(type === CommonUpsertBoxTypes.Community) return communityFeedStore.loadingUpsert;
         else if(type === CommonUpsertBoxTypes.CommunityDiscussion) return communityDiscussionFeedStore.loadingUpsert;
         else return listFeedStore.loadingUpsert;
     }, [
-        communityFeedStore.loadingInitial,
+        communityFeedStore.loadingUpsert,
         communityDiscussionFeedStore.loadingUpsert,
         listFeedStore.loadingUpsert
     ]);

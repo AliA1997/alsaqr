@@ -12,13 +12,15 @@ type Props = {
     invitedUsers: User[];
     filterKey: FilterKeys;
     entityInvitedToId: string;
+    childEntityInviteToId?: string;
 }
 
 function RequestedInvitesModal({ 
     title,
     invitedUsers, 
     filterKey,
-    entityInvitedToId
+    entityInvitedToId,
+    childEntityInviteToId
  }: Props) {
     const { modalStore, authStore } = useStore();
     const { closeModal } = modalStore;
@@ -52,6 +54,7 @@ function RequestedInvitesModal({
                                 key={invitedUser.id ?? invitedUserKey}
                                 userItemToDisplay={{user: invitedUser} as UserItemToDisplay}
                                 entityInvitedToId={entityInvitedToId}
+                                childEntityInviteToId={childEntityInviteToId}
                                 filterKey={filterKey}
                             />
                         ))}

@@ -31,7 +31,7 @@ export default class CommunityDiscussionFeedStore {
         }
     }
     pagination: Pagination | undefined = undefined;
-    pagingParams: PagingParams = new PagingParams(1, 10);
+    pagingParams: PagingParams = new PagingParams(1, 25);
 
     communityDiscussionsRegistry: Map<string, CommunityDiscussionToDisplay> = new Map<string, CommunityDiscussionToDisplay>();
     currentStepInCommunityDiscussionCreation: number | undefined = undefined;
@@ -61,11 +61,11 @@ export default class CommunityDiscussionFeedStore {
     setCommunityDiscussion = (communityDiscussionId: string, communityDiscussion: CommunityDiscussionToDisplay) => {
         this.communityDiscussionsRegistry.set(communityDiscussionId, communityDiscussion);
     }
-    private updateCommunityDiscussionRelationship = (communityId: string, newStatus: RelationshipType) => {
-        if(this.communityDiscussionsRegistry.has(communityId)) {
-            const communityDiscussionInfo = this.communityDiscussionsRegistry.get(communityId);
-            communityDiscussionInfo!.relationshipType = newStatus;
-            this.setCommunityDiscussion(communityId, communityDiscussionInfo!);
+    updateCommunityDiscussionRelationship = (communityDiscussionId: string, newStatus: RelationshipType) => {
+        if(this.communityDiscussionsRegistry.has(communityDiscussionId)) {
+            const communityDiscussionInfo = this.communityDiscussionsRegistry.get(communityDiscussionId);
+            this.setCommunityDiscussion(communityDiscussionId, { ...communityDiscussionInfo!, relationshipType: newStatus });
+            console.log('updateCommunityDiscussionRelationship', JSON.stringify(this.communityDiscussionsRegistry.get(communityDiscussionId)))
         }
     }
     resetListsState = () => {
@@ -92,11 +92,11 @@ export default class CommunityDiscussionFeedStore {
         try {
             const authUserSession = store.authStore.currentSessionUser;
             const userId = authUserSession?.id ?? "";
-            const joinCommunityDto = {
+            const joinCommunityDiscussionDto = {
                 username: authUserSession?.username ?? "",
                 email: authUserSession?.email ?? "",
             }
-            await agent.communityApiClient.unjoinCommunity(joinCommunityDto, userId, communityId)
+            await agent.communityApiClient.unjoinCommunityDiscussion(joinCommunityDiscussionDto, userId, communityId, communityDiscussionId)
 
             runInAction(() => {
                 this.updateCommunityDiscussionRelationship(communityDiscussionId, RelationshipType.None);
@@ -116,7 +116,7 @@ export default class CommunityDiscussionFeedStore {
                 username: authUserSession?.username ?? "",
                 email: authUserSession?.email ?? "",
             }
-            await agent.communityApiClient.joinCommunity(joinCommunityDto, userId, communityId)
+            await agent.communityApiClient.joinCommunityDiscussion(joinCommunityDto, userId, communityId, communityDiscussionId)
 
             runInAction(() => {
                 this.updateCommunityDiscussionRelationship(communityDiscussionId, RelationshipType.Joined);
@@ -136,7 +136,7 @@ export default class CommunityDiscussionFeedStore {
                 username: authUserSession?.username ?? "",
                 email: authUserSession?.email ?? "",
             }
-            await agent.communityApiClient.requestToJoinCommunity(joinCommunityDto, userId, communityId)
+            await agent.communityApiClient.requestToJoinCommunityDiscussion(joinCommunityDto, userId, communityId, communityDiscussionId)
 
             runInAction(() => {
                 this.updateCommunityDiscussionRelationship(communityDiscussionId, RelationshipType.InviteRequested);
@@ -156,7 +156,7 @@ export default class CommunityDiscussionFeedStore {
         try {
             const authUserSession = store.authStore.currentSessionUser;
             const userId = authUserSession?.id ?? "";
-            await agent.communityApiClient.acceptOrDenyToJoinRequestToCommunity(acceptToDenyRequest, invitedUserId, communityId)
+            await agent.communityApiClient.acceptOrDenyToJoinRequestToCommunityDiscussion(acceptToDenyRequest, invitedUserId, communityId, communityDiscussionId)
 
             runInAction(async () => {
                 await this.loadCommunityDiscussions(userId, communityId);
@@ -178,11 +178,10 @@ export default class CommunityDiscussionFeedStore {
                 usersAdded: newCommunityDiscussion.usersAdded.map(u => u.user.id)
             };
 
-            agent.communityApiClient.addCommunityDiscussion(newCommunityDiscussionDto, userId, communityId)
-                .then(() => {
-                    store.modalStore.closeModal();
-                });
-
+            await agent.communityApiClient.addCommunityDiscussion(newCommunityDiscussionDto, userId, communityId);
+            store.modalStore.closeModal();
+            await this.loadCommunityDiscussions(userId, communityId);
+            
             runInAction(() => {
                 this.setCommunityDiscussionCreationForm(DEFAULT_CREATED_LIST_OR_COMMUNITY_FORM);
                 this.setCurrentStepInCommunityDiscussionCreation(0);
