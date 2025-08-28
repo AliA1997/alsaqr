@@ -40,7 +40,43 @@ const nextConfig = {
         hostname: 'loremflickr.com',
         port: '',
         pathname: '/**'
-      }
+      },
+      {
+        protocol: 'https',
+        hostname: '**.aljazeera.com',
+        port: '',
+        pathname: '**',
+      },
+      {
+        protocol: 'https',
+        hostname: '**.bleacherreport.com',
+        port: '',
+        pathname: '**',
+      },
+      {
+        protocol: 'https',
+        hostname: '**.argaam.com',
+        port: '',
+        pathname: '**',
+      },
+      {
+        protocol: 'https',
+        hostname: '**.s3.amazonaws.com',
+        port: '',
+        pathname: '**',
+      },
+      {
+        protocol: 'https',
+        hostname: '**.ccn.com',
+        port: '',
+        pathname: '**',
+      },
+      {
+        protocol: 'https',
+        hostname: '**',
+        port: '',
+        pathname: '**',
+      },
     ],
   },
   // Additional configurations can be added here

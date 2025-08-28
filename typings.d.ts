@@ -360,6 +360,17 @@ export interface ExploreNewsSourceToDisplay {
   url: string;
 }
 
+export enum ExploreTabs {
+  Popular = 'popular',
+  AlJazeeraEnglish = 'al-jazeera-english',
+  Argaam = 'argaam',
+  BleacherReport = 'bleacher-report',
+  CryptoCoinsNews = 'crypto-coins-news',
+  HackerNews = 'hacker-news',
+  SABQ = 'sabq',
+
+}
+
 // New types based on the code snippets
 export interface PersonalInfo {
   dateOfBirth?: string;
@@ -407,4 +418,3 @@ declare module "next-auth" {
     role?: string
   }
 }
-

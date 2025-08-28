@@ -48,7 +48,7 @@ export const axiosRequests = {
 
 axios.defaults.baseURL = process.env.NEXT_PUBLIC_BASE_URL;
 
-console.log("NEXT_PUBLIC_BASE_URL", process.env.NEXT_PUBLIC_BASE_URL)
+// console.log("NEXT_PUBLIC_BASE_URL", process.env.NEXT_PUBLIC_BASE_URL)
 
 
 // Middleware Configuration for Axios

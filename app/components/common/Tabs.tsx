@@ -1,6 +1,7 @@
 import { useCallback, useMemo, useRef, useState } from "react";
 import dynamic from 'next/dynamic';
 import { ModalLoader } from "./CustomLoader";
+import { OptimizedImage } from "./Image";
 const CommonLink = dynamic(() => import("./Links").then(mod => mod.CommonLink), { ssr: false });
 // import { CommonLink } from "./Links";
 const NoRecordsTitle = dynamic(() => import("./Titles").then(mod => mod.NoRecordsTitle), { ssr: false });
@@ -13,15 +14,18 @@ type TabsProps = {
   tabs: {
     tabKey: string;
     title: string;
+    image?: string;
     content: any[];
     noRecordsContent: string;
     renderer: (obj: any) => React.ReactNode;
   }[];
   showNumberOfRecords?: boolean;
   loading: boolean;
+  loadOnTabSwitch?: (tab: string) => Promise<void>;
+  containerClassNames?: string;
 };
 
-function Tabs({ tabs, showNumberOfRecords, loading }: TabsProps) {
+function Tabs({ tabs, showNumberOfRecords, loading, loadOnTabSwitch, containerClassNames }: TabsProps) {
   const containerRef = useRef(null);
   const [activeTab, setActiveTab] = useState<string>(tabs[0].tabKey);
   const tabLinks = useMemo(
@@ -29,6 +33,7 @@ function Tabs({ tabs, showNumberOfRecords, loading }: TabsProps) {
       tabs.map((t) => ({
         tabKey: t.tabKey,
         title: t.title,
+        image: t.image ?? undefined,
         numberOfRecords: t.content.length,
       })),
     [tabs]
@@ -45,6 +50,8 @@ function Tabs({ tabs, showNumberOfRecords, loading }: TabsProps) {
   );
   const handleTabSwitch = useCallback((tab: string) => {
     setActiveTab(tab);
+    if(loadOnTabSwitch)
+      loadOnTabSwitch(tab);
   }, []);
   return (
     <ContentContainerWithRef
@@ -55,10 +62,10 @@ function Tabs({ tabs, showNumberOfRecords, loading }: TabsProps) {
         `}
       innerRef={containerRef}
     >
-      <div className="flex justify-around">
+      <div className={`flex justify-around`}>
         {tabLinks.map(
           (
-            tl: { tabKey: string; title: string; numberOfRecords: number },
+            tl: { tabKey: string; title: string, image?: string; numberOfRecords: number },
             tlIdx: number
           ) => (
             <CommonLink
@@ -67,7 +74,12 @@ function Tabs({ tabs, showNumberOfRecords, loading }: TabsProps) {
               activeInd={activeTab === tl.tabKey}
               animatedLink={false}
             >
-              {tl.title}
+              {tl.image ? (
+                <OptimizedImage
+                  src={tl.image}
+                  alt={tl.title}
+                />
+              ) : <>{tl.title}</>}
 
               {showNumberOfRecords && (
                 <span className="bg-red-500 text-white px-2 py-1 rounded-full text-xs ml-2">
@@ -91,8 +103,7 @@ function Tabs({ tabs, showNumberOfRecords, loading }: TabsProps) {
           <div
             key={tCIdx}
             id={`${tC.tabKey}`}
-            className={`tab-content p-6 ${activeTab === tC.tabKey ? "" : "hidden"
-              }`}
+            className={`tab-content p-4 ${activeTab === tC.tabKey ? "" : "hidden" }  ${containerClassNames ? containerClassNames : ''}`}
           >
 
             {loading 

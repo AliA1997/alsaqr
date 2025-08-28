@@ -373,3 +373,33 @@ export const REACT_TO_PDF_CONFIG: Options = {
 export const INVITATION_EXPIRE_TIME = (24 * 60 * 60 * 1000) * 3
 
 export const FALLBACK_IMAGE_URL = "https://res.cloudinary.com/aa1997/image/upload/v1720130142/Web3-Client-Projects/Gm.png";
+
+export const FALLBACK_NEWS_IMAGE_URL = "/explore-news-placeholder.png";
+
+export const EXPLORE_SOURCES = [
+  {
+    id: "al-jazeera-english",
+    name: "Al Jazeera English",
+    image: "/explore-sources/aljazeeraenglish.svg",
+  },
+  {
+    id: "argaam",
+    name: "Argaam",
+    image: "/explore-sources/argaam.svg",
+  },
+  {
+    id: "bleacher-report",
+    name: "Bleacher Report",
+    image: "/explore-sources/bleacher-report.svg",
+  },
+  {
+    id: "crypto-coins-news",
+    name: "Crypto Coins News",
+    image: "/explore-sources/cryptocoinnews.svg",
+  },
+  {
+    id: "sabq",
+    name: "SABQ",
+    image: "/explore-sources/sabq.svg",
+  },
+]

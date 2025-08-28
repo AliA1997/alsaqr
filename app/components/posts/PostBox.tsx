@@ -137,7 +137,7 @@ function PostBox({ filterKey }: Props) {
     (e: React.ChangeEvent<HTMLTextAreaElement>) => {
       const hashtagMatches = e.target.value.match(/#[\w\-_]+/g) || [];
       setInput(e.target.value);
-      console.log('hashTag matches:', hashtagMatches);
+      // console.log('hashTag matches:', hashtagMatches);
       setHashtags(Array.from(new Set(hashtagMatches)));
     },
     []

@@ -30,7 +30,7 @@ const PersonalizeAccount = observer(() => {
             ...values
         };
 
-        console.log('update personalize account infoToUpsert:', infoToUpsert);
+        // console.log('update personalize account infoToUpsert:', infoToUpsert);
         
         if(currentSessionUser) {
             await updateYourAccount(currentSessionUser?.id!, infoToUpsert);

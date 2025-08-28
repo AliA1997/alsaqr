@@ -181,7 +181,7 @@ function ListOrCommunityUpsertModal({ type, loggedInUserId, communityId }: Props
         else return "List Info";
     }, [type]);
 
-    console.log('loggedInUserId', loggedInUserId)
+    // console.log('loggedInUserId', loggedInUserId)
     return (
         <ModalPortal>
             <ModalBody onClose={() => closeModal()}>

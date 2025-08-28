@@ -1,4 +1,4 @@
-import { FALLBACK_IMAGE_URL } from '@utils/constants';
+import { FALLBACK_IMAGE_URL, FALLBACK_NEWS_IMAGE_URL } from '@utils/constants';
 import Image from 'next/image';
 import { MouseEventHandler, useEffect, useState } from 'react';
 
@@ -33,8 +33,10 @@ export function OptimizedImage({
     src,
     alt,
     onClick,
-    classNames
-}: CommonImageProps){
+    classNames,
+    loadedHeight,
+    loadedWidth
+}: CommonImageProps & { loadedHeight?: number, loadedWidth?: number }){
     const [imageUrl, setImageUrl] = useState<string>(src)
 
     return (
@@ -42,13 +44,40 @@ export function OptimizedImage({
             className={classNames ? classNames : "h-10 w-10 rounded-full object-cover"}
             src={imageUrl ?? ""}
             alt={alt}
-            height={50}
-            width={50}
+            height={loadedHeight ? loadedHeight : 50}
+            width={loadedWidth ? loadedWidth : 50}
             priority={false}
             onClick={onClick}
             onError={() => {
                 if(imageUrl != FALLBACK_IMAGE_URL)
                  setImageUrl(FALLBACK_IMAGE_URL);
+            }}
+            loading="lazy"
+        />
+    );
+}
+
+
+export function OptimizedNewsImage({
+    src,
+    alt,
+    onClick,
+    classNames
+}: CommonImageProps){
+    const [imageUrl, setImageUrl] = useState<string>(src)
+
+    return (
+        <Image
+            className={classNames ? classNames : "h-full w-full object-cover"}
+            src={imageUrl ?? ""}
+            alt={alt}
+            height={600}
+            width={600}
+            priority={false}
+            onClick={onClick}
+            onError={() => {
+                if(imageUrl != FALLBACK_NEWS_IMAGE_URL)
+                 setImageUrl(FALLBACK_NEWS_IMAGE_URL);
             }}
             loading="lazy"
         />

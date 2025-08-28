@@ -153,7 +153,7 @@ const CommunityDiscussionMessageRoom = ({
     return Array.from(new Set([...jUsers, ...iUsers]).values())
   }, [commmityDiscussionInfo])
 
-  console.log("JSON.stringiy:", JSON.stringify(adminCommunityDiscussionInfo))
+  // console.log("JSON.stringiy:", JSON.stringify(adminCommunityDiscussionInfo))
   return (
     <div className="flex flex-col h-screen bg-gray-50 dark:bg-[#0e1517]">
       {/* Header */}

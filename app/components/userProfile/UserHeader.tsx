@@ -21,6 +21,7 @@ import { GoBackButton } from "@components/common/IconButtons";
 import { defineUsersMessagesArray } from "@utils/neo4j";
 import { SaveToListModal } from "@components/list/ListModal";
 import { ROUTES_USER_CANT_ACCESS } from "@utils/constants";
+import { OptimizedImage } from "@components/common/Image";
 
 type UserHeaderProps = {
   currentSession: Session | undefined;
@@ -45,7 +46,7 @@ const UserHeader: React.FC<UserHeaderProps> = ({
   const { currentSessionUser } = authStore;
   const { showModal, closeModal } = modalStore;
   const [isDropdownOpen, setIsDropdownOpen] = React.useState<boolean>(false);
-
+  // console.log('profileInfo:', profileInfo)
 
   const profileIsLoggedInUser = useMemo(() => profileInfo.user.username === (currentSession?.user?.username ?? ""), [currentSession, profileInfo]);
   const isFollowingUser = useMemo(() => currentSession?.user?.followingUsers?.some((fU: any) => fU.id === profileInfo.user.id) ?? false, [profileInfo, currentSession]);
@@ -116,11 +117,12 @@ const UserHeader: React.FC<UserHeaderProps> = ({
                   style={{ height: "9rem", width: "9rem" }}
                   className="md rounded-full relative avatar"
                 >
-                  <img
-                    style={{ height: "9rem", width: "9rem" }}
-                    className="md rounded-full relative border-4 border-gray-900"
-                    src={profileInfo.user.avatar}
-                    alt=""
+                  <OptimizedImage
+                      src={profileInfo.user.avatar}
+                      alt={profileInfo.user.username}
+                      loadedHeight={150}
+                      loadedWidth={150}
+                      classNames="md rounded-full relative border-4 border-gray-900 h-[9rem] w-[9rem]"
                   />
                 </div>
               </div>

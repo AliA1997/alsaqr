@@ -59,7 +59,7 @@ const CommunityDiscussionItemComponent = observer(({
   const requestedInvite = useMemo(() => currentRelationshipType === RelationshipType.InviteRequested, [currentRelationshipType, communityDiscussionToDisplay.relationshipType]);
   const canUnJoin = useMemo(() => currentRelationshipType === RelationshipType.Joined || joined, [currentRelationshipType, communityDiscussionToDisplay.relationshipType, joined]);
 
-  console.log('communityDiscussionToDisplay:', currentRelationshipType)
+  // console.log('communityDiscussionToDisplay:', currentRelationshipType)
 
   return (
     <>

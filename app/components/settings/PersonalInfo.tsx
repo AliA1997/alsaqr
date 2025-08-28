@@ -29,7 +29,7 @@ const PersonalInfo = observer(() => {
             ...values
         };
 
-        console.log('update personal info infoToUpsert:', infoToUpsert);
+        // console.log('update personal info infoToUpsert:', infoToUpsert);
         debugger;
         if(currentSessionUser) {
             await updateYourAccount(currentSessionUser?.id!, infoToUpsert);

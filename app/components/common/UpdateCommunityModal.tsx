@@ -77,7 +77,7 @@ function UpdateCommunityModal({ loggedInUserId, communityAdminInfo, refreshCommu
     const lastStepBeforeReview = useMemo(() => 0, []);
     const reviewInfoSectionTitle = useMemo(() => "Review Community Update", []);
 
-    console.log('loggedInUserId', loggedInUserId)
+    // console.log('loggedInUserId', loggedInUserId)
     return (
         <ModalPortal>
             <ModalBody onClose={() => closeModal()}>
