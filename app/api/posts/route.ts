@@ -131,7 +131,7 @@ async function POST(request: NextRequest) {
   try {
     if (!data.text) throw new Error("Post requires text.");
 
-    console.log("userID:", data.userId);
+    // console.log("userID:", data.userId);
     await write(
       session,
       `

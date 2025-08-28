@@ -109,7 +109,7 @@ async function GET_RETURN_LISTS(
     lists = selectResult ?? []; 
     // console.log('lists:', JSON.stringify(lists))
   } catch(err) {
-    console.log("FETCH LIST ERROR:", err)
+    // console.log("FETCH LIST ERROR:", err)
   }
   finally {
     await session.close();

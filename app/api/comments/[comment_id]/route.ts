@@ -59,7 +59,7 @@ async function GET_COMMENT(
         ]
     );
 
-    console.log('comments:', comments)
+    // console.log('comments:', comments)
     comment = comments ? comments[0] : undefined;
 
     if (!comment) {

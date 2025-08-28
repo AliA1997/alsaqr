@@ -38,7 +38,7 @@ export async function read(session: Session, cypher = "", params = {}, alias?: s
 
         return result;
       }
-      console.log('alias:', alias);
+      // console.log('alias:', alias);
       return alias === 'total' ? record.get(alias).toNumber() : record.get(alias ?? "u").properties
     });
   } catch (error) {

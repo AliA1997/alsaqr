@@ -15,8 +15,8 @@ async function POST_COMPLETE_REGISTRATION(
   try {
     
 
-    console.log("userID:", userId);
-    console.log('data:', data);
+    // console.log("userID:", userId);
+    // console.log('data:', data);
     await write(
       session,
       `

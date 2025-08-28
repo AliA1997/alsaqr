@@ -4,6 +4,7 @@ import { defineDriver, read } from "@utils/neo4j/neo4j";
 import { ExploreToDisplay, ProfileUser } from "typings";
 import axios from "axios";
 import { extractQryParams } from "@utils/common";
+import { PaginatedResult } from "models/common";
 
 async function GET(
   request: NextRequest,
@@ -16,20 +17,28 @@ async function GET(
 
   const { data: recentNewsFromSource } = await axios.get(`https://newsapi.org/v2/top-headlines?sources=${sourceId}&sortBy=popularity&apiKey=${process.env.NEWSAPI_KEY}`);
   const { articles } = recentNewsFromSource;
+  const totalArticles = (articles ?? []).length;
 
   const startIndex = (currentPageParsed - 1) * itemsPerPageParsed;
 
   const result: ExploreToDisplay[] = articles
-                                        .filter((a: any) => a.urlToImage)
-                                        .slice(startIndex, startIndex + itemsPerPageParsed)
-                                        .map((a: any) => ({
-                                            title: a.title.length > 75 ? `${a.title.substring(0, 75)}...` : a.title,
-                                            url: a.url,
-                                            urlToImage: a.urlToImage
-                                        }));
-
-    // console.log('result:', result);
-    return NextResponse.json({ exploreForSource: result });
+                                      .filter((a: any) => a.urlToImage)
+                                      .slice(startIndex, startIndex + itemsPerPageParsed)
+                                      .map((a: any) => ({
+                                          title: a.title.length > 75 ? `${a.title.substring(0, 75)}...` : a.title,
+                                          url: a.url,
+                                          urlToImage: a.urlToImage
+                                      }));
+  const pagination = {
+    itemsPerPage: itemsPerPageParsed,
+    currentPage: currentPageParsed, 
+    totalItems: totalArticles,
+    totalPages: Math.round(totalArticles / itemsPerPageParsed)
+  };
+    
+  return NextResponse.json({ 
+    result: new PaginatedResult(result, pagination)
+  });
 }
 
 export { GET };

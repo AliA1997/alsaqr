@@ -94,19 +94,19 @@ async function PUT_UPDATE_COMMUNITY(
 
   try {
     const userAuthSessionId = await getUserIdFromSession(session);
-    console.log('userId != userAuthSessionId', userId != userAuthSessionId)
+    // console.log('userId != userAuthSessionId', userId != userAuthSessionId)
     if (userId != userAuthSessionId) {
       return new NextResponse("Only logged in user can update communities", { status: 400 });
     }
-    console.log(`     {
-        communityId,
-        userId,
-        ...data
-      }`,      {
-        communityId,
-        userId,
-        ...data
-      })
+    // console.log(`     {
+    //     communityId,
+    //     userId,
+    //     ...data
+    //   }`,      {
+    //     communityId,
+    //     userId,
+    //     ...data
+    //   })
     await write(
       session,
       `

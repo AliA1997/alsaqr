@@ -134,7 +134,7 @@ async function POST_CREATE_COMMUNITY_DISCUSSION_MSG(
   const communityId = community_id as string;
   const communityDiscussionId = community_discussion_id as string;
 
-  console.log('post community discussion message data:', data);
+  // console.log('post community discussion message data:', data);
   if (!data.messageText) {
     return new NextResponse("Message text is required to create discussion message", { status: 400 });
   }

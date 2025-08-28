@@ -18,8 +18,8 @@ async function GET(
   const itemsPerPageParsed = parseInt(itemsPerPage!);
   const { user_id } = params;
   
-  console.log('senderId:', senderId);
-  console.log('receiverId:', receiverId);
+  // console.log('senderId:', senderId);
+  // console.log('receiverId:', receiverId);
   if (!user_id) {
     return new NextResponse("You need to be logged in, in order to access your direct messages.", { status: 400 });
   }

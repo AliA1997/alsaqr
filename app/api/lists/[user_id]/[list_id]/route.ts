@@ -131,7 +131,7 @@ async function GET_SAVED_LIST_ITEMS(
     
     savedListItems = selectResult ?? []; // Adjust based on your schema
     
-    console.log('savedListItems:', savedListItems)
+    // console.log('savedListItems:', savedListItems)
   } catch (err) {
     return NextResponse.json({ message: "Fetch saved list items error!", success: false });
   }
@@ -167,7 +167,7 @@ async function PATCH_SAVE_ITEM_TO_LIST(
   let success = false;
   try {
     const savingPostToList = (data.type === "post");
-    console.log('savingpostTolist:', savingPostToList);
+    // console.log('savingpostTolist:', savingPostToList);
     if(savingPostToList)
       await write(
         session,

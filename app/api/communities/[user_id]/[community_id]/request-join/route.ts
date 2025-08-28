@@ -243,7 +243,7 @@ async function PUT_ACCEPT_OR_DENY_REQUEST_TO_JOIN_COMMUNITY(
       { userId: user_id as string, communityId: community_id as string }
     );
 
-    console.log('communityInvitationResult', communityInvitationResult);
+    // console.log('communityInvitationResult', communityInvitationResult);
     await communityInvitesCollection.deleteOne(communityInvitationResult)
 
     // Return success response

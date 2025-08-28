@@ -72,7 +72,7 @@ if (!communityId) {
     await session.close();
   }
 
-  console.log('communityDiscussionAdminInfo:', communityDiscussionAdminInfo)
+  // console.log('communityDiscussionAdminInfo:', communityDiscussionAdminInfo)
   return NextResponse.json(communityDiscussionAdminInfo ?? {});
 }
 

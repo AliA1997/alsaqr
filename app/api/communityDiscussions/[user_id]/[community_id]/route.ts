@@ -157,7 +157,7 @@ async function POST_CREATE_COMMUNITY_DISCUSSION(
   const userId = user_id as string;
   const communityId = community_id as string;
 
-  console.log('post community data:', data);
+  // console.log('post community data:', data);
   if (!data.name) {
     return new NextResponse("Name of Community Discussion is required", { status: 400 });
   }

@@ -24,7 +24,7 @@ async function GET(
   let bookmarkedPosts: PostToDisplay[] = [];
   let pagination: Pagination | undefined = undefined;
   
-  console.log('id:', id);
+  // console.log('id:', id);
   if (!id) {
     return new NextResponse("You need to be logged in, in order to access  your bookmarks.", { status: 400 });
   }

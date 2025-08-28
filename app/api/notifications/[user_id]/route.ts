@@ -27,8 +27,8 @@ async function GET_NOTIFICATIONS(
   let notifications: NotificationToDisplay[] | undefined;
   let pagination: Pagination | undefined;
 
-  console.log('getAll:', getAll);
-  console.log('userId:', user_id);
+  // console.log('getAll:', getAll);
+  // console.log('userId:', user_id);
   try {
 
     let selectResult,  pagingResult, selectQuery;

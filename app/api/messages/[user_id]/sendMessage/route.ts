@@ -14,7 +14,7 @@ async function POST_SEND_MESSAGE(
   const { user_id } = params;
   const userId = user_id as string;
 
-  console.log('post direct message data:', data);
+  // console.log('post direct message data:', data);
 
   if(userId !== data.senderId)
     return new NextResponse("Logged In user can only send direct messages", { status: 400 });
